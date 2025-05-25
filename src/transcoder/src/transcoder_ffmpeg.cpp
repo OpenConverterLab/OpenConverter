@@ -1,10 +1,25 @@
 #include "../include/transcoder_ffmpeg.h"
+#include <chrono>
 
 /* Receive pointers from converter */
 TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
                                    EncodeParameter *encodeParameter)
     : Transcoder(processParameter, encodeParameter) {
     frameTotalNumber = 0;
+    total_duration = 0;
+    current_duration = 0;
+}
+
+void TranscoderFFmpeg::update_progress(int64_t current_pts, AVRational time_base) {
+    // Convert current PTS to microseconds
+    AVRational micros_base = {1, 1000000};
+    current_duration = av_rescale_q(current_pts, time_base, micros_base);
+    
+    // Calculate progress percentage
+    if (total_duration > 0) {
+        // Use the base class's send_process_parameter which handles time delays and smoothing
+        send_process_parameter(current_duration, total_duration);
+    }
 }
 
 bool TranscoderFFmpeg::transcode(std::string input_path,
@@ -36,6 +51,34 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     if(!open_Media(decoder, encoder)){
         flag = false;
         goto end;
+    }
+
+    // Calculate total duration from the input file
+    if (decoder->fmtCtx->duration != AV_NOPTS_VALUE) {
+        total_duration = decoder->fmtCtx->duration;
+    } else {
+        // If duration is not available, try to get it from streams
+        for (unsigned int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
+            AVStream *stream = decoder->fmtCtx->streams[i];
+            if (stream->duration != AV_NOPTS_VALUE) {
+                AVRational micros_base = {1, 1000000};
+                int64_t stream_duration = av_rescale_q(stream->duration, stream->time_base, micros_base);
+                total_duration = std::max(total_duration, stream_duration);
+            }
+        }
+    }
+
+    // If we still don't have a duration, try to estimate from stream properties
+    if (total_duration == 0) {
+        for (unsigned int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
+            AVStream *stream = decoder->fmtCtx->streams[i];
+            if (stream->nb_frames > 0 && stream->avg_frame_rate.num > 0) {
+                AVRational micros_base = {1, 1000000};
+                int64_t estimated_duration = av_rescale_q(stream->nb_frames * stream->avg_frame_rate.den,
+                                                        stream->avg_frame_rate, micros_base);
+                total_duration = std::max(total_duration, estimated_duration);
+            }
+        }
     }
 
     if (!prepare_Decoder(decoder)) {
@@ -100,19 +143,24 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             if(encoder->fmtCtx->oformat->video_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
+            // Update progress based on video stream
+            update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
+            
             if (!copyVideo) {
                 transcode_Video(decoder, encoder);
             } else {
                 remux(decoder->pkt, encoder->fmtCtx, decoder->videoStream,
                       encoder->videoStream);
             }
-
-            // encode(oFmtCtx, outCodecCtx, outFrame, outPkt, inStream,
-            // outStream);
         } else if (decoder->pkt->stream_index == decoder->audioIdx) {
             if(encoder->fmtCtx->oformat->audio_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
+            // Update progress based on audio stream if no video stream
+            if (decoder->videoIdx < 0) {
+                update_progress(decoder->pkt->pts, decoder->audioStream->time_base);
+            }
+            
             if (!copyAudio) {
                 transcode_Audio(decoder, encoder);
             } else {
@@ -213,17 +261,8 @@ bool TranscoderFFmpeg::encode_Video(AVStream *inStream, StreamContext *encoder,
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             return true;
         } else if (ret < 0) {
-
             return false;
         }
-        /* set the frameNumber of processParameter */
-        // frameNumber =
-        // encoder->frame->pts/(inStream->time_base.den/inStream->r_frame_rate.num);
-
-        av_log(NULL, AV_LOG_DEBUG, "calculator frame = %ld\n", frameNumber);
-        // processParameter->set_Process_Number(frameNumber++,
-        // frameTotalNumber);
-        send_process_parameter(frameNumber++, frameTotalNumber);
 
         output_packet->stream_index = encoder->videoStream->index;
         output_packet->duration = encoder->videoStream->time_base.den /
@@ -298,7 +337,6 @@ bool TranscoderFFmpeg::transcode_Video(StreamContext *decoder,
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             return 0;
         } else if (ret < 0) {
-
             return -1;
         }
 

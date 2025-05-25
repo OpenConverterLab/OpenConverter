@@ -29,6 +29,7 @@ class Transcoder {
     Transcoder(ProcessParameter *processParameter,
                EncodeParameter *encodeParameter)
         : processParameter(processParameter), encodeParameter(encodeParameter) {
+        last_ui_update = std::chrono::system_clock::now();
     }
 
     virtual ~Transcoder() = default;
@@ -52,8 +53,6 @@ class Transcoder {
     void send_process_parameter(int64_t frameNumber, int64_t frameTotalNumber) {
         processNumber = frameNumber * 100 / frameTotalNumber;
 
-        processParameter->set_Process_Number(processNumber);
-
         static auto last_encoder_call_time = std::chrono::system_clock::now();
         auto now = std::chrono::system_clock::now();
 
@@ -65,8 +64,18 @@ class Transcoder {
         double smooth_duration = compute_smooth_duration(duration);
         if (frameNumber > 0 && frameTotalNumber > 0) {
             remainTime =
-                smooth_duration * (frameTotalNumber - frameNumber) / 1000;
-            processParameter->set_Time_Required(remainTime);
+                smooth_duration * (100 - processNumber) / 1000;
+        }
+
+        // Only update UI if enough time has passed (100ms)
+        auto time_since_last_ui_update = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - last_ui_update).count();
+        if (time_since_last_ui_update >= 100) {
+            processParameter->set_Process_Number(processNumber);
+            if (frameNumber > 0 && frameTotalNumber > 0) {
+                processParameter->set_Time_Required(remainTime);
+            }
+            last_ui_update = now;
         }
 
         std::cout << "Process Number (percentage): " << processNumber << "%\t"
@@ -77,25 +86,18 @@ class Transcoder {
     }
 
     ProcessParameter *processParameter = NULL;
-
     EncodeParameter *encodeParameter = NULL;
 
     int64_t frameNumber = 0;
-
     int64_t frameTotalNumber = 0;
-
     int processNumber = 0;
     double remainTime = 0;
 
-    std::chrono::system_clock::time_point
-        last_encoder_call; // Track last call time
-
-    std::vector<double>
-        duration_history; // Store recent durations for averaging
-    static constexpr size_t max_history_size =
-        20; // Limit for the number of durations tracked
-    static constexpr double min_duration_threshold =
-        10.0; // Ignore durations < 10 ms
+    std::chrono::system_clock::time_point last_ui_update;  // Track last UI update time
+    std::vector<double> duration_history;  // Store recent durations for averaging
+    
+    static constexpr size_t max_history_size = 20;  // Limit for the number of durations tracked
+    static constexpr double min_duration_threshold = 10.0;  // Ignore durations < 10 ms
 };
 
 #endif

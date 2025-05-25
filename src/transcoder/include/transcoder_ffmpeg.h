@@ -65,6 +65,13 @@ class TranscoderFFmpeg : public Transcoder {
     // encoder's parameters
     bool copyVideo;
     bool copyAudio;
+    
+    // Progress tracking
+    int64_t total_duration;  // Total duration in microseconds
+    int64_t current_duration;  // Current processed duration in microseconds
+    
+    // Helper function to update progress
+    void update_progress(int64_t current_pts, AVRational time_base);
 };
 
 #endif // TRANSCODERFFMPEG_H
