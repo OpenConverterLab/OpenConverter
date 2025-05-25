@@ -9,8 +9,9 @@ OpenConverter 是一个基于 **FFmpeg**源代码、**Qt**开源框架、**BMF�
 1. 支持更改视频编解码器以进行编码（例如libx264，libx265）
 2. 支持无编码转换多媒体。
 3. 支持显示多媒体文件中视频和音频流的信息。
-4. 支持在转换文件时显示进度和剩余时间。
+4. 支持平滑的进度跟踪和准确的剩余时间显示。
 5. 运行时切换转码内核（FFmpeg、FFTool、BMF）
+6. 提供图形界面和命令行界面（CLI）双重支持。
 
 本项目使用[Qt框架](./doc/Qt.md)、FFmpeg库、[BMF框架](https://github.com/BabitMF/bmf)完成开发。
 
@@ -40,13 +41,43 @@ FFmpeg 开发教程可参考 [Learn FFmpeg the Hard Way](https://github.com/TSGU
 
 这款转换器可以显示有关视频和音频流的详细信息，包括分辨率、帧率、比特率等。这有助于您了解多媒体文件的属性，以便在转换过程中进行相应的调整。
 
-### 4. 支持在转换文件时显示进度和剩余时间
+### 4. 高级进度跟踪和时间估算
 
-在转换文件时，该播放器会实时显示转换进度，以便您了解转换过程所需的时间。这有助于您更好地安排时间，避免不必要的等待。
+在转换文件时，该播放器提供：
+- 平滑的进度更新，具有UI友好的刷新率
+- 使用持续时间平滑的准确剩余时间估算
+- 实时进度百分比和持续时间跟踪
+- 详细的控制台输出，用于监控转换状态
 
 ### 5. 运行时切换转码内核（FFmpeg、FFTool、BMF）
 
-该软件拥有三个不同的转码内核可供选择，分别为由FFmpeg API编写的的内核，调用FFmpeg命令行工具的内核，以及基于BMF框架编写的内核，您还可以选择性编译这些内核。
+该软件提供三种不同的转码内核供选择：
+- 基于FFmpeg API的内核，用于直接库集成
+- FFTool内核，用于命令行工具集成
+- 基于BMF框架的内核，用于高级处理
+您还可以根据需求选择性编译这些内核。
+
+### 6. 命令行界面（CLI）支持
+
+非图形界面模式使用方法：
+```bash
+./OpenConverter [选项] 输入文件 输出文件
+
+选项：
+  -t, --transcoder TYPE    设置转码器类型（FFMPEG, BMF, FFTOOL）
+  -v, --video-codec CODEC  设置视频编码器
+  -a, --audio-codec CODEC  设置音频编码器
+  -h, --help               显示帮助信息
+```
+
+使用示例：
+```bash
+# 使用FFmpeg内核和H.264编码器转换视频
+./OpenConverter -t FFMPEG -v libx264 input.mp4 output.mp4
+
+# 使用BMF内核，H.265视频编码器和AAC音频编码器转换视频
+./OpenConverter -t BMF -v libx265 -a aac input.mp4 output.mp4
+```
 
 ## 使用指南
 如果在运行过程遇到问题，欢迎查看我们的[使用指南文档](./doc/OpenConverter_Usage.md)
