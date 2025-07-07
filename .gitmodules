@@ -1,0 +1,4 @@
+[submodule "3rd_party/gtest"]
+	path = 3rd_party/gtest
+	url = https://github.com/google/googletest.git
+        ignore = dirty

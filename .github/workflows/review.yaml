@@ -1,0 +1,383 @@
+name: Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: 
+
+jobs:
+  build-linux-x86:
+    runs-on: ubuntu-22.04  
+    concurrency:
+      group: "review-linux-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true 
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Print current branch and commit hash
+      run: |
+        echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+        echo "Current commit hash: $(git rev-parse HEAD)"
+
+    - name: Checkout BMF repository (specific branch)
+      run: |
+        # sudo apt update
+        # sudo apt install -y make git pkg-config libssl-dev cmake binutils-dev libgoogle-glog-dev gcc g++ golang wget libgl1
+        sudo apt install -y nasm yasm libx264-dev libx265-dev libnuma-dev
+        # sudo apt install -y python3.9 python3-dev python3-pip libsndfile1 libsndfile1-dev
+        
+        git clone https://github.com/JackLau1222/bmf.git
+
+    - name: Cache FFmpeg build
+      uses: actions/cache@v3
+      with:
+        path: |
+          ffmpeg
+        key: ${{ runner.os }}-ffmpeg-${{ hashFiles('bmf/scripts/build_ffmpeg.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-ffmpeg-linux-x86
+
+    # - name: Cache BMF build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: bmf/output/
+    #     key: ${{ runner.os }}-bmf-${{ hashFiles('bmf/build.sh') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-bmf-linux-x86
+
+    - name: Compile FFmpeg if not cached
+      run: |
+        if [ ! -d "$(pwd)/ffmpeg" ]; then
+          echo "FFmpeg not found, starting build..."
+          wget https://ffmpeg.org/releases/ffmpeg-5.1.6.tar.bz2 && tar xjvf ffmpeg-5.1.6.tar.bz2
+          (cd ffmpeg-5.1.6 && ./configure --pkg-config-flags=--static --enable-shared --disable-static --extra-libs=-lpthread --extra-libs=-lm --enable-gpl --enable-nonfree --enable-libx264 --enable-libx265 --prefix=../ffmpeg)
+          (cd ffmpeg-5.1.6 && make -j$(nproc) && make install)
+        else
+          echo "FFmpeg is already installed, skipping build."
+        fi
+        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg" >> $GITHUB_ENV
+
+    # - name: Set up BMF if not cached
+    #   run: |
+    #     if [ ! -d "$(pwd)/bmf/output/" ]; then
+    #       (cd bmf && git checkout fork_by_oc && ./build.sh)
+    #     else
+    #       echo "BMF is already installed, skipping build."
+    #     fi
+    #     echo "BMF_ROOT_PATH=$(pwd)/bmf/output/bmf" >> $GITHUB_ENV
+
+    - name: Set up Qt
+      run: |
+        sudo apt-get install -y qt5-qmake qtbase5-dev qtchooser qtbase5-dev-tools cmake build-essential
+
+    - name: Build with CMake
+      run: |
+        export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
+        (cd src && cmake -B build -DBMF_TRANSCODER=OFF && cd build && make -j$(nproc))
+
+    - name: Copy libs
+      run: |
+        export LD_LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib/:$BMF_ROOT_PATH/lib
+        export LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib/:$BMF_ROOT_PATH/lib
+        # linuxdeployqt
+        sudo apt-get -y install git g++ libgl1-mesa-dev
+        git clone https://github.com/probonopd/linuxdeployqt.git
+        # Then build in Qt Creator, or use
+        export PATH=$(readlink -f /tmp/.mount_QtCreator-*-x86_64/*/gcc_64/bin/):$PATH
+        (cd linuxdeployqt && qmake && make && sudo make install)
+        # patchelf
+        wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.bz2
+        tar xf patchelf-0.9.tar.bz2
+        ( cd patchelf-0.9/ && ./configure  && make && sudo make install )
+        # appimage
+        sudo wget -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" -O /usr/local/bin/appimagetool
+        sudo chmod a+x /usr/local/bin/appimagetool
+        (linuxdeployqt/bin/linuxdeployqt ./src/build/OpenConverter -appimage)
+      continue-on-error: true
+        
+
+    # - name: Copy runtime
+    #   run: |
+    #     cp $FFMPEG_ROOT_PATH/lib/libswscale.so.6 src/build/lib
+    #     cp $FFMPEG_ROOT_PATH/lib/libavfilter.so.8 src/build/lib
+    #     cp $FFMPEG_ROOT_PATH/lib/libpostproc.so.56 src/build/lib
+    #     cp $BMF_ROOT_PATH/lib/libbuiltin_modules.so src/build/lib
+    #     cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json src/build
+    #     touch src/build/activate_env.sh
+    #     echo export LD_LIBRARY_PATH="./lib" >> src/build/activate_env.sh
+
+    # Step to package the build directory
+    - name: Create tar.gz package
+      run: |
+        BUILD_DIR="src/build"
+        PACKAGE_NAME="OpenConverter_Linux_x86.tar.gz"
+        OUTPUT_DIR="OpenConverter_Linux_x86"
+        mkdir -p $OUTPUT_DIR
+        cp -r $BUILD_DIR/* $OUTPUT_DIR/
+        tar -czvf $PACKAGE_NAME -C $OUTPUT_DIR .
+        rm -rf $OUTPUT_DIR
+
+    # Step to upload the tar.gz package as an artifact
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenConverter_Linux_x86
+        path: OpenConverter_Linux_x86.tar.gz
+
+    # - name: Setup tmate session
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+
+    - name: Finish
+      run: echo "Release upload complete"
+
+  build-macos-arm:
+    runs-on: macos-latest
+    concurrency:
+      group: "review-macos-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout target branch code (using pull_request)
+      uses: actions/checkout@v2
+
+    - name: Print current branch and commit hash
+      run: |
+        echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+        echo "Current commit hash: $(git rev-parse HEAD)"
+
+    # - name: Checkout BMF repository(specific branch)
+    #   run: |
+    #     brew install make git pkg-config openssl cmake glog x264 x265
+    #     # export FFMPEG_ROOT_PATH=$(brew --prefix ffmpeg@5)
+    #     # echo "FFMPEG_ROOT_PATH=$FFMPEG_ROOT_PATH" >> $GITHUB_ENV
+
+    #     git clone https://github.com/JackLau1222/bmf.git
+
+    #     wget https://invisible-island.net/archives/ncurses/ncurses-6.5.tar.gz
+    #     wget https://ftp.gnu.org/gnu/binutils/binutils-2.43.1.tar.bz2
+
+    # - name: Cache ncurses build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: opt/ncurses
+    #     key: ${{ runner.os }}-ncurses-${{ hashFiles('ncurses-6.5.tar.gz') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-ncurses-
+
+    # - name: Cache binutils build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: opt/binutils
+    #     key: ${{ runner.os }}-binutils-${{ hashFiles('binutils-2.43.1.tar.bz2') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-binutils-
+    
+    # - name: compile dependencies
+    #   run: |
+    #     if [ ! -d "$(pwd)/opt/ncurses" ]; then
+    #       tar -xzvf ncurses-6.5.tar.gz
+    #       (cd ncurses-6.5 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/ncurses && make -j$(sysctl -n hw.ncpu) && sudo make install)
+    #     else
+    #       echo "ncurses is already installed, skipping build."
+    #     fi
+
+    #     if [ ! -d "$(pwd)/opt/binutils" ]; then
+    #       tar xvf binutils-2.43.1.tar.bz2
+    #       (cd binutils-2.43.1 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/binutils --enable-install-libiberty && make -j$(sysctl -n hw.ncpu) && sudo make install)
+    #     else
+    #       echo "binutils is already installed, skipping build."
+    #     fi
+
+    - name: Cache FFmpeg build
+      uses: actions/cache@v3
+      with:
+        path: |
+          ffmpeg
+        key: ${{ runner.os }}-ffmpeg-${{ hashFiles('bmf/scripts/build_ffmpeg.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-ffmpeg-macos-arm-
+
+    # - name: Cache BMF build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: bmf/output/
+    #     key: ${{ runner.os }}-bmf-${{ hashFiles('bmf/build.sh') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-bmf-macos-arm-
+
+    - name: Compile FFmpeg if not cached
+      run: |
+        if [ ! -d "$(pwd)/ffmpeg" ]; then
+          echo "FFmpeg not found, starting build..."
+          brew install make pkg-config openssl cmake x264 x265
+          wget https://ffmpeg.org/releases/ffmpeg-5.1.6.tar.bz2 && tar xjvf ffmpeg-5.1.6.tar.bz2
+          (cd ffmpeg-5.1.6 && ./configure --pkg-config-flags=--static --enable-shared --disable-static --extra-libs=-lpthread --extra-libs=-lm --enable-gpl --enable-nonfree --enable-libx264 --enable-libx265 --prefix=../ffmpeg)
+          (cd ffmpeg-5.1.6 && make -j$(sysctl -n hw.ncpu) && make install)
+        else
+          echo "FFmpeg is already installed, skipping build."
+        fi
+        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg" >> $GITHUB_ENV
+
+    # - name: Set up BMF if not cached
+    #   run: |
+    #     if [ ! -d "$(pwd)/bmf/output/" ]; then
+    #       export LIBRARY_PATH=$(pwd)/opt/binutils/lib:$LIBRARY_PATH
+    #       export CMAKE_PREFIX_PATH=$(pwd)/opt/binutils:$CMAKE_PREFIX_PATH
+    #       pip install setuptools
+    #       (cd bmf && git checkout fork_by_oc && git submodule update --init --recursive && ./build_osx.sh)
+    #     else
+    #       echo "BMF is already installed, skipping build."
+    #     fi
+    #     echo "BMF_ROOT_PATH=$(pwd)/bmf/output/bmf" >> $GITHUB_ENV
+
+    - name: Set up Qt
+      run: |
+        brew install qt5
+
+    - name: Build with CMake
+      run: |
+        export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
+        export CMAKE_PREFIX_PATH="/opt/homebrew/opt/qt@5:$CMAKE_PREFIX_PATH"
+        export QT_DIR="/opt/homebrew/opt/qt@5/lib/cmake/Qt5"
+        export PATH="/opt/homebrew/opt/qt@5/bin:$PATH"
+        (cd src && cmake -B build -DBMF_TRANSCODER=OFF && cd build && make -j$(sysctl -n hw.ncpu))
+
+        export DYLD_LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib/
+        export LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib/
+
+        # fix link libraries path mistake
+        cd src/build
+        macdeployqt OpenConverter.app
+
+        # FFMPEG_LIB_DIR="$FFMPEG_ROOT_PATH/lib"
+        # APP_DIR="OpenConverter.app"
+        # FRAMEWORK_DIR="$APP_DIR/Contents/Frameworks"
+        # cp $FFMPEG_LIB_DIR/*.dylib $FRAMEWORK_DIR/
+
+        # FFMPEG_LIBS=$(find "$FFMPEG_LIB_DIR" -name "*.dylib")
+
+        # for lib in $FFMPEG_LIBS; do
+        #     lib_name=$(basename "$lib")  
+        #     target_lib="$FRAMEWORK_DIR/$lib_name"
+
+        #     if [ -f "$target_lib" ]; then
+        #         echo "Processing $target_lib"
+        #         deps=$(otool -L "$target_lib" | grep -E '\.dylib' | awk '{print $1}')
+        #         for dep in $deps; do
+        #             if [[ $dep == *ffmpeg* ]]; then
+        #                 new_dep="@executable_path/../Frameworks/$(basename "$dep")"
+        #                 echo "Updating dependency $dep to $new_dep in $target_lib"
+        #                 install_name_tool -change "$dep" "$new_dep" "$target_lib"
+        #             fi
+        #         done
+        #     else
+        #         echo "Library $lib_name not found in $FRAMEWORK_DIR"
+        #     fi
+        # done
+        # echo "Finished fixing library paths!"
+
+        # install_name_tool -change ../ffmpeg/lib/libavformat.59.dylib @executable_path/../Frameworks/libavformat.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        # install_name_tool -change ../ffmpeg/lib/libavcodec.59.dylib @executable_path/../Frameworks/libavcodec.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        # install_name_tool -change ../ffmpeg/lib/libavutil.57.dylib @executable_path/../Frameworks/libavutil.57.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        # install_name_tool -change ../ffmpeg/lib/libswresample.4.dylib @executable_path/../Frameworks/libswresample.4.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        # install_name_tool -change ../ffmpeg/lib/libswscale.6.dylib @executable_path/../Frameworks/libswscale.6.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        # install_name_tool -change ../ffmpeg/lib/libavfilter.8.dylib @executable_path/../Frameworks/libavfilter.8.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        # install_name_tool -change ../ffmpeg/lib/libavdevice.59.dylib @executable_path/../Frameworks/libavdevice.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        # install_name_tool -change ../ffmpeg/lib/libpostproc.56.dylib @executable_path/../Frameworks/libpostproc.56.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
+        
+        cd ../..
+
+        (cd src/build && 
+        # cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json OpenConverter.app/Contents/Frameworks && 
+        # mkdir OpenConverter.app/Contents/Frameworks/lib && cp $BMF_ROOT_PATH/lib/libbuiltin_modules.dylib OpenConverter.app/Contents/Frameworks/lib && 
+        macdeployqt OpenConverter.app -dmg)
+        
+        mv src/build/OpenConverter.dmg OpenConverter_macOS_aarch64.dmg
+
+    # Step to upload the dmg package as an artifact
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenConverter_macOS_aarch64
+        path: OpenConverter_macOS_aarch64.dmg
+
+    # - name: Setup tmate session
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+
+    - name: Finish
+      run: echo "Release upload complete"
+
+  build-windows-x64:
+    runs-on: windows-latest
+    concurrency:
+      group: "review-win-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true 
+
+    steps:
+      # Check out the repository code.
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up the Qt environment.
+      - name: (2) Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      6.4.3
+          host:         windows
+          target:       desktop
+          arch:         win64_msvc2019_64
+          dir:          ${{ runner.temp }}
+          setup-python: false 
+
+      # Download FFmpeg from the specified release URL.
+      - name: Download FFmpeg
+        shell: powershell
+        run: |
+          $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-03-31-17-28/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4.zip"
+          $outputZip = "ffmpeg.zip"
+          Invoke-WebRequest -Uri $ffmpegUrl -OutFile $outputZip
+          Expand-Archive -Path $outputZip -DestinationPath ffmpeg
+          echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" >> $GITHUB_ENV
+
+      # Create a build directory, run qmake, and build the project.
+      - name: Build Qt project
+        run: |
+          (cd src && 
+          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" -DFFTOOL_TRANSCODER=OFF && 
+          cmake --build build --config Release --parallel)
+
+      - name : Deploy project
+        run: |
+          # 1) Create the deploy folder under the repo workspace
+          New-Item -ItemType Directory -Force -Path OpenConverter_win64
+
+          # 2) Copy your built exe into OpenConverter_win64/
+          Copy-Item -Path "src\build\Release\OpenConverter.exe" -Destination "OpenConverter_win64"
+
+          # 3) Bundle Qt runtime into OpenConverter_win64/
+          & "D:\a\_temp\Qt\6.4.3\msvc2019_64\bin\windeployqt.exe" `
+            "--qmldir=src" `
+            "OpenConverter_win64\OpenConverter.exe"
+
+          # 4) Copy FFmpeg DLLs into OpenConverter_win64/
+          Copy-Item `
+            -Path "ffmpeg\ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4\bin\*.dll" `
+            -Destination "OpenConverter_win64"
+
+          # 5) Zip the OpenConverter_win64 folder into the workspace root
+          Compress-Archive -Path "OpenConverter_win64" -DestinationPath "OpenConverter_win64.zip"
+
+      # (Optional) Archive the build artifacts.
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenConverter_win64
+          path: OpenConverter_win64.zip
+
+      # - name: Setup tmate session
+      #   if: ${{ failure() }}
+      #   uses: mxschmitt/action-tmate@v3

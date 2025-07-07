@@ -1,0 +1,11 @@
+open_converter.pro.user
+build-*
+.vscode
+.DS_Store
+./src/.DS_Store
+src/CMakeLists.txt.user
+src/build
+src/build-*
+build
+.idea
+workload_output.txt

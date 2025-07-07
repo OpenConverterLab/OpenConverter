@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  ci-linux:
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: "build-linux-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake pkg-config
+        sudo apt-get install -y nasm yasm libx264-dev libx265-dev libnuma-dev
+        git clone https://github.com/google/googletest.git 3rd_party/gtest
+
+    - name: Build FFmpeg
+      run: |
+        if [ ! -d "ffmpeg" ]; then
+          wget https://ffmpeg.org/releases/ffmpeg-5.1.6.tar.bz2
+          tar xjvf ffmpeg-5.1.6.tar.bz2
+          (cd ffmpeg-5.1.6 && ./configure --pkg-config-flags=--static --enable-shared --disable-static \
+            --extra-libs=-lpthread --extra-libs=-lm --enable-gpl --enable-nonfree \
+            --enable-libx264 --enable-libx265 --prefix=../ffmpeg)
+          (cd ffmpeg-5.1.6 && make -j$(nproc) && make install)
+        fi
+        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg" >> $GITHUB_ENV
+
+    - name: Build with CMake
+      run: |
+        export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
+        (cd src && cmake -B build -DENABLE_TESTS=ON -DENABLE_GUI=OFF && cd build && make -j$(nproc))
+
+    - name: Run tests
+      run: |
+        export LD_LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib
+        wget https://github.com/JackLau1222/OpenConverter/releases/download/files/test.zip
+        unzip test.zip -d src/build/tests/media
+        cd src/build/tests && ./transcoder_test
+
+  ci-macos:
+    runs-on: macos-latest
+    concurrency:
+      group: "build-macos-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        brew install cmake pkg-config
+        brew install nasm yasm x264 x265
+        git clone https://github.com/google/googletest.git 3rd_party/gtest
+
+    - name: Build FFmpeg
+      run: |
+        if [ ! -d "ffmpeg" ]; then
+          wget https://ffmpeg.org/releases/ffmpeg-5.1.6.tar.bz2
+          tar xjvf ffmpeg-5.1.6.tar.bz2
+          (cd ffmpeg-5.1.6 && ./configure --pkg-config-flags=--static --enable-shared --disable-static \
+            --extra-libs=-lpthread --extra-libs=-lm --enable-gpl --enable-nonfree \
+            --enable-libx264 --enable-libx265 --prefix=../ffmpeg)
+          (cd ffmpeg-5.1.6 && make -j$(sysctl -n hw.ncpu) && make install)
+        fi
+        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg" >> $GITHUB_ENV
+
+    - name: Build with CMake
+      run: |
+        export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
+        (cd src && cmake -B build -DENABLE_TESTS=ON -DENABLE_GUI=OFF && cd build && make -j$(sysctl -n hw.ncpu))
+
+    - name: Run tests
+      run: |
+        export DYLD_LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib
+        wget https://github.com/JackLau1222/OpenConverter/releases/download/files/test.zip
+        unzip test.zip -d src/build/tests/media
+        cd src/build/tests && ./transcoder_test 
