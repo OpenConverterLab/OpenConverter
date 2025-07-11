@@ -10,14 +10,16 @@ TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
     current_duration = 0;
 }
 
-void TranscoderFFmpeg::update_progress(int64_t current_pts, AVRational time_base) {
+void TranscoderFFmpeg::update_progress(int64_t current_pts,
+                                       AVRational time_base) {
     // Convert current PTS to microseconds
     AVRational micros_base = {1, 1000000};
     current_duration = av_rescale_q(current_pts, time_base, micros_base);
-    
+
     // Calculate progress percentage
     if (total_duration > 0) {
-        // Use the base class's send_process_parameter which handles time delays and smoothing
+        // Use the base class's send_process_parameter which handles time delays
+        // and smoothing
         send_process_parameter(current_duration, total_duration);
     }
 }
@@ -48,7 +50,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         copyAudio = false;
     }
 
-    if(!open_Media(decoder, encoder)){
+    if (!open_Media(decoder, encoder)) {
         flag = false;
         goto end;
     }
@@ -62,7 +64,8 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             AVStream *stream = decoder->fmtCtx->streams[i];
             if (stream->duration != AV_NOPTS_VALUE) {
                 AVRational micros_base = {1, 1000000};
-                int64_t stream_duration = av_rescale_q(stream->duration, stream->time_base, micros_base);
+                int64_t stream_duration = av_rescale_q(
+                    stream->duration, stream->time_base, micros_base);
                 total_duration = std::max(total_duration, stream_duration);
             }
         }
@@ -74,8 +77,9 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             AVStream *stream = decoder->fmtCtx->streams[i];
             if (stream->nb_frames > 0 && stream->avg_frame_rate.num > 0) {
                 AVRational micros_base = {1, 1000000};
-                int64_t estimated_duration = av_rescale_q(stream->nb_frames * stream->avg_frame_rate.den,
-                                                        stream->avg_frame_rate, micros_base);
+                int64_t estimated_duration =
+                    av_rescale_q(stream->nb_frames * stream->avg_frame_rate.den,
+                                 stream->avg_frame_rate, micros_base);
                 total_duration = std::max(total_duration, estimated_duration);
             }
         }
@@ -140,12 +144,12 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     // read video data from multimedia files to write into destination file
     while (av_read_frame(decoder->fmtCtx, decoder->pkt) >= 0) {
         if (decoder->pkt->stream_index == decoder->videoIdx) {
-            if(encoder->fmtCtx->oformat->video_codec == AV_CODEC_ID_NONE) {
+            if (encoder->fmtCtx->oformat->video_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
             // Update progress based on video stream
             update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
-            
+
             if (!copyVideo) {
                 transcode_Video(decoder, encoder);
             } else {
@@ -153,14 +157,15 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
                       encoder->videoStream);
             }
         } else if (decoder->pkt->stream_index == decoder->audioIdx) {
-            if(encoder->fmtCtx->oformat->audio_codec == AV_CODEC_ID_NONE) {
+            if (encoder->fmtCtx->oformat->audio_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
             // Update progress based on audio stream if no video stream
             if (decoder->videoIdx < 0) {
-                update_progress(decoder->pkt->pts, decoder->audioStream->time_base);
+                update_progress(decoder->pkt->pts,
+                                decoder->audioStream->time_base);
             }
-            
+
             if (!copyAudio) {
                 transcode_Audio(decoder, encoder);
             } else {
@@ -491,10 +496,12 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
 
     av_opt_set(encoder->videoCodecCtx->priv_data, "preset", "medium", 0);
     if (encoder->videoCodecCtx->codec_id == AV_CODEC_ID_H264)
-        av_opt_set(encoder->videoCodecCtx->priv_data, "x264-params", "keyint=60:min-keyint=60:scenecut=0:force-cfr=1", 0);
+        av_opt_set(encoder->videoCodecCtx->priv_data, "x264-params",
+                   "keyint=60:min-keyint=60:scenecut=0:force-cfr=1", 0);
     else if (encoder->videoCodecCtx->codec_id == AV_CODEC_ID_HEVC)
-        av_opt_set(encoder->videoCodecCtx->priv_data, "x265-params", "keyint=60:min-keyint=60:scenecut=0", 0);
-        
+        av_opt_set(encoder->videoCodecCtx->priv_data, "x265-params",
+                   "keyint=60:min-keyint=60:scenecut=0", 0);
+
     if (decoder->videoCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
         encoder->videoCodecCtx->height = decoder->videoCodecCtx->height;
         encoder->videoCodecCtx->width = decoder->videoCodecCtx->width;
@@ -625,8 +632,8 @@ bool TranscoderFFmpeg::prepare_Copy(AVFormatContext *avCtx, AVStream **stream,
     avcodec_parameters_copy((*stream)->codecpar, codecParam);
 
     // the "mp4a" tag in MP4 is incompatible with MKV.
-    // so set the codec_tag of the audio stream to 0 to avoid compatibility issues.
-    // we will improve this method in the future.
+    // so set the codec_tag of the audio stream to 0 to avoid compatibility
+    // issues. we will improve this method in the future.
     if (codecParam->codec_type == AVMEDIA_TYPE_AUDIO) {
         (*stream)->codecpar->codec_tag = 0;
     }

@@ -28,7 +28,7 @@ extern "C" {
 #define ENCODE_BIT_RATE 5000000
 
 class TranscoderFFmpeg : public Transcoder {
-  public:
+public:
     TranscoderFFmpeg(ProcessParameter *processParameter,
                      EncodeParameter *encodeParameter);
     ~TranscoderFFmpeg();
@@ -61,15 +61,15 @@ class TranscoderFFmpeg : public Transcoder {
     bool remux(AVPacket *pkt, AVFormatContext *avCtx, AVStream *inStream,
                AVStream *outStream);
 
-  private:
+private:
     // encoder's parameters
     bool copyVideo;
     bool copyAudio;
-    
+
     // Progress tracking
-    int64_t total_duration;  // Total duration in microseconds
-    int64_t current_duration;  // Current processed duration in microseconds
-    
+    int64_t total_duration;   // Total duration in microseconds
+    int64_t current_duration; // Current processed duration in microseconds
+
     // Helper function to update progress
     void update_progress(int64_t current_pts, AVRational time_base);
 };

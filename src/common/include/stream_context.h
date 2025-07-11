@@ -24,7 +24,7 @@ extern "C" {
 
 class StreamContext {
 
-  public:
+public:
     StreamContext();
     ~StreamContext();
 

@@ -9,7 +9,9 @@ if [ ! -f "$TOP_DIR/.clang-format" ]; then
     echo "No .clang-format file found in $TOP_DIR. Creating a temporary one..."
     echo "BasedOnStyle: LLVM" > "$TOP_DIR/.clang-format"
     echo "IndentWidth: 4" >> "$TOP_DIR/.clang-format"
-    echo "AccessModifierOffset: -2" >> "$TOP_DIR/.clang-format"
+    echo "AccessModifierOffset: -4" >> "$TOP_DIR/.clang-format"
+    echo "IndentPPDirectives: BeforeHash" >> "$TOP_DIR/.clang-format"
+    echo "IndentAccessModifiers: false" >> "$TOP_DIR/.clang-format"
 fi
 
 # Iterate through the specified directories and format the files

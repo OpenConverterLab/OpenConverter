@@ -24,7 +24,7 @@
 #include <regex>
 
 class TranscoderBMF : public Transcoder {
-  public:
+public:
     TranscoderBMF(ProcessParameter *processParameter,
                   EncodeParameter *encodeParamter);
 
@@ -36,7 +36,7 @@ class TranscoderBMF : public Transcoder {
 
     bmf_sdk::CBytes encoder_callback(bmf_sdk::CBytes input);
 
-  private:
+private:
     // encoder's parameters
     bool copyVideo;
     bool copyAudio;

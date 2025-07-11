@@ -1,36 +1,36 @@
-#include <QMainWindow>
-#include <QTranslator>
-#include <QMessageBox>
 #include <QAction>
-#include <QEvent>
+#include <QApplication>
+#include <QByteArray>
 #include <QDragEnterEvent>
 #include <QDropEvent>
-#include <QIcon>
-#include <QString>
-#include <QUrl>
-#include <QFileInfo>
-#include <QByteArray>
+#include <QEvent>
 #include <QFileDialog>
-#include <QToolButton>
-#include <QPushButton>
-#include <QMenu>
-#include <QStatusBar>
-#include <QProgressBar>
+#include <QFileInfo>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
-#include <QThread>
+#include <QMainWindow>
+#include <QMenu>
+#include <QMessageBox>
 #include <QMetaObject>
-#include <QApplication>
 #include <QMimeData>
+#include <QProgressBar>
+#include <QPushButton>
+#include <QStatusBar>
+#include <QString>
+#include <QThread>
+#include <QToolButton>
+#include <QTranslator>
+#include <QUrl>
 
+#include "../../common/include/encode_parameter.h"
+#include "../../common/include/info.h"
+#include "../../common/include/process_observer.h"
+#include "../../common/include/process_parameter.h"
+#include "../../engine/include/converter.h"
+#include "../include/encode_setting.h"
 #include "../include/open_converter.h"
 #include "ui_open_converter.h"
-#include "../include/encode_setting.h"
-#include "../../engine/include/converter.h"
-#include "../../common/include/info.h"
-#include "../../common/include/encode_parameter.h"
-#include "../../common/include/process_parameter.h"
-#include "../../common/include/process_observer.h"
 
 #include <iostream>
 
@@ -51,7 +51,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     setWindowIcon(QIcon(":/icon/icon.png"));
 
     ui->progressBar->setValue(0);
-    
+
     // Register this class as an observer for process updates
     processParameter->addObserver(std::shared_ptr<ProcessObserver>(this));
 
@@ -178,7 +178,7 @@ void OpenConverter::changeEvent(QEvent *event) {
         ui->lineEdit_outputFile->setText(currentOutputPath);
 
         if (info && info->get_Quick_Info()) {
-            info_Display(info->get_Quick_Info());  // Convert QuickInfo to string
+            info_Display(info->get_Quick_Info()); // Convert QuickInfo to string
         }
     }
     QMainWindow::changeEvent(event);
@@ -251,23 +251,21 @@ void OpenConverter::convert_Pushed() {
     // Start conversion in worker thread
 
     // capture everything you need by value
-    auto* thread = QThread::create([=]() {
-        bool ok = converter->convert_Format(
-            inputFilePath.toStdString(),
-            outputFilePath.toStdString()
-        );
+    auto *thread = QThread::create([=]() {
+        bool ok = converter->convert_Format(inputFilePath.toStdString(),
+                                            outputFilePath.toStdString());
         // When done, marshal back to the GUI thread:
-        QMetaObject::invokeMethod(this, [this, ok]() {
-            handle_Converter_Result(ok);
-        }, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(
+            this, [this, ok]() { handle_Converter_Result(ok); },
+            Qt::QueuedConnection);
     });
 
     // clean up the QThread object once it finishes
     connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 
     // fire off
-    thread->start();;
-
+    thread->start();
+    ;
 }
 
 // automatically select kbps/Mbps
@@ -291,15 +289,14 @@ QString OpenConverter::formatFrequency(int64_t hertz) {
 }
 
 void OpenConverter::info_Display(QuickInfo *quickInfo) {
-    if (!quickInfo) return;
-    
+    if (!quickInfo)
+        return;
+
     // video
     ui->label_videoStreamResult->setText(
         QString("%1").arg(quickInfo->videoIdx));
-    ui->label_widthResult->setText(
-        QString("%1 px").arg(quickInfo->width));
-    ui->label_heightResult->setText(
-        QString("%1 px").arg(quickInfo->height));
+    ui->label_widthResult->setText(QString("%1 px").arg(quickInfo->width));
+    ui->label_heightResult->setText(QString("%1 px").arg(quickInfo->height));
     ui->label_colorSpaceResult->setText(
         QString("%1").arg(QString::fromStdString(quickInfo->colorSpace)));
     ui->label_videoCodecResult->setText(
@@ -307,7 +304,7 @@ void OpenConverter::info_Display(QuickInfo *quickInfo) {
     ui->label_videoBitRateResult->setText(
         formatBitrate(quickInfo->videoBitRate));
     ui->label_frameRateResult->setText(
-        QString("%1 fps").arg(quickInfo->frameRate,0,'f',2));
+        QString("%1 fps").arg(quickInfo->frameRate, 0, 'f', 2));
     // audio
     ui->label_audioStreamResult->setText(
         QString("%1").arg(quickInfo->audioIdx));
@@ -315,12 +312,10 @@ void OpenConverter::info_Display(QuickInfo *quickInfo) {
         QString("%1").arg(QString::fromStdString(quickInfo->audioCodec)));
     ui->label_audioBitRateResult->setText(
         formatBitrate(quickInfo->audioBitRate));
-    ui->label_channelsResult->setText(
-        QString("%1").arg(quickInfo->channels));
+    ui->label_channelsResult->setText(QString("%1").arg(quickInfo->channels));
     ui->label_sampleFmtResult->setText(
         QString("%1").arg(QString::fromStdString(quickInfo->sampleFmt)));
-    ui->label_sampleRateResult->setText(
-        formatFrequency(quickInfo->sampleRate));
+    ui->label_sampleRateResult->setText(formatFrequency(quickInfo->sampleRate));
 }
 
 OpenConverter::~OpenConverter() {

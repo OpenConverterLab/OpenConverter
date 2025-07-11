@@ -18,9 +18,9 @@
 #ifndef PROCESSPARAMETER_H
 #define PROCESSPARAMETER_H
 
-#include <vector>
-#include <memory>
 #include "process_observer.h"
+#include <memory>
+#include <vector>
 
 class ProcessParameter {
 public:
@@ -41,8 +41,8 @@ public:
 private:
     int64_t processNumber;
     double timeRequired;
-    std::vector<std::shared_ptr<ProcessObserver> > observers;
-    
+    std::vector<std::shared_ptr<ProcessObserver>> observers;
+
     void notifyProcessUpdate(double progress);
     void notifyTimeUpdate(double timeRequired);
 };

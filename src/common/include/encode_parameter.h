@@ -22,7 +22,7 @@
 #include <string>
 
 class EncodeParameter {
-  private:
+private:
     bool available;
 
     std::string videoCodec;
@@ -31,7 +31,7 @@ class EncodeParameter {
     std::string audioCodec;
     int64_t audioBitRate;
 
-  public:
+public:
     EncodeParameter();
     ~EncodeParameter();
 

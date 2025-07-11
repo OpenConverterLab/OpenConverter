@@ -1,4 +1,5 @@
 BasedOnStyle: LLVM
-AccessModifierOffset: -2
+AccessModifierOffset: -4
 IndentWidth: 4
 IndentPPDirectives: BeforeHash
+IndentAccessModifiers: false

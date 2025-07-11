@@ -19,7 +19,7 @@
 #include "transcoder.h"
 
 class TranscoderFFTool : public Transcoder {
-  public:
+public:
     TranscoderFFTool(ProcessParameter *processParameter,
                      EncodeParameter *encodeParameter);
     ~TranscoderFFTool();
@@ -28,7 +28,7 @@ class TranscoderFFTool : public Transcoder {
 
     bool transcode(std::string input_path, std::string output_path);
 
-  private:
+private:
     // encoder's parameters
     bool copyVideo;
     bool copyAudio;

@@ -25,4 +25,4 @@ public:
     virtual void onTimeUpdate(double timeRequired) = 0;
 };
 
-#endif // PROCESSOBSERVER_H 
+#endif // PROCESSOBSERVER_H

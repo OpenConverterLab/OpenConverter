@@ -16,16 +16,16 @@
 #ifndef TRANSCODER_H
 #define TRANSCODER_H
 
+#include <chrono>
 #include <iostream>
 #include <numeric>
-#include <chrono> 
 
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../common/include/stream_context.h"
 
 class Transcoder {
-  public:
+public:
     Transcoder(ProcessParameter *processParameter,
                EncodeParameter *encodeParameter)
         : processParameter(processParameter), encodeParameter(encodeParameter) {
@@ -63,13 +63,14 @@ class Transcoder {
 
         double smooth_duration = compute_smooth_duration(duration);
         if (frameNumber > 0 && frameTotalNumber > 0) {
-            remainTime =
-                smooth_duration * (100 - processNumber) / 1000;
+            remainTime = smooth_duration * (100 - processNumber) / 1000;
         }
 
         // Only update UI if enough time has passed (100ms)
-        auto time_since_last_ui_update = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - last_ui_update).count();
+        auto time_since_last_ui_update =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - last_ui_update)
+                .count();
         if (time_since_last_ui_update >= 100) {
             processParameter->set_Process_Number(processNumber);
             if (frameNumber > 0 && frameTotalNumber > 0) {
@@ -93,11 +94,15 @@ class Transcoder {
     int processNumber = 0;
     double remainTime = 0;
 
-    std::chrono::system_clock::time_point last_ui_update;  // Track last UI update time
-    std::vector<double> duration_history;  // Store recent durations for averaging
-    
-    static constexpr size_t max_history_size = 20;  // Limit for the number of durations tracked
-    static constexpr double min_duration_threshold = 10.0;  // Ignore durations < 10 ms
+    std::chrono::system_clock::time_point
+        last_ui_update; // Track last UI update time
+    std::vector<double>
+        duration_history; // Store recent durations for averaging
+
+    static constexpr size_t max_history_size =
+        20; // Limit for the number of durations tracked
+    static constexpr double min_duration_threshold =
+        10.0; // Ignore durations < 10 ms
 };
 
 #endif

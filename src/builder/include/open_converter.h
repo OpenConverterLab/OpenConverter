@@ -18,35 +18,35 @@
 #ifndef OPEN_CONVERTER_H
 #define OPEN_CONVERTER_H
 
-#include <QMainWindow>
-#include <QTranslator>
-#include <QMessageBox>
 #include <QAction>
-#include <QEvent>
+#include <QApplication>
+#include <QByteArray>
 #include <QDragEnterEvent>
 #include <QDropEvent>
-#include <QIcon>
-#include <QString>
-#include <QUrl>
-#include <QFileInfo>
-#include <QByteArray>
+#include <QEvent>
 #include <QFileDialog>
-#include <QToolButton>
-#include <QPushButton>
-#include <QMenu>
-#include <QStatusBar>
-#include <QProgressBar>
+#include <QFileInfo>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
-#include <QThread>
+#include <QMainWindow>
+#include <QMenu>
+#include <QMessageBox>
 #include <QMetaObject>
-#include <QApplication>
 #include <QMimeData>
+#include <QProgressBar>
+#include <QPushButton>
+#include <QStatusBar>
+#include <QString>
+#include <QThread>
+#include <QToolButton>
+#include <QTranslator>
+#include <QUrl>
 
-#include "../../common/include/info.h"
 #include "../../common/include/encode_parameter.h"
-#include "../../common/include/process_parameter.h"
+#include "../../common/include/info.h"
 #include "../../common/include/process_observer.h"
+#include "../../common/include/process_parameter.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {

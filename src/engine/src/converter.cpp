@@ -15,18 +15,18 @@ Converter::Converter() {}
 Converter::Converter(ProcessParameter *processParamter,
                      EncodeParameter *encodeParamter)
     : processParameter(processParamter), encodeParameter(encodeParamter) {
-    // #if defined(USE_BMF)
-    //     transcoder = new TranscoderBMF(this->processParameter,
-    //     this->encodeParameter);
-    // #elif defined(USE_FFMPEG)
-    //     transcoder = new TranscoderFFmpeg(this->processParameter,
-    //     this->encodeParameter);
-    // #elif defined(USE_FFTOOL)
-    //     transcoder = new TranscoderFFTool(this->processParameter,
-    //     this->encodeParameter);
-    // #endif
+// #if defined(USE_BMF)
+//     transcoder = new TranscoderBMF(this->processParameter,
+//     this->encodeParameter);
+// #elif defined(USE_FFMPEG)
+//     transcoder = new TranscoderFFmpeg(this->processParameter,
+//     this->encodeParameter);
+// #elif defined(USE_FFTOOL)
+//     transcoder = new TranscoderFFTool(this->processParameter,
+//     this->encodeParameter);
+// #endif
 
-    // Default transcoder
+// Default transcoder
 #if defined(ENABLE_FFMPEG)
     transcoder =
         new TranscoderFFmpeg(this->processParameter, this->encodeParameter);
@@ -40,7 +40,7 @@ bool Converter::set_Transcoder(std::string transcoderName) {
         delete transcoder;
         transcoder = NULL;
     }
-    
+
     if (transcoder == NULL) {
         if (transcoderName == "FFMPEG") {
 #if defined(ENABLE_FFMPEG)
@@ -71,7 +71,7 @@ bool Converter::set_Transcoder(std::string transcoderName) {
     return true;
 }
 
-bool Converter::convert_Format(const std::string& src, const std::string& dst) {
+bool Converter::convert_Format(const std::string &src, const std::string &dst) {
     if (encodeParameter->get_Video_Codec_Name() == "") {
         copyVideo = true;
     } else {
@@ -86,7 +86,6 @@ bool Converter::convert_Format(const std::string& src, const std::string& dst) {
 
     return transcoder->transcode(src, dst);
 }
-
 
 Converter::~Converter() {
     if (transcoder) {

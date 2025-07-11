@@ -18,10 +18,10 @@
 #ifndef CONVERTER_H
 #define CONVERTER_H
 
-#include "../../transcoder/include/transcoder.h"
 #include "../../common/include/encode_parameter.h"
-#include <string>
+#include "../../transcoder/include/transcoder.h"
 #include <functional>
+#include <string>
 
 class Converter {
 public:
@@ -31,13 +31,12 @@ public:
     ~Converter();
 
     bool set_Transcoder(std::string transcoderName);
-    bool convert_Format(const std::string& src, const std::string& dst);
+    bool convert_Format(const std::string &src, const std::string &dst);
 
 private:
     Transcoder *transcoder = NULL;
     bool copyVideo;
     bool copyAudio;
-
 
 public:
     ProcessParameter *processParameter = NULL;

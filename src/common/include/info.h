@@ -16,8 +16,8 @@
 #ifndef INFO_H
 #define INFO_H
 
-#include <stdint.h>
 #include <map>
+#include <stdint.h>
 #include <string>
 
 #include "common.h"
@@ -27,7 +27,6 @@ extern "C" {
 #include <libavutil/avutil.h>
 #include <libavutil/pixdesc.h>
 };
-
 
 // store some info of video and audio
 typedef struct QuickInfo {
@@ -62,11 +61,11 @@ typedef struct QuickInfo {
 // deal with info of video and audio and stored as QuickInfo type
 class Info {
 
-  public:
+public:
     Info();
     ~Info();
 
-  private:
+private:
     AVFormatContext *avCtx = NULL;
 
     const AVCodec *audioCodec = NULL;
@@ -75,7 +74,7 @@ class Info {
 
     QuickInfo *quickInfo = NULL;
 
-  public:
+public:
     // init quick info
     void init();
     // get qucik info reference

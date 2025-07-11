@@ -27,12 +27,12 @@ class EncodeSetting;
 
 class EncodeSetting : public QMainWindow {
     Q_OBJECT
-  protected:
+protected:
     // this event is called, when a new translator is loaded or the system
     // language is changed
     void changeEvent(QEvent *);
 
-  public:
+public:
     explicit EncodeSetting(QWidget *parent = nullptr,
                            EncodeParameter *encodeParamter = NULL);
 
@@ -42,12 +42,12 @@ class EncodeSetting : public QMainWindow {
 
     bool get_Available();
 
-  public slots:
+public slots:
     void cancel_Pushed();
 
     void apply_Pushed();
 
-  private:
+private:
     EncodeParameter *encodeParameter = NULL;
 
     Ui::EncodeSetting *ui;

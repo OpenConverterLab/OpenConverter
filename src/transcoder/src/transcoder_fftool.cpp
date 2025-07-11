@@ -67,7 +67,7 @@ bool TranscoderFFTool::transcode(std::string input_path,
         return false;
     }
 
-    // Convert paths for Windows (escape backslashes)
+// Convert paths for Windows (escape backslashes)
 #ifdef _WIN32
     input_path = escapeWindowsPath(input_path);
     output_path = escapeWindowsPath(output_path);
