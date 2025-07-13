@@ -18,35 +18,36 @@
 #ifndef OPEN_CONVERTER_H
 #define OPEN_CONVERTER_H
 
+#include <QMainWindow>
+#include <QTranslator>
+#include <QMessageBox>
 #include <QAction>
-#include <QApplication>
-#include <QByteArray>
+#include <QEvent>
 #include <QDragEnterEvent>
 #include <QDropEvent>
-#include <QEvent>
-#include <QFileDialog>
-#include <QFileInfo>
 #include <QIcon>
+#include <QString>
+#include <QUrl>
+#include <QFileInfo>
+#include <QByteArray>
+#include <QFileDialog>
+#include <QToolButton>
+#include <QPushButton>
+#include <QMenu>
+#include <QStatusBar>
+#include <QProgressBar>
 #include <QLabel>
 #include <QLineEdit>
-#include <QMainWindow>
-#include <QMenu>
-#include <QMessageBox>
-#include <QMetaObject>
-#include <QMimeData>
-#include <QProgressBar>
-#include <QPushButton>
-#include <QStatusBar>
-#include <QString>
 #include <QThread>
-#include <QToolButton>
-#include <QTranslator>
-#include <QUrl>
+#include <QMetaObject>
+#include <QApplication>
+#include <QMimeData>
+#include <QActionGroup>
 
-#include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
-#include "../../common/include/process_observer.h"
+#include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
+#include "../../common/include/process_observer.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -94,6 +95,8 @@ private:
     ProcessParameter *processParameter;
     Converter *converter;
     QMessageBox *displayResult;
+    QActionGroup *transcoderGroup;
+    QActionGroup *languageGroup;
 
     void loadLanguage(const QString &rLanguage);
     void handle_Converter_Result(bool flag);
