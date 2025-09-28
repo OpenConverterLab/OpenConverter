@@ -19,6 +19,7 @@
 #define OPEN_CONVERTER_H
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QByteArray>
 #include <QDragEnterEvent>
@@ -94,6 +95,8 @@ private:
     ProcessParameter *processParameter;
     Converter *converter;
     QMessageBox *displayResult;
+    QActionGroup *transcoderGroup;
+    QActionGroup *languageGroup;
 
     void LoadLanguage(const QString &rLanguage);
     void HandleConverterResult(bool flag);

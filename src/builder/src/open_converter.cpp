@@ -44,6 +44,8 @@ OpenConverter::OpenConverter(QWidget *parent)
     processParameter = new ProcessParameter;
     converter = new Converter(processParameter, encodeParameter);
     displayResult = new QMessageBox;
+    transcoderGroup = new QActionGroup(this);
+    languageGroup = new QActionGroup(this);
 
     ui->setupUi(this);
     setAcceptDrops(true);
@@ -54,6 +56,34 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // Register this class as an observer for process updates
     processParameter->add_observer(this);
+
+    transcoderGroup->setExclusive(true);
+    QList<QAction*> transcoderActions = ui->menuTranscoder->actions();
+    for (QAction* action : transcoderActions) {
+        action->setCheckable(true);
+        transcoderGroup->addAction(action);
+    }
+
+    if (!transcoderActions.isEmpty()) {
+        transcoderActions.first()->setChecked(true);
+        converter->set_transcoder(transcoderActions.first()->objectName().toStdString());
+    }
+
+    languageGroup->setExclusive(true);
+    QList<QAction*> languageActions = ui->menuLanguage->actions();
+    for (QAction* action : languageActions) {
+        action->setCheckable(true);
+        languageGroup->addAction(action);
+    }
+
+    m_currLang = "english";
+    m_langPath = ":/";
+    for (QAction* action : languageActions) {
+        if (action->objectName() == m_currLang) {
+            action->setChecked(true);
+            break;
+        }
+    }
 
     connect(ui->toolButton, &QToolButton::clicked, [&]() {
         QString filename = QFileDialog::getOpenFileName();
@@ -74,9 +104,6 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     connect(ui->menuTranscoder, SIGNAL(triggered(QAction *)), this,
             SLOT(SlotTranscoderChanged(QAction *)));
-
-    m_currLang = "english";
-    m_langPath = ":/";
 }
 
 void OpenConverter::dragEnterEvent(QDragEnterEvent *event) {
