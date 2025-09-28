@@ -91,4 +91,4 @@ jobs:
         export DYLD_LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib
         wget https://github.com/JackLau1222/OpenConverter/releases/download/files/test.zip
         unzip test.zip -d src/build/tests/media
-        cd src/build/tests && ./transcoder_test 
+        cd src/build/tests && ./transcoder_test

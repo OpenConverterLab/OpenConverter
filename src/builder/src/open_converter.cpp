@@ -131,7 +131,7 @@ void OpenConverter::slotTranscoderChanged(QAction *action) {
 // Called every time, when a menu entry of the language menu is called
 void OpenConverter::slotLanguageChanged(QAction *action) {
     if (0 != action) {
-        // load the language dependant on the action content
+        // load the language dependent on the action content
         loadLanguage(action->objectName());
         setWindowIcon(action->icon());
     }

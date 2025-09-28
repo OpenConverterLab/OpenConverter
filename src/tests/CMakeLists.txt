@@ -11,7 +11,7 @@ add_executable(transcoder_test transcoder_test.cpp)
 
 # Set C++17 for std::filesystem
 target_compile_features(transcoder_test PRIVATE cxx_std_17)
-target_compile_definitions(transcoder_test PRIVATE 
+target_compile_definitions(transcoder_test PRIVATE
     _LIBCPP_ENABLE_CXX17_REMOVED_FEATURES
     GTEST_HAS_PTHREAD=1
     TEST_MEDIA_PATH="${CMAKE_SOURCE_DIR}/build/tests/media"
@@ -42,4 +42,4 @@ add_custom_command(TARGET transcoder_test POST_BUILD
 )
 
 # Add test to CTest
-add_test(NAME transcoder_test COMMAND transcoder_test) 
+add_test(NAME transcoder_test COMMAND transcoder_test)

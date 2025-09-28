@@ -3,14 +3,14 @@ name: Review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build-linux-x86:
-    runs-on: ubuntu-22.04  
+    runs-on: ubuntu-22.04
     concurrency:
       group: "review-linux-${{ github.event.pull_request.number }}"
-      cancel-in-progress: true 
+      cancel-in-progress: true
 
     steps:
     - name: Checkout code
@@ -27,7 +27,7 @@ jobs:
         # sudo apt install -y make git pkg-config libssl-dev cmake binutils-dev libgoogle-glog-dev gcc g++ golang wget libgl1
         sudo apt install -y nasm yasm libx264-dev libx265-dev libnuma-dev
         # sudo apt install -y python3.9 python3-dev python3-pip libsndfile1 libsndfile1-dev
-        
+
         git clone https://github.com/JackLau1222/bmf.git
 
     - name: Cache FFmpeg build
@@ -96,7 +96,7 @@ jobs:
         sudo chmod a+x /usr/local/bin/appimagetool
         (linuxdeployqt/bin/linuxdeployqt ./src/build/OpenConverter -appimage)
       continue-on-error: true
-        
+
 
     # - name: Copy runtime
     #   run: |
@@ -174,7 +174,7 @@ jobs:
     #     key: ${{ runner.os }}-binutils-${{ hashFiles('binutils-2.43.1.tar.bz2') }}
     #     restore-keys: |
     #       ${{ runner.os }}-binutils-
-    
+
     # - name: compile dependencies
     #   run: |
     #     if [ ! -d "$(pwd)/opt/ncurses" ]; then
@@ -260,7 +260,7 @@ jobs:
         # FFMPEG_LIBS=$(find "$FFMPEG_LIB_DIR" -name "*.dylib")
 
         # for lib in $FFMPEG_LIBS; do
-        #     lib_name=$(basename "$lib")  
+        #     lib_name=$(basename "$lib")
         #     target_lib="$FRAMEWORK_DIR/$lib_name"
 
         #     if [ -f "$target_lib" ]; then
@@ -279,22 +279,22 @@ jobs:
         # done
         # echo "Finished fixing library paths!"
 
-        # install_name_tool -change ../ffmpeg/lib/libavformat.59.dylib @executable_path/../Frameworks/libavformat.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        # install_name_tool -change ../ffmpeg/lib/libavcodec.59.dylib @executable_path/../Frameworks/libavcodec.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        # install_name_tool -change ../ffmpeg/lib/libavutil.57.dylib @executable_path/../Frameworks/libavutil.57.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        # install_name_tool -change ../ffmpeg/lib/libswresample.4.dylib @executable_path/../Frameworks/libswresample.4.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        # install_name_tool -change ../ffmpeg/lib/libswscale.6.dylib @executable_path/../Frameworks/libswscale.6.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        # install_name_tool -change ../ffmpeg/lib/libavfilter.8.dylib @executable_path/../Frameworks/libavfilter.8.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        # install_name_tool -change ../ffmpeg/lib/libavdevice.59.dylib @executable_path/../Frameworks/libavdevice.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        # install_name_tool -change ../ffmpeg/lib/libpostproc.56.dylib @executable_path/../Frameworks/libpostproc.56.dylib OpenConverter.app/Contents/MacOS/OpenConverter 
-        
+        # install_name_tool -change ../ffmpeg/lib/libavformat.59.dylib @executable_path/../Frameworks/libavformat.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+        # install_name_tool -change ../ffmpeg/lib/libavcodec.59.dylib @executable_path/../Frameworks/libavcodec.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+        # install_name_tool -change ../ffmpeg/lib/libavutil.57.dylib @executable_path/../Frameworks/libavutil.57.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+        # install_name_tool -change ../ffmpeg/lib/libswresample.4.dylib @executable_path/../Frameworks/libswresample.4.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+        # install_name_tool -change ../ffmpeg/lib/libswscale.6.dylib @executable_path/../Frameworks/libswscale.6.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+        # install_name_tool -change ../ffmpeg/lib/libavfilter.8.dylib @executable_path/../Frameworks/libavfilter.8.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+        # install_name_tool -change ../ffmpeg/lib/libavdevice.59.dylib @executable_path/../Frameworks/libavdevice.59.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+        # install_name_tool -change ../ffmpeg/lib/libpostproc.56.dylib @executable_path/../Frameworks/libpostproc.56.dylib OpenConverter.app/Contents/MacOS/OpenConverter
+
         cd ../..
 
-        (cd src/build && 
-        # cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json OpenConverter.app/Contents/Frameworks && 
-        # mkdir OpenConverter.app/Contents/Frameworks/lib && cp $BMF_ROOT_PATH/lib/libbuiltin_modules.dylib OpenConverter.app/Contents/Frameworks/lib && 
+        (cd src/build &&
+        # cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json OpenConverter.app/Contents/Frameworks &&
+        # mkdir OpenConverter.app/Contents/Frameworks/lib && cp $BMF_ROOT_PATH/lib/libbuiltin_modules.dylib OpenConverter.app/Contents/Frameworks/lib &&
         macdeployqt OpenConverter.app -dmg)
-        
+
         mv src/build/OpenConverter.dmg OpenConverter_macOS_aarch64.dmg
 
     # Step to upload the dmg package as an artifact
@@ -315,7 +315,7 @@ jobs:
     runs-on: windows-latest
     concurrency:
       group: "review-win-${{ github.event.pull_request.number }}"
-      cancel-in-progress: true 
+      cancel-in-progress: true
 
     steps:
       # Check out the repository code.
@@ -331,7 +331,7 @@ jobs:
           target:       desktop
           arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
-          setup-python: false 
+          setup-python: false
 
       # Download FFmpeg from the specified release URL.
       - name: Download FFmpeg
@@ -346,8 +346,8 @@ jobs:
       # Create a build directory, run qmake, and build the project.
       - name: Build Qt project
         run: |
-          (cd src && 
-          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" -DFFTOOL_TRANSCODER=OFF && 
+          (cd src &&
+          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" -DFFTOOL_TRANSCODER=OFF &&
           cmake --build build --config Release --parallel)
 
       - name : Deploy project

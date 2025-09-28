@@ -52,5 +52,3 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 
 - See [C++ Code clang-format](https://marketplace.visualstudio.com/items?itemName=xaver.clang-format).
   After clang-format installed(version 16.0.6, can be installed by: pip install clang-format==16.0.6), using [tool/format.sh](tool/format.sh).
-
-

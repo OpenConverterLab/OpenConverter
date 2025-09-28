@@ -1,4 +1,4 @@
-name: Release 
+name: Release
 
 on:
   release:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-linux-x86:
-    runs-on: ubuntu-22.04  
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -152,12 +152,12 @@ jobs:
         cd src/build
         macdeployqt OpenConverter.app
 
-     
+
         cd ../..
 
-        (cd src/build && 
+        (cd src/build &&
         macdeployqt OpenConverter.app -dmg)
-        
+
         mv src/build/OpenConverter.dmg OpenConverter_macOS_aarch64.dmg
 
 
@@ -205,7 +205,7 @@ jobs:
           target:       desktop
           arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
-          setup-python: false 
+          setup-python: false
 
       # Download FFmpeg from the specified release URL.
       - name: Download FFmpeg
@@ -220,8 +220,8 @@ jobs:
       # Create a build directory, run qmake, and build the project.
       - name: Build Qt project
         run: |
-          (cd src && 
-          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" -DFFTOOL_TRANSCODER=OFF && 
+          (cd src &&
+          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" -DFFTOOL_TRANSCODER=OFF &&
           cmake --build build --config Release --parallel)
 
       - name : Deploy project
@@ -244,7 +244,7 @@ jobs:
 
           # 5) Zip the OpenConverter_win64 folder into the workspace root
           Compress-Archive -Path "OpenConverter_win64" -DestinationPath "OpenConverter_win64.zip"
-      
+
       # (Optional) Archive the build artifacts.
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

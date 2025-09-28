@@ -37,4 +37,4 @@ if [ ! -d "${THIRD_PARTY_DIR}/googletest" ]; then
     (cd "${THIRD_PARTY_DIR}/googletest" && git checkout release-1.12.1)
 fi
 
-echo "Test dependencies have been set up successfully!" 
+echo "Test dependencies have been set up successfully!"

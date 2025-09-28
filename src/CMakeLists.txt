@@ -126,7 +126,7 @@ function(find_ffmpeg_version FFMPEG_VERSION_INCLUDE_DIR FFMPEG_LIB_DIR VERSION_V
         string(REGEX MATCH "FFMPEG_VERSION \"([^\"]+)\"" FFMPEG_VERSION_STRING ${FFMPEG_VERSION_DEFINE})
         set(FFMPEG_VERSION_MATCHED ${CMAKE_MATCH_1})
 
-        if(FFMPEG_VERSION_MATCHED AND NOT FFMPEG_VERSION_MATCHED MATCHES "N-")  
+        if(FFMPEG_VERSION_MATCHED AND NOT FFMPEG_VERSION_MATCHED MATCHES "N-")
             string(REGEX MATCHALL "([0-9]+)" VERSION_PARTS ${FFMPEG_VERSION_MATCHED})
             list(GET VERSION_PARTS 0 VERSION_MAJOR)
             list(GET VERSION_PARTS 1 VERSION_MINOR)
@@ -148,7 +148,7 @@ function(find_ffmpeg_version FFMPEG_VERSION_INCLUDE_DIR FFMPEG_LIB_DIR VERSION_V
             string(REGEX MATCH "libavcodec\\.([0-9]+)" FFMPEG_VERSION_MATCH ${lib})
             if(FFMPEG_VERSION_MATCH)
                 string(REGEX REPLACE "libavcodec\\.([0-9]+)" "\\1" FFMPEG_VERSION ${FFMPEG_VERSION_MATCH})
-                
+
                 # Map library version to FFmpeg version
                 if(FFMPEG_VERSION STREQUAL "58")
                     set(FFMPEG_VERSION_CLEAN "40")  # FFmpeg v4.x
@@ -231,33 +231,33 @@ if(ENABLE_GUI)
     set(CMAKE_AUTOUIC ON)
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
-    
+
     find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets)
-    
+
     # Add GUI-specific sources
     list(APPEND GUI_SOURCES
         ${CMAKE_SOURCE_DIR}/builder/src/encode_setting.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.cpp
     )
-    
+
     # Add GUI-specific headers
     list(APPEND GUI_HEADERS
         ${CMAKE_SOURCE_DIR}/builder/include/encode_setting.h
         ${CMAKE_SOURCE_DIR}/builder/include/open_converter.h
     )
-    
+
     # Add UI files
     list(APPEND UI_FILES
         ${CMAKE_SOURCE_DIR}/builder/src/encode_setting.ui
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.ui
     )
-    
+
     # Add resource files
     list(APPEND RESOURCE_FILES
         ${CMAKE_SOURCE_DIR}/resources/lang.qrc
     )
-    
+
     # Add GUI-specific include directories
     include_directories(
         ${CMAKE_SOURCE_DIR}/builder/include
@@ -265,7 +265,7 @@ if(ENABLE_GUI)
         ${Qt${QT_VERSION_MAJOR}Core_INCLUDE_DIRS}
         ${Qt${QT_VERSION_MAJOR}Gui_INCLUDE_DIRS}
     )
-    
+
     if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         qt_add_executable(OpenConverter
             MANUAL_FINALIZATION
@@ -280,14 +280,14 @@ if(ENABLE_GUI)
             ${UI_FILES} ${RESOURCE_FILES}
         )
     endif()
-    
+
     target_link_libraries(OpenConverter PRIVATE
         OpenConverterCore
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Gui
         Qt${QT_VERSION_MAJOR}::Widgets
     )
-    
+
     if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         qt_finalize_executable(OpenConverter)
     endif()
