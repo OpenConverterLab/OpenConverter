@@ -363,9 +363,6 @@
     <property name="title">
      <string>Transcoder</string>
     </property>
-    <addaction name="FFMPEG"/>
-    <addaction name="FFTOOL"/>
-    <addaction name="BMF"/>
    </widget>
    <addaction name="menuLanguage"/>
    <addaction name="menuTranscoder"/>
@@ -379,21 +376,6 @@
   <action name="chinese">
    <property name="text">
     <string>Chinese</string>
-   </property>
-  </action>
-  <action name="FFMPEG">
-   <property name="text">
-    <string>FFmpeg</string>
-   </property>
-  </action>
-  <action name="FFTOOL">
-   <property name="text">
-    <string>FFtool</string>
-   </property>
-  </action>
-  <action name="BMF">
-   <property name="text">
-    <string>BabitMF</string>
    </property>
   </action>
  </widget>

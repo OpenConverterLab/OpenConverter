@@ -46,6 +46,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     displayResult = new QMessageBox;
     transcoderGroup = new QActionGroup(this);
     languageGroup = new QActionGroup(this);
+    QList<QAction*> transcoderActions;
 
     ui->setupUi(this);
     setAcceptDrops(true);
@@ -57,8 +58,30 @@ OpenConverter::OpenConverter(QWidget *parent)
     // Register this class as an observer for process updates
     processParameter->add_observer(this);
 
+#ifdef ENABLE_FFMPEG
+    QAction *act_ffmpeg = new QAction(tr("FFMPEG"), this);
+    act_ffmpeg->setObjectName("FFMPEG");
+    transcoderActions.append(act_ffmpeg);
+#endif
+
+#ifdef ENABLE_BMF
+    QAction *act_bmf = new QAction(tr("BMF"), this);
+    transcoderActions.append(act_bmf);
+#endif
+
+#ifdef ENABLE_FFTOOL
+    QAction *act_fftool = new QAction(tr("FFTOOL"), this);
+    act_fftool->setObjectName("FFTOOL");
+    transcoderActions.append(act_fftool);
+#endif
+
+    for (QAction* a : qAsConst(transcoderActions)) {
+        if (a) ui->menuTranscoder->addAction(a);
+    }
+
+
     transcoderGroup->setExclusive(true);
-    QList<QAction*> transcoderActions = ui->menuTranscoder->actions();
+    transcoderActions = ui->menuTranscoder->actions();
     for (QAction* action : transcoderActions) {
         action->setCheckable(true);
         transcoderGroup->addAction(action);
