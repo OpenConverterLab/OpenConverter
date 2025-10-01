@@ -71,6 +71,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     connect(ui->toolButton, &QToolButton::clicked, [&]() {
         QString filename = QFileDialog::getOpenFileName();
         ui->lineEdit_inputFile->setText(filename);
+        apply_Pushed();
     });
 
     connect(ui->pushButton_apply, SIGNAL(clicked(bool)), this,
