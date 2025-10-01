@@ -51,6 +51,18 @@ OpenConverter::OpenConverter(QWidget *parent)
     setWindowIcon(QIcon(":/icon/icon.png"));
 
     ui->progressBar->setValue(0);
+    ui->stackedWidget->setCurrentIndex(0);
+    auto connectNav = [&](const char* name, int pageIndex) {
+        QPushButton *btn = findChild<QPushButton *>(name);
+        if(!btn) return;
+        connect(btn, &QPushButton::clicked, this, [this, pageIndex](){
+            ui->stackedWidget->setCurrentIndex(pageIndex);
+        });
+    };
+
+    connectNav("pushButton_summary", 0);
+    connectNav("pushButton_transcode", 1);
+    connectNav("pushButton_picture", 2);
 
     // Register this class as an observer for process updates
     processParameter->addObserver(std::shared_ptr<ProcessObserver>(this));
