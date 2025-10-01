@@ -49,6 +49,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     setAcceptDrops(true);
     setWindowTitle("OpenConverter");
     setWindowIcon(QIcon(":/icon/icon.png"));
+    this->setMinimumSize(1100, 600);
 
     ui->progressBar->setValue(0);
     ui->stackedWidget->setCurrentIndex(0);
