@@ -1,5 +1,6 @@
 #include <QAction>
 #include <QApplication>
+#include <QButtonGroup>
 #include <QByteArray>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -44,6 +45,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     processParameter = new ProcessParameter;
     converter = new Converter(processParameter, encodeParameter);
     displayResult = new QMessageBox;
+    QButtonGroup *navButtonGroup = new QButtonGroup(this);
 
     ui->setupUi(this);
     setAcceptDrops(true);
@@ -56,14 +58,19 @@ OpenConverter::OpenConverter(QWidget *parent)
     auto connectNav = [&](const char* name, int pageIndex) {
         QPushButton *btn = findChild<QPushButton *>(name);
         if(!btn) return;
+        btn->setCheckable(true);
+        navButtonGroup->addButton(btn, pageIndex);
         connect(btn, &QPushButton::clicked, this, [this, pageIndex](){
             ui->stackedWidget->setCurrentIndex(pageIndex);
         });
     };
+    navButtonGroup->setExclusive(true);
 
     connectNav("pushButton_summary", 0);
     connectNav("pushButton_transcode", 1);
     connectNav("pushButton_picture", 2);
+
+    ui->pushButton_summary->setChecked(true);
 
     // Register this class as an observer for process updates
     processParameter->addObserver(std::shared_ptr<ProcessObserver>(this));
