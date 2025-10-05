@@ -147,7 +147,7 @@ jobs:
           sudo apt-get install -y qt5-qmake qtbase5-dev qtchooser qtbase5-dev-tools cmake build-essential
 
       - name: Install Build Wrapper
-        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v4
+        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v6
       - name: Run Build Wrapper
         run: |
           export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
@@ -156,7 +156,7 @@ jobs:
           cat ${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
@@ -165,8 +165,8 @@ jobs:
             --define sonar.pullrequest.key=${{ github.event.pull_request.number }}
             --define sonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
             --define sonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
-            --define sonar.coverage.exclusions=**/* 
-            --define sonar.coverage.reportPaths=  
+            --define sonar.coverage.exclusions=**/*
+            --define sonar.coverage.reportPaths=
 
       - name: Set up Python
         uses: actions/setup-python@v4
