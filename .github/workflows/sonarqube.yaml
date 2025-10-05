@@ -160,14 +160,8 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          scannerVersion: 5.0.1.3006
           args: >
             --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"
-            --define sonar.pullrequest.key=${{ github.event.pull_request.number }}
-            --define sonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
-            --define sonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
-            --define sonar.coverage.exclusions=**/*
-            --define sonar.coverage.reportPaths=
 
       - name: Set up Python
         uses: actions/setup-python@v4
