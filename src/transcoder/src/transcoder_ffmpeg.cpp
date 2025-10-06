@@ -257,6 +257,10 @@ bool TranscoderFFmpeg::encode_Video(AVStream *inStream, StreamContext *encoder,
                                     AVFrame *inputFrame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
+    if (encodeParameter->get_Qscale() != -1 && inputFrame) {
+        inputFrame->quality = encoder->videoCodecCtx->global_quality;
+        inputFrame->pict_type = AV_PICTURE_TYPE_NONE;
+    }
     // send frame to encoder
     ret = avcodec_send_frame(encoder->videoCodecCtx, inputFrame);
     if (ret < 0) {
@@ -529,6 +533,11 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
         // encoder->videoCodecCtx->max_b_frames = 0;
         encoder->videoCodecCtx->time_base = av_make_q(1, 60);
         encoder->videoCodecCtx->framerate = av_make_q(60, 1);
+        int qscale = encodeParameter->get_Qscale();
+        if (qscale != -1) {
+            encoder->videoCodecCtx->flags |= AV_CODEC_FLAG_QSCALE;
+            encoder->videoCodecCtx->global_quality = qscale * FF_QP2LAMBDA;
+        }
     }
 
     // bind codec and codec context
