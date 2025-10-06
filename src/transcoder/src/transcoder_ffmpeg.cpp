@@ -237,6 +237,12 @@ bool TranscoderFFmpeg::open_Media(StreamContext *decoder,
         return -1;
     }
 
+    ret = avformat_find_stream_info(decoder->fmtCtx, NULL);
+    if (ret < 0) {
+        CHECK_ERROR(ret);
+        return -1;
+    }
+
     ret = avformat_alloc_output_context2(&encoder->fmtCtx, NULL, NULL,
                                          encoder->filename);
     if (!encoder->fmtCtx) {

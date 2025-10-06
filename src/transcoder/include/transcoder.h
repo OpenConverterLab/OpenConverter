@@ -20,6 +20,7 @@
 #include <iostream>
 #include <numeric>
 
+#include "../../common/include/common.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../common/include/stream_context.h"
