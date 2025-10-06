@@ -517,7 +517,10 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
     if (decoder->videoCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
         encoder->videoCodecCtx->height = decoder->videoCodecCtx->height;
         encoder->videoCodecCtx->width = decoder->videoCodecCtx->width;
-        encoder->videoCodecCtx->bit_rate = ENCODE_BIT_RATE;
+        if (encodeParameter->get_Video_Bit_Rate())
+            encoder->videoCodecCtx->bit_rate = encodeParameter->get_Video_Bit_Rate();
+        else
+            encoder->videoCodecCtx->bit_rate = decoder->videoCodecCtx->bit_rate;
         encoder->videoCodecCtx->sample_aspect_ratio =
             decoder->videoCodecCtx->sample_aspect_ratio;
         // the AVCodecContext don't have framerate
@@ -598,8 +601,6 @@ bool TranscoderFFmpeg::prepare_Encoder_Audio(StreamContext *decoder,
         return -1;
     }
     if (decoder->audioCodecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
-        //        int OUTPUT_CHANNELS = 2;
-        int OUTPUT_BIT_RATE = 196000;
 #ifdef OC_FFMPEG_VERSION
     #if OC_FFMPEG_VERSION < 50
         encoder->audioCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
@@ -613,7 +614,10 @@ bool TranscoderFFmpeg::prepare_Encoder_Audio(StreamContext *decoder,
             decoder->audioCodecCtx->sample_rate;
         encoder->audioCodecCtx->sample_fmt =
             encoder->audioCodec->sample_fmts[0];
-        encoder->audioCodecCtx->bit_rate = OUTPUT_BIT_RATE;
+        if (encodeParameter->get_Audio_Bit_Rate())
+            encoder->audioCodecCtx->bit_rate = encodeParameter->get_Audio_Bit_Rate();
+        else
+            encoder->audioCodecCtx->bit_rate = decoder->audioCodecCtx->bit_rate;
         encoder->audioCodecCtx->time_base =
             av_make_q(1, decoder->audioCodecCtx->sample_rate);
         encoder->audioCodecCtx->strict_std_compliance =

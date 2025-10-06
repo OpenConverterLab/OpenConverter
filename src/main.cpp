@@ -19,6 +19,8 @@ void printUsage(const char *programName) {
               << "  -v, --video-codec CODEC  Set video codec\n"
               << "  -q, --qscale QSCALE      Set qscale for video codec\n"
               << "  -a, --audio-codec CODEC  Set audio codec\n"
+              << "  -b:v, --bitrate:video BITRATE    Set bitrate for video codec\n"
+              << "  -b:a, --bitrate:audio BITRATE    Set bitrate for audio codec\n"
               << "  -h, --help               Show this help message\n";
 }
 
@@ -34,6 +36,8 @@ bool handleCLI(int argc, char *argv[]) {
     std::string videoCodec;
     std::string audioCodec;
     int qscale = -1;
+    int videoBitRate = -1;
+    int audioBitRate = -1;
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -59,6 +63,16 @@ bool handleCLI(int argc, char *argv[]) {
                    strcmp(argv[i], "--audio-codec") == 0) {
             if (i + 1 < argc) {
                 audioCodec = argv[++i];
+            }
+        } else if (strcmp(argv[i], "-b:v") == 0 ||
+                   strcmp(argv[i], "--bitrate:video") == 0) {
+            if (i + 1 < argc) {
+                videoBitRate = std::stoi(argv[++i]);
+            }
+        } else if (strcmp(argv[i], "-b:a") == 0 ||
+                   strcmp(argv[i], "--bitrate:audio") == 0) {
+            if (i + 1 < argc) {
+                audioBitRate = std::stoi(argv[++i]);
             }
         } else if (inputFile.empty()) {
             inputFile = argv[i];
@@ -86,6 +100,12 @@ bool handleCLI(int argc, char *argv[]) {
     }
     if (!audioCodec.empty()) {
         encodeParam->set_Audio_Codec_Name(audioCodec);
+    }
+    if (videoBitRate != -1) {
+        encodeParam->set_Video_Bit_Rate(videoBitRate);
+    }
+    if (audioBitRate != -1) {
+        encodeParam->set_Audio_Bit_Rate(audioBitRate);
     }
 
     // Create converter
