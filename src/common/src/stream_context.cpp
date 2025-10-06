@@ -4,12 +4,12 @@ StreamContext::StreamContext() {
     fmtCtx = NULL;
     filename = NULL;
 
-    videoIdx = 0;
+    videoIdx = OC_INVALID_STREAM_IDX;
     videoStream = NULL;
     videoCodec = NULL;
     videoCodecCtx = NULL;
 
-    audioIdx = 0;
+    audioIdx = OC_INVALID_STREAM_IDX;
     audioStream = NULL;
     audioCodec = NULL;
     audioCodecCtx = NULL;

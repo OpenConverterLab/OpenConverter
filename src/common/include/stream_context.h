@@ -22,27 +22,29 @@ extern "C" {
 #include <libavutil/avutil.h>
 };
 
+#define OC_INVALID_STREAM_IDX -1
+
 class StreamContext {
 
 public:
     StreamContext();
     ~StreamContext();
 
-    AVFormatContext *fmtCtx = NULL;
-    const char *filename = NULL;
+    AVFormatContext *fmtCtx;
+    const char *filename;
 
     int videoIdx;
-    AVStream *videoStream = NULL;
-    const AVCodec *videoCodec = NULL;
-    AVCodecContext *videoCodecCtx = NULL;
+    AVStream *videoStream;
+    const AVCodec *videoCodec;
+    AVCodecContext *videoCodecCtx;
 
     int audioIdx;
-    AVStream *audioStream = NULL;
-    const AVCodec *audioCodec = NULL;
-    AVCodecContext *audioCodecCtx = NULL;
+    AVStream *audioStream;
+    const AVCodec *audioCodec;
+    AVCodecContext *audioCodecCtx;
 
-    AVPacket *pkt = NULL;
-    AVFrame *frame = NULL;
+    AVPacket *pkt;
+    AVFrame *frame;
 };
 
 #endif // STREAMCONTEXT_H

@@ -403,48 +403,50 @@ bool TranscoderFFmpeg::prepare_Decoder(StreamContext *decoder) {
     // find the decoder
     // decoder->videoCodec = avcodec_find_encoder_by_name(codec);
     // find the decoder by ID
-    decoder->videoCodec =
-        avcodec_find_decoder(decoder->videoStream->codecpar->codec_id);
-    if (!decoder->videoCodec) {
-        av_log(NULL, AV_LOG_ERROR, "Couldn't find codec: %s \n",
-               avcodec_get_name(decoder->videoStream->codecpar->codec_id));
-        // return -1;
+    if (decoder->videoIdx != OC_INVALID_STREAM_IDX) {
+        decoder->videoCodec =
+            avcodec_find_decoder(decoder->videoStream->codecpar->codec_id);
+        if (!decoder->videoCodec) {
+            av_log(NULL, AV_LOG_ERROR, "Couldn't find codec: %s \n",
+                avcodec_get_name(decoder->videoStream->codecpar->codec_id));
+            // return -1;
+        }
+        // init decoder context
+        decoder->videoCodecCtx = avcodec_alloc_context3(decoder->videoCodec);
+        if (!decoder->videoCodec) {
+            av_log(decoder->videoCodecCtx, AV_LOG_ERROR, "No memory!\n");
+            // return -1;
+        }
+        avcodec_parameters_to_context(decoder->videoCodecCtx,
+                                    decoder->videoStream->codecpar);
+        // bind decoder and decoder context
+        ret = avcodec_open2(decoder->videoCodecCtx, decoder->videoCodec, NULL);
+        if (ret < 0) {
+            // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
+            // av_err2str(ret)); return -1;
+        }
     }
 
-    decoder->audioCodec =
-        avcodec_find_decoder(decoder->audioStream->codecpar->codec_id);
-    if (!decoder->audioCodec) {
-        av_log(NULL, AV_LOG_ERROR, "Couldn't find codec: %s \n",
-               avcodec_get_name(decoder->audioStream->codecpar->codec_id));
-    }
+    if (decoder->audioIdx != OC_INVALID_STREAM_IDX) {
+        decoder->audioCodec =
+            avcodec_find_decoder(decoder->audioStream->codecpar->codec_id);
+        if (!decoder->audioCodec) {
+            av_log(NULL, AV_LOG_ERROR, "Couldn't find codec: %s \n",
+                    avcodec_get_name(decoder->audioStream->codecpar->codec_id));
+        }
+        decoder->audioCodecCtx = avcodec_alloc_context3(decoder->audioCodec);
+        if (!decoder->audioCodec) {
+            av_log(decoder->audioCodecCtx, AV_LOG_ERROR, "No Memory!");
+        }
+        avcodec_parameters_to_context(decoder->audioCodecCtx,
+                                    decoder->audioStream->codecpar);
 
-    // init decoder context
-    decoder->videoCodecCtx = avcodec_alloc_context3(decoder->videoCodec);
-    if (!decoder->videoCodec) {
-        av_log(decoder->videoCodecCtx, AV_LOG_ERROR, "No memory!\n");
-        // return -1;
-    }
 
-    decoder->audioCodecCtx = avcodec_alloc_context3(decoder->audioCodec);
-    if (!decoder->audioCodec) {
-        av_log(decoder->audioCodecCtx, AV_LOG_ERROR, "No Memory!");
-    }
-
-    avcodec_parameters_to_context(decoder->videoCodecCtx,
-                                  decoder->videoStream->codecpar);
-    avcodec_parameters_to_context(decoder->audioCodecCtx,
-                                  decoder->audioStream->codecpar);
-    // bind decoder and decoder context
-    ret = avcodec_open2(decoder->videoCodecCtx, decoder->videoCodec, NULL);
-    if (ret < 0) {
-        // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
-        // av_err2str(ret)); return -1;
-    }
-
-    ret = avcodec_open2(decoder->audioCodecCtx, decoder->audioCodec, NULL);
-    if (ret < 0) {
-        // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
-        // av_err2str(ret)); return -1;
+        ret = avcodec_open2(decoder->audioCodecCtx, decoder->audioCodec, NULL);
+        if (ret < 0) {
+            // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
+            // av_err2str(ret)); return -1;
+        }
     }
 
     // create AVFrame
