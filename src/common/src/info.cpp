@@ -1,6 +1,9 @@
 #include "../include/info.h"
 
 Info::Info() {
+    avCtx = NULL;
+    audioCodec = NULL;
+    audioCtx = NULL;
     quickInfo = new QuickInfo();
     init();
 }
@@ -52,6 +55,7 @@ void Info::send_Info(char *src) {
         quickInfo->width = avCtx->streams[quickInfo->videoIdx]->codecpar->width;
 
 #ifdef OC_FFMPEG_VERSION
+    if (avCtx->streams[quickInfo->videoIdx]->codecpar->color_space != AVCOL_SPC_UNSPECIFIED)
     #if OC_FFMPEG_VERSION > 51
         quickInfo->colorSpace = av_color_space_name(
             avCtx->streams[quickInfo->videoIdx]->codecpar->color_space);
@@ -60,8 +64,9 @@ void Info::send_Info(char *src) {
             avCtx->streams[quickInfo->videoIdx]->codecpar->color_space);
     #endif
 #endif
-        quickInfo->videoCodec = avcodec_get_name(
-            avCtx->streams[quickInfo->videoIdx]->codecpar->codec_id);
+        if (avCtx->streams[quickInfo->videoIdx]->codecpar->codec_id != AV_CODEC_ID_NONE)
+            quickInfo->videoCodec = avcodec_get_name(
+                avCtx->streams[quickInfo->videoIdx]->codecpar->codec_id);
         quickInfo->videoBitRate =
             avCtx->streams[quickInfo->videoIdx]->codecpar->bit_rate;
         quickInfo->frameRate =
@@ -114,4 +119,6 @@ end:
     avcodec_free_context(&audioCtx);
 }
 
-Info::~Info() {}
+Info::~Info() {
+    delete quickInfo;
+}

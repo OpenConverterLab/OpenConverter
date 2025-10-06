@@ -66,13 +66,13 @@ public:
     ~Info();
 
 private:
-    AVFormatContext *avCtx = NULL;
+    AVFormatContext *avCtx;
 
-    const AVCodec *audioCodec = NULL;
+    const AVCodec *audioCodec;
 
-    AVCodecContext *audioCtx = NULL;
+    AVCodecContext *audioCtx;
 
-    QuickInfo *quickInfo = NULL;
+    QuickInfo *quickInfo;
 
 public:
     // init quick info
