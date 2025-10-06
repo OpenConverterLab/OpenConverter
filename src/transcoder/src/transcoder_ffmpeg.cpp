@@ -519,13 +519,12 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
         // the AVCodecContext don't have framerate
         // outCodecCtx->time_base = av_inv_q(inCodecCtx->framerate);
 
-        // if(inCodecCtx->pix_fmt)
-        //     outCodecCtx->pix_fmt = inCodecCtx->pix_fmt;
-        // else
-        if (encoder->videoCodec->pix_fmts)
+        if (decoder->videoCodecCtx->pix_fmt != AV_PIX_FMT_NONE)
+            encoder->videoCodecCtx->pix_fmt = decoder->videoCodecCtx->pix_fmt;
+        else if (encoder->videoCodec->pix_fmts)
             encoder->videoCodecCtx->pix_fmt = encoder->videoCodec->pix_fmts[0];
         else
-            encoder->videoCodecCtx->pix_fmt = decoder->videoCodecCtx->pix_fmt;
+            encoder->videoCodecCtx->pix_fmt = AV_PIX_FMT_NONE;
 
         // encoder->videoCodecCtx->max_b_frames = 0;
         encoder->videoCodecCtx->time_base = av_make_q(1, 60);
