@@ -114,4 +114,6 @@ int main(int argc, char *argv[]) {
     w.show();
     return app.exec();
 #endif
+    printUsage(argv[0]);
+    return 0;
 }
