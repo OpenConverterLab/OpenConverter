@@ -17,6 +17,7 @@ void printUsage(const char *programName) {
               << "  -t, --transcoder TYPE    Set transcoder type (FFMPEG, BMF, "
                  "FFTOOL)\n"
               << "  -v, --video-codec CODEC  Set video codec\n"
+              << "  -q, --qscale QSCALE      Set qscale for video codec\n"
               << "  -a, --audio-codec CODEC  Set audio codec\n"
               << "  -h, --help               Show this help message\n";
 }
@@ -32,6 +33,7 @@ bool handleCLI(int argc, char *argv[]) {
     std::string transcoderType = "FFMPEG";
     std::string videoCodec;
     std::string audioCodec;
+    int qscale = -1;
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -47,6 +49,11 @@ bool handleCLI(int argc, char *argv[]) {
                    strcmp(argv[i], "--video-codec") == 0) {
             if (i + 1 < argc) {
                 videoCodec = argv[++i];
+            }
+        } else if (strcmp(argv[i], "-q") == 0 ||
+                   strcmp(argv[i], "--qscale") == 0) {
+            if (i + 1 < argc) {
+                qscale = std::stoi(argv[++i]);
             }
         } else if (strcmp(argv[i], "-a") == 0 ||
                    strcmp(argv[i], "--audio-codec") == 0) {
@@ -73,6 +80,9 @@ bool handleCLI(int argc, char *argv[]) {
     // Set codecs if specified
     if (!videoCodec.empty()) {
         encodeParam->set_Video_Codec_Name(videoCodec);
+    }
+    if (qscale != -1) {
+        encodeParam->set_Qscale(qscale);
     }
     if (!audioCodec.empty()) {
         encodeParam->set_Audio_Codec_Name(audioCodec);

@@ -7,8 +7,20 @@ EncodeParameter::EncodeParameter() {
     videoBitRate = 0;
     audioBitRate = 0;
 
+    qscale = -1;
+
     available = false;
 }
+
+void EncodeParameter::set_Qscale(int q) {
+    if (q < 0) {
+        return;
+    }
+    qscale = q;
+    available = true;
+}
+
+int EncodeParameter::get_Qscale() { return qscale; }
 
 bool EncodeParameter::get_Available() { return available; }
 

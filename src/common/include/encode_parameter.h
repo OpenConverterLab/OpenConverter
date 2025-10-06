@@ -31,6 +31,8 @@ private:
     std::string audioCodec;
     int64_t audioBitRate;
 
+    int qscale;
+
 public:
     EncodeParameter();
     ~EncodeParameter();
@@ -39,6 +41,8 @@ public:
 
     void set_Video_Codec_Name(std::string vc);
 
+    void set_Qscale(int q);
+
     void set_Audio_Codec_Name(std::string ac);
 
     void set_Video_Bit_Rate(int64_t vbr);
@@ -46,6 +50,8 @@ public:
     void set_Audio_Bit_Rate(int64_t abr);
 
     std::string get_Video_Codec_Name();
+
+    int get_Qscale();
 
     std::string get_Audio_Codec_Name();
 
