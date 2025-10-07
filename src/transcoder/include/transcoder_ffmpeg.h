@@ -62,6 +62,7 @@ public:
                AVStream *outStream);
 
 private:
+    char errorMsg[128];
     // encoder's parameters
     bool copyVideo;
     bool copyAudio;
@@ -72,6 +73,7 @@ private:
 
     // Helper function to update progress
     void update_progress(int64_t current_pts, AVRational time_base);
+    void print_error(const char *msg, int ret);
 };
 
 #endif // TRANSCODERFFMPEG_H

@@ -10,6 +10,11 @@ TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
     current_duration = 0;
 }
 
+void TranscoderFFmpeg::print_error(const char *msg, int ret) {
+    av_strerror(ret, errorMsg, sizeof(errorMsg));
+    av_log(NULL, AV_LOG_ERROR, " %s: %s \n", msg, errorMsg);
+}
+
 void TranscoderFFmpeg::update_progress(int64_t current_pts,
                                        AVRational time_base) {
     // Convert current PTS to microseconds
@@ -127,16 +132,14 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     ret = avio_open2(&encoder->fmtCtx->pb, encoder->filename, AVIO_FLAG_WRITE,
                      NULL, NULL);
     if (ret < 0) {
-        // av_log(encoder->fmtCtx, AV_LOG_ERROR, "%s", av_err2str(ret));
+        print_error("Failed to open output file", ret);
         flag = false;
         goto end;
     }
     /* Write the stream header, if any. */
     ret = avformat_write_header(encoder->fmtCtx, NULL);
     if (ret < 0) {
-        //        fprintf(stderr, "Error occurred when opening output file:
-        //        %s\n",
-        //                av_err2str(ret));
+        print_error("Failed to write header", ret);
         flag = false;
         goto end;
     }
@@ -233,21 +236,21 @@ bool TranscoderFFmpeg::open_Media(StreamContext *decoder,
     // open the multimedia file
     if ((ret = avformat_open_input(&decoder->fmtCtx, decoder->filename, NULL,
                                    NULL)) < 0) {
-        // av_log(NULL, AV_LOG_ERROR, " %s \n", av_err2str(ret));
-        return -1;
+        print_error("Failed to open input file", ret);
+        return false;
     }
 
     ret = avformat_find_stream_info(decoder->fmtCtx, NULL);
     if (ret < 0) {
-        CHECK_ERROR(ret);
-        return -1;
+        print_error("Failed to find stream info", ret);
+        return false;
     }
 
     ret = avformat_alloc_output_context2(&encoder->fmtCtx, NULL, NULL,
                                          encoder->filename);
     if (!encoder->fmtCtx) {
         av_log(NULL, AV_LOG_ERROR, "Could not create output context\n");
-        return -1;
+        return false;
     }
 
     return true;
@@ -264,10 +267,7 @@ bool TranscoderFFmpeg::encode_Video(AVStream *inStream, StreamContext *encoder,
     // send frame to encoder
     ret = avcodec_send_frame(encoder->videoCodecCtx, inputFrame);
     if (ret < 0) {
-        char errbuf[AV_ERROR_MAX_STRING_SIZE];
-        ret = av_strerror(ret, errbuf, AV_ERROR_MAX_STRING_SIZE);
-        av_log(NULL, AV_LOG_ERROR, "Failed to send frame to encoder! %s\n",
-               errbuf);
+        print_error("Failed to send frame to encoder", ret);
         goto end;
     }
 
@@ -290,8 +290,7 @@ bool TranscoderFFmpeg::encode_Video(AVStream *inStream, StreamContext *encoder,
 
         ret = av_interleaved_write_frame(encoder->fmtCtx, output_packet);
         if (ret < 0) {
-            // fprintf(stderr, "Error while writing output packet: %s\n",
-            // av_err2str(ret));
+            print_error("Failed to write packet", ret);
         }
 
         av_packet_unref(output_packet);
@@ -308,10 +307,7 @@ bool TranscoderFFmpeg::encode_Audio(AVStream *in_stream, StreamContext *encoder,
     // send frame to encoder
     ret = avcodec_send_frame(encoder->audioCodecCtx, input_frame);
     if (ret < 0) {
-        char errbuf[AV_ERROR_MAX_STRING_SIZE];
-        ret = av_strerror(ret, errbuf, AV_ERROR_MAX_STRING_SIZE);
-        av_log(NULL, AV_LOG_ERROR, "Failed to send frame to encoder! %s\n",
-               errbuf);
+        print_error("Failed to send frame to encoder", ret);
         goto end;
     }
     while (ret >= 0) {
@@ -326,8 +322,7 @@ bool TranscoderFFmpeg::encode_Audio(AVStream *in_stream, StreamContext *encoder,
                              encoder->audioStream->time_base);
         ret = av_interleaved_write_frame(encoder->fmtCtx, output_packet);
         if (ret < 0) {
-            // fprintf(stderr, "Error while writing output packet: %s\n",
-            // av_err2str(ret));
+            print_error("Failed to write packet", ret);
         }
         av_packet_unref(output_packet);
     }
@@ -432,8 +427,8 @@ bool TranscoderFFmpeg::prepare_Decoder(StreamContext *decoder) {
         // bind decoder and decoder context
         ret = avcodec_open2(decoder->videoCodecCtx, decoder->videoCodec, NULL);
         if (ret < 0) {
-            // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
-            // av_err2str(ret)); return -1;
+            print_error("Couldn't open the codec", ret);
+            return false;
         }
     }
 
@@ -454,8 +449,8 @@ bool TranscoderFFmpeg::prepare_Decoder(StreamContext *decoder) {
 
         ret = avcodec_open2(decoder->audioCodecCtx, decoder->audioCodec, NULL);
         if (ret < 0) {
-            // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
-            // av_err2str(ret)); return -1;
+            print_error("Couldn't open the codec", ret);
+            return false;
         }
     }
 
@@ -546,8 +541,7 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
     // bind codec and codec context
     ret = avcodec_open2(encoder->videoCodecCtx, encoder->videoCodec, NULL);
     if (ret < 0) {
-        // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
-        // av_err2str(ret));
+        print_error("Couldn't open the codec", ret);
         return false;
     }
 
@@ -626,9 +620,8 @@ bool TranscoderFFmpeg::prepare_Encoder_Audio(StreamContext *decoder,
     // bind codec and codec context
     ret = avcodec_open2(encoder->audioCodecCtx, encoder->audioCodec, NULL);
     if (ret < 0) {
-        // av_log(NULL, AV_LOG_ERROR, "Couldn't open the codec: %s\n",
-        // av_err2str(ret));
-        return -1;
+        print_error("Couldn't open the codec", ret);
+        return false;
     }
     encoder->audioStream = avformat_new_stream(encoder->fmtCtx, NULL);
     if (!encoder->audioStream) {

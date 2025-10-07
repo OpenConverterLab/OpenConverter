@@ -28,6 +28,12 @@ void Info::init() {
     quickInfo->subIdx = 0;
 }
 
+void Info::print_error(const char *msg, int ret) {
+    av_strerror(ret, errorMsg, sizeof(errorMsg));
+    av_log(NULL, AV_LOG_ERROR, " %s: %s \n", msg, errorMsg);
+}
+
+
 QuickInfo *Info::get_Quick_Info() { return quickInfo; }
 
 void Info::send_Info(char *src) {
@@ -36,12 +42,12 @@ void Info::send_Info(char *src) {
     av_log_set_level(AV_LOG_DEBUG);
     ret = avformat_open_input(&avCtx, src, NULL, NULL);
     if (ret < 0) {
-        av_log(avCtx, AV_LOG_ERROR, "open failed");
+        print_error("open failed", ret);
         goto end;
     }
     ret = avformat_find_stream_info(avCtx, NULL);
     if (ret < 0) {
-        CHECK_ERROR(ret);
+        print_error("find stream info failed", ret);
     }
     // find the video and audio stream from container
     quickInfo->videoIdx =

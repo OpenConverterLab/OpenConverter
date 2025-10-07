@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <string>
 
-#include "common.h"
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -66,6 +65,8 @@ public:
     ~Info();
 
 private:
+    void print_error(const char *msg, int ret);
+
     AVFormatContext *avCtx;
 
     const AVCodec *audioCodec;
@@ -74,6 +75,7 @@ private:
 
     QuickInfo *quickInfo;
 
+    char errorMsg[128];
 public:
     // init quick info
     void init();
