@@ -193,38 +193,13 @@ end:
         avformat_close_input(&decoder->fmtCtx);
         decoder->fmtCtx = NULL;
     }
-    if (decoder->videoCodecCtx) {
-        avcodec_free_context(&decoder->videoCodecCtx);
-        decoder->videoCodecCtx = NULL;
-    }
-    if (decoder->frame) {
-        av_frame_free(&decoder->frame);
-        decoder->frame = NULL;
-    }
-    if (decoder->pkt) {
-        av_packet_free(&decoder->pkt);
-        decoder->pkt = NULL;
-    }
+    delete decoder;
 
     if (encoder->fmtCtx && !(encoder->fmtCtx->oformat->flags & AVFMT_NOFILE)) {
         avio_closep(&encoder->fmtCtx->pb);
     }
-    if (encoder->fmtCtx) {
-        avformat_free_context(encoder->fmtCtx);
-        encoder->fmtCtx = NULL;
-    }
-    if (encoder->videoCodecCtx) {
-        avcodec_free_context(&encoder->videoCodecCtx);
-        encoder->videoCodecCtx = NULL;
-    }
-    if (encoder->frame) {
-        av_frame_free(&encoder->frame);
-        encoder->frame = NULL;
-    }
-    if (encoder->pkt) {
-        av_packet_free(&encoder->pkt);
-        encoder->pkt = NULL;
-    }
+    delete encoder;
+
     return flag;
 }
 

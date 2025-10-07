@@ -18,4 +18,21 @@ StreamContext::StreamContext() {
     frame = NULL;
 }
 
-StreamContext::~StreamContext() {}
+StreamContext::~StreamContext() {
+    if (videoCodecCtx) {
+        avcodec_free_context(&videoCodecCtx);
+        videoCodecCtx = NULL;
+    }
+    if (audioCodecCtx) {
+        avcodec_free_context(&audioCodecCtx);
+        audioCodecCtx = NULL;
+    }
+    if (pkt) {
+        av_packet_free(&pkt);
+        pkt = NULL;
+    }
+    if (frame) {
+        av_frame_free(&frame);
+        frame = NULL;
+    }
+}
