@@ -35,27 +35,27 @@ public:
 
     bool transcode(std::string input_path, std::string output_path);
 
-    bool open_Media(StreamContext *decoder, StreamContext *encoder);
+    bool open_media(StreamContext *decoder, StreamContext *encoder);
 
-    bool copyFrame(AVFrame *oldFrame, AVFrame *newFrame);
+    bool copy_frame(AVFrame *oldFrame, AVFrame *newFrame);
 
-    bool encode_Video(AVStream *inStream, StreamContext *encoder,
+    bool encode_video(AVStream *inStream, StreamContext *encoder,
                       AVFrame *inputFrame);
 
-    bool transcode_Video(StreamContext *decoder, StreamContext *encoder);
+    bool transcode_video(StreamContext *decoder, StreamContext *encoder);
 
-    bool encode_Audio(AVStream *inStream, StreamContext *encoder,
+    bool encode_audio(AVStream *inStream, StreamContext *encoder,
                       AVFrame *inputFrame);
 
-    bool transcode_Audio(StreamContext *decoder, StreamContext *encoder);
+    bool transcode_audio(StreamContext *decoder, StreamContext *encoder);
 
-    bool prepare_Decoder(StreamContext *decoder);
+    bool prepare_decoder(StreamContext *decoder);
 
-    bool prepare_Encoder_Video(StreamContext *decoder, StreamContext *encoder);
+    bool prepare_encoder_video(StreamContext *decoder, StreamContext *encoder);
 
-    bool prepare_Encoder_Audio(StreamContext *decoder, StreamContext *encoder);
+    bool prepare_encoder_audio(StreamContext *decoder, StreamContext *encoder);
 
-    bool prepare_Copy(AVFormatContext *avCtx, AVStream **stream,
+    bool prepare_copy(AVFormatContext *avCtx, AVStream **stream,
                       AVCodecParameters *codecParam);
 
     bool remux(AVPacket *pkt, AVFormatContext *avCtx, AVStream *inStream,

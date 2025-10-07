@@ -27,24 +27,24 @@ public:
     ProcessParameter();
     ~ProcessParameter();
 
-    void set_Process_Number(int64_t frameNumber, int64_t frameTotalNumnber);
-    void set_Process_Number(int64_t processNumber);
-    double get_Process_Number();
-    void set_Time_Required(double timeRequired);
-    double get_Time_Required();
-    ProcessParameter get_Process_Parmeter();
+    void set_process_number(int64_t frameNumber, int64_t frameTotalNumnber);
+    void set_process_number(int64_t processNumber);
+    double get_process_number();
+    void set_time_required(double timeRequired);
+    double get_time_required();
+    ProcessParameter get_process_parmeter();
 
     // Observer management
-    void addObserver(std::shared_ptr<ProcessObserver> observer);
-    void removeObserver(std::shared_ptr<ProcessObserver> observer);
+    void add_observer(std::shared_ptr<ProcessObserver> observer);
+    void remove_observer(std::shared_ptr<ProcessObserver> observer);
 
 private:
     int64_t processNumber;
     double timeRequired;
     std::vector<std::shared_ptr<ProcessObserver>> observers;
 
-    void notifyProcessUpdate(double progress);
-    void notifyTimeUpdate(double timeRequired);
+    void notify_process_update(double progress);
+    void notify_time_update(double timeRequired);
 };
 
 #endif // PROCESSPARAMETER_H

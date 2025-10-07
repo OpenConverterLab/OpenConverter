@@ -38,14 +38,14 @@ public:
 
     ~EncodeSetting();
 
-    bool get_Encode_Parameter(EncodeParameter *ep);
+    bool GetEncodeParameter(EncodeParameter *ep);
 
-    bool get_Available();
+    bool GetAvailable();
 
 public slots:
-    void cancel_Pushed();
+    void CancelPushed();
 
-    void apply_Pushed();
+    void ApplyPushed();
 
 private:
     EncodeParameter *encodeParameter = NULL;

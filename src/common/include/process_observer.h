@@ -21,8 +21,8 @@
 class ProcessObserver {
 public:
     virtual ~ProcessObserver() = default;
-    virtual void onProcessUpdate(double progress) = 0;
-    virtual void onTimeUpdate(double timeRequired) = 0;
+    virtual void on_process_update(double progress) = 0;
+    virtual void on_time_update(double timeRequired) = 0;
 };
 
 #endif // PROCESSOBSERVER_H

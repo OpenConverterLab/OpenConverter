@@ -80,9 +80,9 @@ public:
     // init quick info
     void init();
     // get qucik info reference
-    QuickInfo *get_Quick_Info();
+    QuickInfo *get_quick_info();
     // send the info to front-end
-    void send_Info(char *src);
+    void send_info(char *src);
 };
 
 #endif // INFO_H

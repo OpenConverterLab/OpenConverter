@@ -30,8 +30,8 @@ public:
               EncodeParameter *encodeParamter);
     ~Converter();
 
-    bool set_Transcoder(std::string transcoderName);
-    bool convert_Format(const std::string &src, const std::string &dst);
+    bool set_transcoder(std::string transcoderName);
+    bool convert_format(const std::string &src, const std::string &dst);
 
 private:
     Transcoder *transcoder = NULL;

@@ -53,7 +53,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     ui->progressBar->setValue(0);
 
     // Register this class as an observer for process updates
-    processParameter->addObserver(std::shared_ptr<ProcessObserver>(this));
+    processParameter->add_observer(std::shared_ptr<ProcessObserver>(this));
 
     connect(ui->toolButton, &QToolButton::clicked, [&]() {
         QString filename = QFileDialog::getOpenFileName();
@@ -61,19 +61,19 @@ OpenConverter::OpenConverter(QWidget *parent)
     });
 
     connect(ui->pushButton_apply, SIGNAL(clicked(bool)), this,
-            SLOT(apply_Pushed()));
+            SLOT(ApplyPushed()));
 
     connect(ui->pushButton_convert, SIGNAL(clicked(bool)), this,
-            SLOT(convert_Pushed()));
+            SLOT(ConvertPushed()));
 
     connect(ui->pushButton_encodeSetting, SIGNAL(clicked(bool)), this,
-            SLOT(encode_Setting_Pushed()));
+            SLOT(EncodeSettingPushed()));
 
     connect(ui->menuLanguage, SIGNAL(triggered(QAction *)), this,
-            SLOT(slotLanguageChanged(QAction *)));
+            SLOT(SlotLanguageChanged(QAction *)));
 
     connect(ui->menuTranscoder, SIGNAL(triggered(QAction *)), this,
-            SLOT(slotTranscoderChanged(QAction *)));
+            SLOT(SlotTranscoderChanged(QAction *)));
 
     m_currLang = "english";
     m_langPath = ":/";
@@ -94,25 +94,25 @@ void OpenConverter::dropEvent(QDropEvent *event) {
 }
 
 // Called every time, when a menu entry of the transcoder menu is called
-void OpenConverter::slotTranscoderChanged(QAction *action) {
+void OpenConverter::SlotTranscoderChanged(QAction *action) {
     if (0 != action) {
         std::string transcoderName = action->objectName().toStdString();
         bool isValid = false;
 #ifdef ENABLE_FFMPEG
         if (transcoderName == "FFMPEG") {
-            converter->set_Transcoder(transcoderName);
+            converter->set_transcoder(transcoderName);
             isValid = true;
         }
 #endif
 #ifdef ENABLE_FFTOOL
         if (transcoderName == "FFTOOL") {
-            converter->set_Transcoder(transcoderName);
+            converter->set_transcoder(transcoderName);
             isValid = true;
         }
 #endif
 #ifdef ENABLE_BMF
         if (transcoderName == "BMF") {
-            converter->set_Transcoder(transcoderName);
+            converter->set_transcoder(transcoderName);
             isValid = true;
         }
 #endif
@@ -129,10 +129,10 @@ void OpenConverter::slotTranscoderChanged(QAction *action) {
 }
 
 // Called every time, when a menu entry of the language menu is called
-void OpenConverter::slotLanguageChanged(QAction *action) {
+void OpenConverter::SlotLanguageChanged(QAction *action) {
     if (0 != action) {
         // load the language dependent on the action content
-        loadLanguage(action->objectName());
+        LoadLanguage(action->objectName());
         setWindowIcon(action->icon());
     }
 }
@@ -150,7 +150,7 @@ void switchTranslator(QTranslator &translator, const QString &filename) {
         qApp->installTranslator(&translator);
 }
 
-void OpenConverter::loadLanguage(const QString &rLanguage) {
+void OpenConverter::LoadLanguage(const QString &rLanguage) {
     if (m_currLang != rLanguage) {
         m_currLang = rLanguage;
         //        QLocale locale = QLocale(m_currLang);
@@ -177,14 +177,14 @@ void OpenConverter::changeEvent(QEvent *event) {
         ui->lineEdit_inputFile->setText(currentInputPath);
         ui->lineEdit_outputFile->setText(currentOutputPath);
 
-        if (info && info->get_Quick_Info()) {
-            info_Display(info->get_Quick_Info()); // Convert QuickInfo to string
+        if (info && info->get_quick_info()) {
+            InfoDisplay(info->get_quick_info()); // Convert QuickInfo to string
         }
     }
     QMainWindow::changeEvent(event);
 }
 
-void OpenConverter::handle_Converter_Result(bool flag) {
+void OpenConverter::HandleConverterResult(bool flag) {
     if (flag) {
         displayResult->setText("Convert success!");
         ui->label_timeRequiredResult->setText(QString("%1s").arg(0));
@@ -195,31 +195,31 @@ void OpenConverter::handle_Converter_Result(bool flag) {
     displayResult->show();
 }
 
-void OpenConverter::onProcessUpdate(double progress) {
+void OpenConverter::on_process_update(double progress) {
     int process = progress;
     ui->progressBar->setValue(process);
     ui->label_processResult->setText(QString("%1%").arg(process));
 }
 
-void OpenConverter::onTimeUpdate(double timeRequired) {
+void OpenConverter::on_time_update(double timeRequired) {
     ui->label_timeRequiredResult->setText(
         QString("%1s").arg(QString::number(timeRequired, 'f', 2)));
 }
 
-void OpenConverter::encode_Setting_Pushed() { encodeSetting->show(); }
+void OpenConverter::EncodeSettingPushed() { encodeSetting->show(); }
 
-void OpenConverter::apply_Pushed() {
+void OpenConverter::ApplyPushed() {
 
     QByteArray ba = ui->lineEdit_inputFile->text().toLocal8Bit();
     char *src = ba.data();
     // get info by Decapsulation
-    info->send_Info(src);
+    info->send_info(src);
 
     // display info on window
-    info_Display(info->get_Quick_Info());
+    InfoDisplay(info->get_quick_info());
 }
 
-void OpenConverter::convert_Pushed() {
+void OpenConverter::ConvertPushed() {
 
     // get the input file path
     QString inputFilePath = ui->lineEdit_inputFile->text();
@@ -252,11 +252,11 @@ void OpenConverter::convert_Pushed() {
 
     // capture everything you need by value
     auto *thread = QThread::create([=]() {
-        bool ok = converter->convert_Format(inputFilePath.toStdString(),
+        bool ok = converter->convert_format(inputFilePath.toStdString(),
                                             outputFilePath.toStdString());
         // When done, marshal back to the GUI thread:
         QMetaObject::invokeMethod(
-            this, [this, ok]() { handle_Converter_Result(ok); },
+            this, [this, ok]() { HandleConverterResult(ok); },
             Qt::QueuedConnection);
     });
 
@@ -269,7 +269,7 @@ void OpenConverter::convert_Pushed() {
 }
 
 // automatically select kbps/Mbps
-QString OpenConverter::formatBitrate(int64_t bitsPerSec) {
+QString OpenConverter::FormatBitrate(int64_t bitsPerSec) {
     const double kbps = bitsPerSec / 1000.0;
     if (kbps >= 1000.0) {
         return QString("%1 Mbps").arg(kbps / 1000.0, 0, 'f', 1);
@@ -278,7 +278,7 @@ QString OpenConverter::formatBitrate(int64_t bitsPerSec) {
 }
 
 // automatically select Hz/kHz/MHz
-QString OpenConverter::formatFrequency(int64_t hertz) {
+QString OpenConverter::FormatFrequency(int64_t hertz) {
     const double kHz = hertz / 1000.0;
     if (kHz >= 1000.0) {
         return QString("%1 MHz").arg(kHz / 1000.0, 0, 'f', 2);
@@ -288,7 +288,7 @@ QString OpenConverter::formatFrequency(int64_t hertz) {
     return QString("%1 Hz").arg(hertz);
 }
 
-void OpenConverter::info_Display(QuickInfo *quickInfo) {
+void OpenConverter::InfoDisplay(QuickInfo *quickInfo) {
     if (!quickInfo)
         return;
 
@@ -302,7 +302,7 @@ void OpenConverter::info_Display(QuickInfo *quickInfo) {
     ui->label_videoCodecResult->setText(
         QString("%1").arg(QString::fromStdString(quickInfo->videoCodec)));
     ui->label_videoBitRateResult->setText(
-        formatBitrate(quickInfo->videoBitRate));
+        FormatBitrate(quickInfo->videoBitRate));
     ui->label_frameRateResult->setText(
         QString("%1 fps").arg(quickInfo->frameRate, 0, 'f', 2));
     // audio
@@ -311,11 +311,11 @@ void OpenConverter::info_Display(QuickInfo *quickInfo) {
     ui->label_audioCodecResult->setText(
         QString("%1").arg(QString::fromStdString(quickInfo->audioCodec)));
     ui->label_audioBitRateResult->setText(
-        formatBitrate(quickInfo->audioBitRate));
+        FormatBitrate(quickInfo->audioBitRate));
     ui->label_channelsResult->setText(QString("%1").arg(quickInfo->channels));
     ui->label_sampleFmtResult->setText(
         QString("%1").arg(QString::fromStdString(quickInfo->sampleFmt)));
-    ui->label_sampleRateResult->setText(formatFrequency(quickInfo->sampleRate));
+    ui->label_sampleRateResult->setText(FormatFrequency(quickInfo->sampleRate));
 }
 
 OpenConverter::~OpenConverter() {

@@ -8,10 +8,10 @@ EncodeSetting::EncodeSetting(QWidget *parent, EncodeParameter *encodeParamter)
     ui->setupUi(this);
 
     connect(ui->pushButton_cancel, SIGNAL(clicked(bool)), this,
-            SLOT(cancel_Pushed()));
+            SLOT(CancelPushed()));
 
     connect(ui->pushButton_apply, SIGNAL(clicked(bool)), this,
-            SLOT(apply_Pushed()));
+            SLOT(ApplyPushed()));
 }
 
 void EncodeSetting::changeEvent(QEvent *event) {
@@ -21,9 +21,9 @@ void EncodeSetting::changeEvent(QEvent *event) {
     QMainWindow::changeEvent(event);
 }
 
-bool EncodeSetting::get_Available() { return encodeParameter->get_Available(); }
+bool EncodeSetting::GetAvailable() { return encodeParameter->get_available(); }
 
-bool EncodeSetting::get_Encode_Parameter(EncodeParameter *ep) {
+bool EncodeSetting::GetEncodeParameter(EncodeParameter *ep) {
     ep = encodeParameter;
     if (ep != NULL) {
         return true;
@@ -32,27 +32,27 @@ bool EncodeSetting::get_Encode_Parameter(EncodeParameter *ep) {
     return false;
 }
 
-void EncodeSetting::cancel_Pushed() {
+void EncodeSetting::CancelPushed() {
     // close the sub window
     close();
 }
 
-void EncodeSetting::apply_Pushed() {
+void EncodeSetting::ApplyPushed() {
     /* get the encoder's parameter of video */
     if (!ui->lineEdit_videoCodec->text().toStdString().empty())
-        encodeParameter->set_Video_Codec_Name(
+        encodeParameter->set_video_codec_name(
             ui->lineEdit_videoCodec->text().toStdString());
     else
-        encodeParameter->set_Video_Codec_Name("");
-    encodeParameter->set_Video_Bit_Rate(
+        encodeParameter->set_video_codec_name("");
+    encodeParameter->set_video_bit_rate(
         ui->lineEdit_videoBitRate->text().toLong());
 
     if (!ui->lineEdit_audioCodec->text().toStdString().empty())
-        encodeParameter->set_Audio_Codec_Name(
+        encodeParameter->set_audio_codec_name(
             ui->lineEdit_audioCodec->text().toStdString());
     else
-        encodeParameter->set_Audio_Codec_Name("");
-    encodeParameter->set_Audio_Bit_Rate(
+        encodeParameter->set_audio_codec_name("");
+    encodeParameter->set_audio_bit_rate(
         ui->lineEdit_audioBitRate->text().toLong());
     // close the sub window
     close();

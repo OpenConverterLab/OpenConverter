@@ -34,9 +34,9 @@ void Info::print_error(const char *msg, int ret) {
 }
 
 
-QuickInfo *Info::get_Quick_Info() { return quickInfo; }
+QuickInfo *Info::get_quick_info() { return quickInfo; }
 
-void Info::send_Info(char *src) {
+void Info::send_info(char *src) {
     init();
     int ret = 0;
     av_log_set_level(AV_LOG_DEBUG);

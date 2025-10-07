@@ -55,13 +55,13 @@ bmf_sdk::CBytes TranscoderBMF::encoder_callback(bmf_sdk::CBytes input) {
 bool TranscoderBMF::prepare_info(std::string input_path,
                                  std::string output_path) {
     // decoder init
-    if (encodeParameter->get_Video_Codec_Name() == "") {
+    if (encodeParameter->get_video_codec_name() == "") {
         copyVideo = true;
     } else {
         copyVideo = false;
     }
 
-    if (encodeParameter->get_Audio_Codec_Name() == "") {
+    if (encodeParameter->get_audio_codec_name() == "") {
         copyAudio = true;
     } else {
         copyAudio = false;
@@ -85,13 +85,13 @@ bool TranscoderBMF::prepare_info(std::string input_path,
 
     // encoder init
     nlohmann::json en_video_codec = {"codec",
-                                     encodeParameter->get_Video_Codec_Name()};
+                                     encodeParameter->get_video_codec_name()};
     nlohmann::json en_audio_codec = {"codec",
-                                     encodeParameter->get_Audio_Codec_Name()};
+                                     encodeParameter->get_audio_codec_name()};
     nlohmann::json en_video_bitrate = {"bit_rate",
-                                       encodeParameter->get_Video_Bit_Rate()};
+                                       encodeParameter->get_video_bit_rate()};
     nlohmann::json en_audio_bitrate = {"bit_rate",
-                                       encodeParameter->get_Audio_Bit_Rate()};
+                                       encodeParameter->get_audio_bit_rate()};
 
     encoder_para = {{"output_path", output_path},
                     {"video_params", {en_video_codec, en_video_bitrate}},

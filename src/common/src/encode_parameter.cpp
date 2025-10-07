@@ -12,7 +12,7 @@ EncodeParameter::EncodeParameter() {
     available = false;
 }
 
-void EncodeParameter::set_Qscale(int q) {
+void EncodeParameter::set_qscale(int q) {
     if (q < 0) {
         return;
     }
@@ -20,11 +20,11 @@ void EncodeParameter::set_Qscale(int q) {
     available = true;
 }
 
-int EncodeParameter::get_Qscale() { return qscale; }
+int EncodeParameter::get_qscale() { return qscale; }
 
-bool EncodeParameter::get_Available() { return available; }
+bool EncodeParameter::get_available() { return available; }
 
-void EncodeParameter::set_Video_Codec_Name(std::string vc) {
+void EncodeParameter::set_video_codec_name(std::string vc) {
     if (vc == "") {
         return;
     }
@@ -32,7 +32,7 @@ void EncodeParameter::set_Video_Codec_Name(std::string vc) {
     available = true;
 }
 
-void EncodeParameter::set_Audio_Codec_Name(std::string ac) {
+void EncodeParameter::set_audio_codec_name(std::string ac) {
     if (ac == "") {
         return;
     }
@@ -40,7 +40,7 @@ void EncodeParameter::set_Audio_Codec_Name(std::string ac) {
     available = true;
 }
 
-void EncodeParameter::set_Video_Bit_Rate(int64_t vbr) {
+void EncodeParameter::set_video_bit_rate(int64_t vbr) {
     if (vbr == 0) {
         return;
     }
@@ -48,7 +48,7 @@ void EncodeParameter::set_Video_Bit_Rate(int64_t vbr) {
     available = true;
 }
 
-void EncodeParameter::set_Audio_Bit_Rate(int64_t abr) {
+void EncodeParameter::set_audio_bit_rate(int64_t abr) {
     if (abr == 0) {
         return;
     }
@@ -56,12 +56,12 @@ void EncodeParameter::set_Audio_Bit_Rate(int64_t abr) {
     available = true;
 }
 
-std::string EncodeParameter::get_Video_Codec_Name() { return videoCodec; }
+std::string EncodeParameter::get_video_codec_name() { return videoCodec; }
 
-std::string EncodeParameter::get_Audio_Codec_Name() { return audioCodec; }
+std::string EncodeParameter::get_audio_codec_name() { return audioCodec; }
 
-int64_t EncodeParameter::get_Video_Bit_Rate() { return videoBitRate; }
+int64_t EncodeParameter::get_video_bit_rate() { return videoBitRate; }
 
-int64_t EncodeParameter::get_Audio_Bit_Rate() { return audioBitRate; }
+int64_t EncodeParameter::get_audio_bit_rate() { return audioBitRate; }
 
 EncodeParameter::~EncodeParameter() {}

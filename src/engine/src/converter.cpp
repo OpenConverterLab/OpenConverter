@@ -35,7 +35,7 @@ Converter::Converter(ProcessParameter *processParamter,
     this->encodeParameter = encodeParamter;
 }
 
-bool Converter::set_Transcoder(std::string transcoderName) {
+bool Converter::set_transcoder(std::string transcoderName) {
     if (transcoder) {
         delete transcoder;
         transcoder = NULL;
@@ -71,14 +71,14 @@ bool Converter::set_Transcoder(std::string transcoderName) {
     return true;
 }
 
-bool Converter::convert_Format(const std::string &src, const std::string &dst) {
-    if (encodeParameter->get_Video_Codec_Name() == "") {
+bool Converter::convert_format(const std::string &src, const std::string &dst) {
+    if (encodeParameter->get_video_codec_name() == "") {
         copyVideo = true;
     } else {
         copyVideo = false;
     }
 
-    if (encodeParameter->get_Audio_Codec_Name() == "") {
+    if (encodeParameter->get_audio_codec_name() == "") {
         copyAudio = true;
     } else {
         copyAudio = false;

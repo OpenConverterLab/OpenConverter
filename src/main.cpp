@@ -25,7 +25,7 @@ void printUsage(const char *programName) {
               << "  -h, --help               Show this help message\n";
 }
 
-bool parse_bitrate_minimal(const std::string &s, int64_t &out_bps) {
+bool parseBitrate(const std::string &s, int64_t &out_bps) {
 
     // split numeric prefix and optional single unit
     size_t pos = 0;
@@ -109,7 +109,7 @@ bool handleCLI(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "-b:v") == 0 ||
                    strcmp(argv[i], "--bitrate:video") == 0) {
             if (i + 1 < argc) {
-                if (!parse_bitrate_minimal(argv[++i], videoBitRate)) {
+                if (!parseBitrate(argv[++i], videoBitRate)) {
                     std::cerr << "Error: Invalid video bitrate format\n";
                     return false;
                 }
@@ -117,7 +117,7 @@ bool handleCLI(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "-b:a") == 0 ||
                    strcmp(argv[i], "--bitrate:audio") == 0) {
             if (i + 1 < argc) {
-                if (!parse_bitrate_minimal(argv[++i], audioBitRate)) {
+                if (!parseBitrate(argv[++i], audioBitRate)) {
                     std::cerr << "Error: Invalid audio bitrate format\n";
                     return false;
                 }
@@ -144,26 +144,26 @@ bool handleCLI(int argc, char *argv[]) {
 
     // Set codecs if specified
     if (!videoCodec.empty()) {
-        encodeParam->set_Video_Codec_Name(videoCodec);
+        encodeParam->set_video_codec_name(videoCodec);
     }
     if (qscale != -1) {
-        encodeParam->set_Qscale(qscale);
+        encodeParam->set_qscale(qscale);
     }
     if (!audioCodec.empty()) {
-        encodeParam->set_Audio_Codec_Name(audioCodec);
+        encodeParam->set_audio_codec_name(audioCodec);
     }
     if (videoBitRate != -1) {
-        encodeParam->set_Video_Bit_Rate(videoBitRate);
+        encodeParam->set_video_bit_rate(videoBitRate);
     }
     if (audioBitRate != -1) {
-        encodeParam->set_Audio_Bit_Rate(audioBitRate);
+        encodeParam->set_audio_bit_rate(audioBitRate);
     }
 
     // Create converter
     Converter converter(processParam, encodeParam);
 
     // Set transcoder
-    if (!converter.set_Transcoder(transcoderType)) {
+    if (!converter.set_transcoder(transcoderType)) {
         std::cerr << "Error: Failed to set transcoder\n";
         delete processParam;
         delete encodeParam;
@@ -171,7 +171,7 @@ bool handleCLI(int argc, char *argv[]) {
     }
 
     // Perform conversion
-    bool result = converter.convert_Format(inputFile, outputFile);
+    bool result = converter.convert_format(inputFile, outputFile);
     if (result) {
         std::cout << "Conversion completed successfully\n";
     } else {

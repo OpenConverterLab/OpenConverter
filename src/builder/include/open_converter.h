@@ -65,8 +65,8 @@ public:
     ~OpenConverter();
 
     // ProcessObserver interface implementation
-    void onProcessUpdate(double progress) override;
-    void onTimeUpdate(double timeRequired) override;
+    void on_process_update(double progress) override;
+    void on_time_update(double timeRequired) override;
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
@@ -74,11 +74,11 @@ protected:
     void changeEvent(QEvent *event) override;
 
 private slots:
-    void slotLanguageChanged(QAction *action);
-    void slotTranscoderChanged(QAction *action);
-    void apply_Pushed();
-    void convert_Pushed();
-    void encode_Setting_Pushed();
+    void SlotLanguageChanged(QAction *action);
+    void SlotTranscoderChanged(QAction *action);
+    void ApplyPushed();
+    void ConvertPushed();
+    void EncodeSettingPushed();
 
 private:
     Ui::OpenConverter *ui;
@@ -95,11 +95,11 @@ private:
     Converter *converter;
     QMessageBox *displayResult;
 
-    void loadLanguage(const QString &rLanguage);
-    void handle_Converter_Result(bool flag);
-    void info_Display(QuickInfo *info);
-    QString formatBitrate(int64_t bitsPerSec);
-    QString formatFrequency(int64_t hertz);
+    void LoadLanguage(const QString &rLanguage);
+    void HandleConverterResult(bool flag);
+    void InfoDisplay(QuickInfo *info);
+    QString FormatBitrate(int64_t bitsPerSec);
+    QString FormatFrequency(int64_t hertz);
 };
 
 #endif // OPEN_CONVERTER_H

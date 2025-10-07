@@ -43,19 +43,19 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     decoder->filename = input_path.c_str();
     encoder->filename = output_path.c_str();
 
-    if (encodeParameter->get_Video_Codec_Name() == "") {
+    if (encodeParameter->get_video_codec_name() == "") {
         copyVideo = true;
     } else {
         copyVideo = false;
     }
 
-    if (encodeParameter->get_Audio_Codec_Name() == "") {
+    if (encodeParameter->get_audio_codec_name() == "") {
         copyAudio = true;
     } else {
         copyAudio = false;
     }
 
-    if (!open_Media(decoder, encoder)) {
+    if (!open_media(decoder, encoder)) {
         flag = false;
         goto end;
     }
@@ -90,7 +90,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         }
     }
 
-    if (!prepare_Decoder(decoder)) {
+    if (!prepare_decoder(decoder)) {
         flag = false;
         goto end;
     }
@@ -103,12 +103,12 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
                 continue;
             }
             if (!copyVideo) {
-                ret = prepare_Encoder_Video(decoder, encoder);
+                ret = prepare_encoder_video(decoder, encoder);
                 if (ret < 0) {
                     goto end;
                 }
             } else {
-                prepare_Copy(encoder->fmtCtx, &encoder->videoStream,
+                prepare_copy(encoder->fmtCtx, &encoder->videoStream,
                              decoder->videoStream->codecpar);
             }
         } else if (decoder->fmtCtx->streams[i]->codecpar->codec_type ==
@@ -118,12 +118,12 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
                 continue;
             }
             if (!copyAudio) {
-                ret = prepare_Encoder_Audio(decoder, encoder);
+                ret = prepare_encoder_audio(decoder, encoder);
                 if (ret < 0) {
                     goto end;
                 }
             } else {
-                prepare_Copy(encoder->fmtCtx, &encoder->audioStream,
+                prepare_copy(encoder->fmtCtx, &encoder->audioStream,
                              decoder->audioStream->codecpar);
             }
         }
@@ -154,7 +154,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
 
             if (!copyVideo) {
-                transcode_Video(decoder, encoder);
+                transcode_video(decoder, encoder);
             } else {
                 remux(decoder->pkt, encoder->fmtCtx, decoder->videoStream,
                       encoder->videoStream);
@@ -170,7 +170,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             }
 
             if (!copyAudio) {
-                transcode_Audio(decoder, encoder);
+                transcode_audio(decoder, encoder);
             } else {
                 remux(decoder->pkt, encoder->fmtCtx, decoder->audioStream,
                       encoder->audioStream);
@@ -180,10 +180,10 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     if (!copyVideo) {
         encoder->frame = NULL;
         // write the buffered frame
-        encode_Video(decoder->videoStream, encoder, NULL);
+        encode_video(decoder->videoStream, encoder, NULL);
     }
 
-    processParameter->set_Process_Number(1, 1);
+    processParameter->set_process_number(1, 1);
 
     av_write_trailer(encoder->fmtCtx);
 
@@ -228,7 +228,7 @@ end:
     return flag;
 }
 
-bool TranscoderFFmpeg::open_Media(StreamContext *decoder,
+bool TranscoderFFmpeg::open_media(StreamContext *decoder,
                                   StreamContext *encoder) {
     int ret = -1;
     /* set the frameNumber to zero to avoid some bugs */
@@ -256,11 +256,11 @@ bool TranscoderFFmpeg::open_Media(StreamContext *decoder,
     return true;
 }
 
-bool TranscoderFFmpeg::encode_Video(AVStream *inStream, StreamContext *encoder,
+bool TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
                                     AVFrame *inputFrame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
-    if (encodeParameter->get_Qscale() != -1 && inputFrame) {
+    if (encodeParameter->get_qscale() != -1 && inputFrame) {
         inputFrame->quality = encoder->videoCodecCtx->global_quality;
         inputFrame->pict_type = AV_PICTURE_TYPE_NONE;
     }
@@ -300,7 +300,7 @@ end:
     return true;
 }
 
-bool TranscoderFFmpeg::encode_Audio(AVStream *in_stream, StreamContext *encoder,
+bool TranscoderFFmpeg::encode_audio(AVStream *in_stream, StreamContext *encoder,
                                     AVFrame *input_frame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
@@ -331,7 +331,7 @@ end:
     return 0;
 }
 
-bool TranscoderFFmpeg::transcode_Video(StreamContext *decoder,
+bool TranscoderFFmpeg::transcode_video(StreamContext *decoder,
                                        StreamContext *encoder) {
     int ret = -1;
 
@@ -350,7 +350,7 @@ bool TranscoderFFmpeg::transcode_Video(StreamContext *decoder,
             return -1;
         }
 
-        encode_Video(decoder->videoStream, encoder, decoder->frame);
+        encode_video(decoder->videoStream, encoder, decoder->frame);
 
         if (decoder->pkt) {
             av_packet_unref(decoder->pkt);
@@ -363,7 +363,7 @@ end:
     return 0;
 }
 
-bool TranscoderFFmpeg::transcode_Audio(StreamContext *decoder,
+bool TranscoderFFmpeg::transcode_audio(StreamContext *decoder,
                                        StreamContext *encoder) {
     int ret = avcodec_send_packet(decoder->audioCodecCtx, decoder->pkt);
     if (ret < 0) {
@@ -380,7 +380,7 @@ bool TranscoderFFmpeg::transcode_Audio(StreamContext *decoder,
             return ret;
         }
 
-        encode_Audio(decoder->audioStream, encoder, decoder->frame);
+        encode_audio(decoder->audioStream, encoder, decoder->frame);
 
         if (decoder->pkt) {
             av_packet_unref(decoder->pkt);
@@ -390,7 +390,7 @@ bool TranscoderFFmpeg::transcode_Audio(StreamContext *decoder,
     return 0;
 }
 
-bool TranscoderFFmpeg::prepare_Decoder(StreamContext *decoder) {
+bool TranscoderFFmpeg::prepare_decoder(StreamContext *decoder) {
     int ret = -1;
 
     for (int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
@@ -471,7 +471,7 @@ bool TranscoderFFmpeg::prepare_Decoder(StreamContext *decoder) {
     return true;
 }
 
-bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
+bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
                                              StreamContext *encoder) {
     int ret = -1;
 
@@ -481,8 +481,8 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
      * set the output file parameters
      */
     // find the encodec by Name
-    //  QByteArray ba = encodeParamter->get_Video_Codec_Name().toLocal8Bit();
-    std::string codec = encodeParameter->get_Video_Codec_Name();
+    //  QByteArray ba = encodeParamter->get_video_codec_name().toLocal8Bit();
+    std::string codec = encodeParameter->get_video_codec_name();
     encoder->videoCodec = avcodec_find_encoder_by_name(codec.c_str());
 
     // find the encodec by ID
@@ -512,8 +512,8 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
     if (decoder->videoCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
         encoder->videoCodecCtx->height = decoder->videoCodecCtx->height;
         encoder->videoCodecCtx->width = decoder->videoCodecCtx->width;
-        if (encodeParameter->get_Video_Bit_Rate())
-            encoder->videoCodecCtx->bit_rate = encodeParameter->get_Video_Bit_Rate();
+        if (encodeParameter->get_video_bit_rate())
+            encoder->videoCodecCtx->bit_rate = encodeParameter->get_video_bit_rate();
         else
             encoder->videoCodecCtx->bit_rate = decoder->videoCodecCtx->bit_rate;
         encoder->videoCodecCtx->sample_aspect_ratio =
@@ -531,7 +531,7 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
         // encoder->videoCodecCtx->max_b_frames = 0;
         encoder->videoCodecCtx->time_base = av_make_q(1, 60);
         encoder->videoCodecCtx->framerate = av_make_q(60, 1);
-        int qscale = encodeParameter->get_Qscale();
+        int qscale = encodeParameter->get_qscale();
         if (qscale != -1) {
             encoder->videoCodecCtx->flags |= AV_CODEC_FLAG_QSCALE;
             encoder->videoCodecCtx->global_quality = qscale * FF_QP2LAMBDA;
@@ -574,14 +574,14 @@ bool TranscoderFFmpeg::prepare_Encoder_Video(StreamContext *decoder,
     return true;
 }
 
-bool TranscoderFFmpeg::prepare_Encoder_Audio(StreamContext *decoder,
+bool TranscoderFFmpeg::prepare_encoder_audio(StreamContext *decoder,
                                              StreamContext *encoder) {
     int ret = -1;
     /**
      * set the output file parameters
      */
     // find the encodec by name
-    std::string codec = encodeParameter->get_Audio_Codec_Name();
+    std::string codec = encodeParameter->get_audio_codec_name();
     encoder->audioCodec = avcodec_find_encoder_by_name(codec.c_str());
     if (!encoder->audioCodec) {
         av_log(NULL, AV_LOG_ERROR, "Couldn't find audio codec: %s\n",
@@ -608,8 +608,8 @@ bool TranscoderFFmpeg::prepare_Encoder_Audio(StreamContext *decoder,
             decoder->audioCodecCtx->sample_rate;
         encoder->audioCodecCtx->sample_fmt =
             encoder->audioCodec->sample_fmts[0];
-        if (encodeParameter->get_Audio_Bit_Rate())
-            encoder->audioCodecCtx->bit_rate = encodeParameter->get_Audio_Bit_Rate();
+        if (encodeParameter->get_audio_bit_rate())
+            encoder->audioCodecCtx->bit_rate = encodeParameter->get_audio_bit_rate();
         else
             encoder->audioCodecCtx->bit_rate = decoder->audioCodecCtx->bit_rate;
         encoder->audioCodecCtx->time_base =
@@ -639,7 +639,7 @@ bool TranscoderFFmpeg::prepare_Encoder_Audio(StreamContext *decoder,
     return true;
 }
 
-bool TranscoderFFmpeg::prepare_Copy(AVFormatContext *avCtx, AVStream **stream,
+bool TranscoderFFmpeg::prepare_copy(AVFormatContext *avCtx, AVStream **stream,
                                     AVCodecParameters *codecParam) {
     *stream = avformat_new_stream(avCtx, NULL);
     avcodec_parameters_copy((*stream)->codecpar, codecParam);

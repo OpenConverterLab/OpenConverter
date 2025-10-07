@@ -72,9 +72,9 @@ public:
                 now - last_ui_update)
                 .count();
         if (time_since_last_ui_update >= 100) {
-            processParameter->set_Process_Number(processNumber);
+            processParameter->set_process_number(processNumber);
             if (frameNumber > 0 && frameTotalNumber > 0) {
-                processParameter->set_Time_Required(remainTime);
+                processParameter->set_time_required(remainTime);
             }
             last_ui_update = now;
         }

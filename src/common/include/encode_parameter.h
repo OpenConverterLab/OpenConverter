@@ -37,27 +37,27 @@ public:
     EncodeParameter();
     ~EncodeParameter();
 
-    bool get_Available();
+    bool get_available();
 
-    void set_Video_Codec_Name(std::string vc);
+    void set_video_codec_name(std::string vc);
 
-    void set_Qscale(int q);
+    void set_qscale(int q);
 
-    void set_Audio_Codec_Name(std::string ac);
+    void set_audio_codec_name(std::string ac);
 
-    void set_Video_Bit_Rate(int64_t vbr);
+    void set_video_bit_rate(int64_t vbr);
 
-    void set_Audio_Bit_Rate(int64_t abr);
+    void set_audio_bit_rate(int64_t abr);
 
-    std::string get_Video_Codec_Name();
+    std::string get_video_codec_name();
 
-    int get_Qscale();
+    int get_qscale();
 
-    std::string get_Audio_Codec_Name();
+    std::string get_audio_codec_name();
 
-    int64_t get_Video_Bit_Rate();
+    int64_t get_video_bit_rate();
 
-    int64_t get_Audio_Bit_Rate();
+    int64_t get_audio_bit_rate();
 };
 
 #endif // ENCODEPARAMETER_H

@@ -26,7 +26,7 @@ TranscoderFFTool::~TranscoderFFTool() {
 }
 
 // Helper function to escape file paths for Windows
-std::string escapeWindowsPath(const std::string &path) {
+std::string escape_windows_path(const std::string &path) {
     std::string escaped = path;
     size_t pos = 0;
     while ((pos = escaped.find("\\", pos)) != std::string::npos) {
@@ -38,23 +38,23 @@ std::string escapeWindowsPath(const std::string &path) {
 
 bool TranscoderFFTool::prepared_opt() {
 
-    if (encodeParameter->get_Video_Codec_Name() == "") {
+    if (encodeParameter->get_video_codec_name() == "") {
         copyVideo = true;
     } else {
         copyVideo = false;
     }
 
-    if (encodeParameter->get_Audio_Codec_Name() == "") {
+    if (encodeParameter->get_audio_codec_name() == "") {
         copyAudio = true;
     } else {
         copyAudio = false;
     }
 
     if (encodeParameter) {
-        videoCodec = encodeParameter->get_Video_Codec_Name();
-        videoBitRate = encodeParameter->get_Video_Bit_Rate();
-        audioCodec = encodeParameter->get_Audio_Codec_Name();
-        audioBitRate = encodeParameter->get_Audio_Bit_Rate();
+        videoCodec = encodeParameter->get_video_codec_name();
+        videoBitRate = encodeParameter->get_video_bit_rate();
+        audioCodec = encodeParameter->get_audio_codec_name();
+        audioBitRate = encodeParameter->get_audio_bit_rate();
     }
 
     return true;
@@ -69,8 +69,8 @@ bool TranscoderFFTool::transcode(std::string input_path,
 
 // Convert paths for Windows (escape backslashes)
 #ifdef _WIN32
-    input_path = escapeWindowsPath(input_path);
-    output_path = escapeWindowsPath(output_path);
+    input_path = escape_windows_path(input_path);
+    output_path = escape_windows_path(output_path);
 #endif
 
     // Build the FFmpeg command

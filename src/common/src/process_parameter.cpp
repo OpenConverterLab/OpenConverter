@@ -5,41 +5,41 @@ ProcessParameter::ProcessParameter() : processNumber(0), timeRequired(0.0) {}
 
 ProcessParameter::~ProcessParameter() = default;
 
-void ProcessParameter::set_Process_Number(int64_t frameNumber,
+void ProcessParameter::set_process_number(int64_t frameNumber,
                                           int64_t frameTotalNumnber) {
     if (frameTotalNumnber > 0) {
         double progress =
             static_cast<double>(frameNumber) / frameTotalNumnber * 100.0;
         processNumber = frameNumber;
-        notifyProcessUpdate(progress);
+        notify_process_update(progress);
     }
 }
 
-void ProcessParameter::set_Process_Number(int64_t processNumber) {
+void ProcessParameter::set_process_number(int64_t processNumber) {
     this->processNumber = processNumber;
-    notifyProcessUpdate(static_cast<double>(processNumber));
+    notify_process_update(static_cast<double>(processNumber));
 }
 
-double ProcessParameter::get_Process_Number() {
+double ProcessParameter::get_process_number() {
     return static_cast<double>(processNumber);
 }
 
-void ProcessParameter::set_Time_Required(double timeRequired) {
+void ProcessParameter::set_time_required(double timeRequired) {
     this->timeRequired = timeRequired;
-    notifyTimeUpdate(timeRequired);
+    notify_time_update(timeRequired);
 }
 
-double ProcessParameter::get_Time_Required() { return timeRequired; }
+double ProcessParameter::get_time_required() { return timeRequired; }
 
-ProcessParameter ProcessParameter::get_Process_Parmeter() { return *this; }
+ProcessParameter ProcessParameter::get_process_parmeter() { return *this; }
 
-void ProcessParameter::addObserver(std::shared_ptr<ProcessObserver> observer) {
+void ProcessParameter::add_observer(std::shared_ptr<ProcessObserver> observer) {
     if (observer) {
         observers.push_back(observer);
     }
 }
 
-void ProcessParameter::removeObserver(
+void ProcessParameter::remove_observer(
     std::shared_ptr<ProcessObserver> observer) {
     auto it = std::find(observers.begin(), observers.end(), observer);
     if (it != observers.end()) {
@@ -47,14 +47,14 @@ void ProcessParameter::removeObserver(
     }
 }
 
-void ProcessParameter::notifyProcessUpdate(double progress) {
+void ProcessParameter::notify_process_update(double progress) {
     for (const auto &observer : observers) {
-        observer->onProcessUpdate(progress);
+        observer->on_process_update(progress);
     }
 }
 
-void ProcessParameter::notifyTimeUpdate(double timeRequired) {
+void ProcessParameter::notify_time_update(double timeRequired) {
     for (const auto &observer : observers) {
-        observer->onTimeUpdate(timeRequired);
+        observer->on_time_update(timeRequired);
     }
 }
