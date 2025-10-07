@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <filesystem>
 
 #if defined(ENABLE_GUI)
     #include "builder/include/open_converter.h"
@@ -24,6 +25,47 @@ void printUsage(const char *programName) {
               << "  -h, --help               Show this help message\n";
 }
 
+bool parse_bitrate_minimal(const std::string &s, int64_t &out_bps) {
+
+    // split numeric prefix and optional single unit
+    size_t pos = 0;
+    while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) ++pos;
+    if (pos == 0) return false; // no digits
+
+    std::string numpart = s.substr(0, pos);
+
+    // optional single-unit
+    uint64_t multiplier = 1;
+    if (pos < s.size()) {
+        if (pos + 1 != s.size()) return false; // extra chars -> invalid
+        char u = s[pos];
+        if (u == 'k' || u == 'K') multiplier = 1000ULL;
+        else if (u == 'm' || u == 'M') multiplier = 1000ULL * 1000ULL;
+        else if (u == 'g' || u == 'G') multiplier = 1000ULL * 1000ULL * 1000ULL;
+        else return false; // unknown unit
+    }
+
+    // compute safe limit (max value of numeric part)
+    uint64_t limit = static_cast<uint64_t>(LLONG_MAX) / multiplier;
+    std::string limit_str = std::to_string(limit);
+
+    // strip leading zeros for a fair comparison (leave single zero)
+    size_t nz = 0;
+    while (nz + 1 < numpart.size() && numpart[nz] == '0') ++nz;
+    if (nz) numpart.erase(0, nz);
+
+    // overflow check by length/lexicographic compare
+    if (numpart.size() > limit_str.size()) return false;
+    if (numpart.size() == limit_str.size() && numpart > limit_str) return false;
+
+    // safe to convert with std::stoull (we validated digits and range)
+    unsigned long long value = std::stoull(numpart);
+    unsigned long long prod = value * multiplier;
+
+    out_bps = static_cast<int64_t>(prod);
+    return true;
+}
+
 bool handleCLI(int argc, char *argv[]) {
     if (argc < 3) {
         printUsage(argv[0]);
@@ -36,8 +78,8 @@ bool handleCLI(int argc, char *argv[]) {
     std::string videoCodec;
     std::string audioCodec;
     int qscale = -1;
-    int videoBitRate = -1;
-    int audioBitRate = -1;
+    int64_t videoBitRate = -1;
+    int64_t audioBitRate = -1;
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -67,17 +109,26 @@ bool handleCLI(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "-b:v") == 0 ||
                    strcmp(argv[i], "--bitrate:video") == 0) {
             if (i + 1 < argc) {
-                videoBitRate = std::stoi(argv[++i]);
+                if (!parse_bitrate_minimal(argv[++i], videoBitRate)) {
+                    std::cerr << "Error: Invalid video bitrate format\n";
+                    return false;
+                }
             }
         } else if (strcmp(argv[i], "-b:a") == 0 ||
                    strcmp(argv[i], "--bitrate:audio") == 0) {
             if (i + 1 < argc) {
-                audioBitRate = std::stoi(argv[++i]);
+                if (!parse_bitrate_minimal(argv[++i], audioBitRate)) {
+                    std::cerr << "Error: Invalid audio bitrate format\n";
+                    return false;
+                }
             }
-        } else if (inputFile.empty()) {
-            inputFile = argv[i];
-        } else if (outputFile.empty()) {
-            outputFile = argv[i];
+        } else {
+            if (!std::filesystem::exists(argv[i]) || !std::filesystem::is_regular_file(argv[i]))
+                std::cout << "Failed to parse argument: " << argv[i] << "\n";
+            else if (inputFile.empty())
+                inputFile = argv[i];
+            else if (outputFile.empty())
+                outputFile = argv[i];
         }
     }
 
