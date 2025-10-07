@@ -21,22 +21,11 @@ jobs:
         sudo apt install -y nasm yasm libx264-dev libx265-dev libnuma-dev
         git clone https://github.com/JackLau1222/bmf.git
 
-    - name: Cache FFmpeg build
-      uses: actions/cache@v3
-      with:
-        path: |
-          ffmpeg
-        key: ${{ runner.os }}-ffmpeg-${{ hashFiles('bmf/scripts/build_ffmpeg.sh') }}
-        restore-keys: |
-          ${{ runner.os }}-ffmpeg-
-
-    - name: Compile FFmpeg if not cached
+    - name: Get FFmpeg
       run: |
-        if [ ! -d "ffmpeg" ]; then
-          wget https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-03-31-17-28/ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
-          tar xJvf ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
-          ls ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4
-        fi
+        wget https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-03-31-17-28/ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
+        tar xJvf ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
+        ls ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4
         echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4" >> $GITHUB_ENV
 
     - name: Set up Qt
