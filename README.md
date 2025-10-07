@@ -1,8 +1,10 @@
 # OpenConverter
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=OpenConverterLab_OpenConverter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=OpenConverterLab_OpenConverter)
+
 ## 📢 Project Introduction
 
-OpenConverter is software built on the **FFmpeg** source code, **Qt** open-source framework, and **BMF framework**. It provides simple and user-friendly tools to convert, edit, and process audio and video files.
+OpenConverter is software built on the [**FFmpeg**](https://ffmpeg.org/), [**Qt**](https://www.qt.io/), and [**BMF**](https://babitmf.github.io). It provides simple and user-friendly tools to convert, edit, and process audio and video files.
 
 The converter includes the following main features:
 
