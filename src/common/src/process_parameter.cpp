@@ -33,14 +33,13 @@ double ProcessParameter::get_time_required() { return timeRequired; }
 
 ProcessParameter ProcessParameter::get_process_parmeter() { return *this; }
 
-void ProcessParameter::add_observer(std::shared_ptr<ProcessObserver> observer) {
+void ProcessParameter::add_observer(ProcessObserver* observer) {
     if (observer) {
         observers.push_back(observer);
     }
 }
 
-void ProcessParameter::remove_observer(
-    std::shared_ptr<ProcessObserver> observer) {
+void ProcessParameter::remove_observer(ProcessObserver* observer) {
     auto it = std::find(observers.begin(), observers.end(), observer);
     if (it != observers.end()) {
         observers.erase(it);
@@ -48,13 +47,17 @@ void ProcessParameter::remove_observer(
 }
 
 void ProcessParameter::notify_process_update(double progress) {
-    for (const auto &observer : observers) {
-        observer->on_process_update(progress);
+    for (auto observer : observers) {
+        if (observer) {
+            observer->on_process_update(progress);
+        }
     }
 }
 
 void ProcessParameter::notify_time_update(double timeRequired) {
-    for (const auto &observer : observers) {
-        observer->on_time_update(timeRequired);
+    for (auto observer : observers) {
+        if (observer) {
+            observer->on_time_update(timeRequired);
+        }
     }
 }

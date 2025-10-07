@@ -53,7 +53,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     ui->progressBar->setValue(0);
 
     // Register this class as an observer for process updates
-    processParameter->add_observer(std::shared_ptr<ProcessObserver>(this));
+    processParameter->add_observer(this);
 
     connect(ui->toolButton, &QToolButton::clicked, [&]() {
         QString filename = QFileDialog::getOpenFileName();
@@ -319,6 +319,11 @@ void OpenConverter::InfoDisplay(QuickInfo *quickInfo) {
 }
 
 OpenConverter::~OpenConverter() {
+    // Remove observer before deleting processParameter
+    if (processParameter) {
+        processParameter->remove_observer(this);
+    }
+
     delete ui;
     delete info;
     delete encodeParameter;

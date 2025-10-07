@@ -42,8 +42,8 @@ TEST_F(TranscoderTest, Remux) {
     ProcessParameter processParams;
 
     auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
-    converter->set_Transcoder("FFMPEG");
-    bool result = converter->convert_Format(inputFile, outputFile);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
 
     EXPECT_TRUE(result);
     EXPECT_TRUE(std::filesystem::exists(outputFile));
@@ -59,12 +59,12 @@ TEST_F(TranscoderTest, VideoTranscode) {
     ProcessParameter processParams;
 
     // Set video encoding parameters
-    encodeParams.set_Video_Codec_Name("libx264");
-    encodeParams.set_Video_Bit_Rate(2000000); // 2Mbps
+    encodeParams.set_video_codec_name("libx264");
+    encodeParams.set_video_bit_rate(2000000); // 2Mbps
 
     auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
-    converter->set_Transcoder("FFMPEG");
-    bool result = converter->convert_Format(inputFile, outputFile);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
 
     EXPECT_TRUE(result);
     EXPECT_TRUE(std::filesystem::exists(outputFile));
@@ -80,13 +80,13 @@ TEST_F(TranscoderTest, AudioTranscode) {
     ProcessParameter processParams;
 
     // Set audio encoding parameters
-    encodeParams.set_Video_Codec_Name(""); // Disable video
-    encodeParams.set_Audio_Codec_Name("aac");
-    encodeParams.set_Audio_Bit_Rate(128000); // 128kbps
+    encodeParams.set_video_codec_name(""); // Disable video
+    encodeParams.set_audio_codec_name("aac");
+    encodeParams.set_audio_bit_rate(128000); // 128kbps
 
     auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
-    converter->set_Transcoder("FFMPEG");
-    bool result = converter->convert_Format(inputFile, outputFile);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
 
     EXPECT_TRUE(result);
     EXPECT_TRUE(std::filesystem::exists(outputFile));

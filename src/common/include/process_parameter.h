@@ -35,13 +35,13 @@ public:
     ProcessParameter get_process_parmeter();
 
     // Observer management
-    void add_observer(std::shared_ptr<ProcessObserver> observer);
-    void remove_observer(std::shared_ptr<ProcessObserver> observer);
+    void add_observer(ProcessObserver* observer);
+    void remove_observer(ProcessObserver* observer);
 
 private:
     int64_t processNumber;
     double timeRequired;
-    std::vector<std::shared_ptr<ProcessObserver>> observers;
+    std::vector<ProcessObserver*> observers;
 
     void notify_process_update(double progress);
     void notify_time_update(double timeRequired);
