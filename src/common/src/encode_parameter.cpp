@@ -8,6 +8,9 @@ EncodeParameter::EncodeParameter() {
     audioBitRate = 0;
 
     qscale = -1;
+    pixelFormat = "";
+    width = 0;
+    height = 0;
 
     available = false;
 }
@@ -20,7 +23,28 @@ void EncodeParameter::set_qscale(int q) {
     available = true;
 }
 
+void EncodeParameter::set_pixel_format(std::string p) {
+    pixelFormat = p;
+    available = true;
+}
+
+void EncodeParameter::set_width(uint16_t w) {
+    width = w;
+    available = true;
+}
+
+void EncodeParameter::set_height(uint16_t h) {
+    height = h;
+    available = true;
+}
+
 int EncodeParameter::get_qscale() { return qscale; }
+
+std::string EncodeParameter::get_pixel_format() { return pixelFormat; }
+
+uint16_t EncodeParameter::get_width() { return width; }
+
+uint16_t EncodeParameter::get_height() { return height; }
 
 bool EncodeParameter::get_available() { return available; }
 

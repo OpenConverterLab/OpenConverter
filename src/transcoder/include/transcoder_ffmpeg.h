@@ -21,6 +21,8 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
 #include <libavutil/avutil.h>
 #include <libavutil/opt.h>
 };
@@ -36,6 +38,10 @@ public:
     bool transcode(std::string input_path, std::string output_path);
 
     bool open_media(StreamContext *decoder, StreamContext *encoder);
+
+    int init_filters(StreamContext *decoder, const char *filters_descr);
+
+    bool init_filters_wrapper(StreamContext *decoder);
 
     bool copy_frame(AVFrame *oldFrame, AVFrame *newFrame);
 
@@ -66,6 +72,10 @@ private:
     // encoder's parameters
     bool copyVideo;
     bool copyAudio;
+
+    AVFilterContext *buffersrc_ctx;
+    AVFilterContext *buffersink_ctx;
+    AVFilterGraph *filter_graph;
 
     // Progress tracking
     int64_t total_duration;   // Total duration in microseconds

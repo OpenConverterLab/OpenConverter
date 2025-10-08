@@ -36,6 +36,8 @@ void printUsage(const char *programName) {
               << "  -a, --audio-codec CODEC  Set audio codec\n"
               << "  -b:v, --bitrate:video BITRATE    Set bitrate for video codec\n"
               << "  -b:a, --bitrate:audio BITRATE    Set bitrate for audio codec\n"
+              << "  -pix_fmt PIX_FMT         Set pixel format for video\n"
+              << "  -scale SCALE(w)x(h)      Set scale for video (width x height)\n"
               << "  -h, --help               Show this help message\n";
 }
 
@@ -111,6 +113,9 @@ bool handleCLI(int argc, char *argv[]) {
     std::string videoCodec;
     std::string audioCodec;
     int qscale = -1;
+    std::string pixelFormat;
+    uint16_t width = 0;
+    uint16_t height = 0;
     int64_t videoBitRate = -1;
     int64_t audioBitRate = -1;
 
@@ -145,6 +150,22 @@ bool handleCLI(int argc, char *argv[]) {
                 if (!parseBitrate(argv[++i], videoBitRate)) {
                     std::cerr << "Error: Invalid video bitrate format\n";
                     return false;
+                }
+            }
+        } else if (strcmp(argv[i], "-pix_fmt") == 0 ||
+                   strcmp(argv[i], "--pixel-format") == 0) {
+            if (i + 1 < argc) {
+                pixelFormat = argv[++i];
+            }
+        } else if (strcmp(argv[i], "-scale") == 0 ||
+                   strcmp(argv[i], "--scale") == 0) {
+            if (i + 1 < argc) {
+                std::string scale = argv[++i];
+                if (scale.find("x") != std::string::npos) {
+                    std::string widthStr = scale.substr(0, scale.find("x"));
+                    std::string heightStr = scale.substr(scale.find("x") + 1);
+                    width = std::stoi(widthStr);
+                    height = std::stoi(heightStr);
                 }
             }
         } else if (strcmp(argv[i], "-b:a") == 0 ||
@@ -191,6 +212,15 @@ bool handleCLI(int argc, char *argv[]) {
     }
     if (qscale != -1) {
         encodeParam->set_qscale(qscale);
+    }
+    if (!pixelFormat.empty()) {
+        encodeParam->set_pixel_format(pixelFormat);
+    }
+    if (width > 0) {
+        encodeParam->set_width(width);
+    }
+    if (height > 0) {
+        encodeParam->set_height(height);
     }
     if (!audioCodec.empty()) {
         encodeParam->set_audio_codec_name(audioCodec);

@@ -1,4 +1,7 @@
 #include "../include/transcoder_ffmpeg.h"
+extern "C" {
+#include <libavutil/pixdesc.h>
+}
 #include <chrono>
 
 /* Receive pointers from converter */
@@ -8,6 +11,7 @@ TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
     frameTotalNumber = 0;
     total_duration = 0;
     current_duration = 0;
+    filter_graph = nullptr;
 }
 
 void TranscoderFFmpeg::print_error(const char *msg, int ret) {
@@ -27,6 +31,108 @@ void TranscoderFFmpeg::update_progress(int64_t current_pts,
         // and smoothing
         send_process_parameter(current_duration, total_duration);
     }
+}
+
+int TranscoderFFmpeg::init_filters(StreamContext *decoder, const char *filters_descr)
+{
+    char args[512];
+    int ret = 0;
+    const AVFilter *buffersrc  = avfilter_get_by_name("buffer");
+    const AVFilter *buffersink = avfilter_get_by_name("buffersink");
+    AVFilterInOut *outputs = avfilter_inout_alloc();
+    AVFilterInOut *inputs  = avfilter_inout_alloc();
+    AVRational time_base = decoder->fmtCtx->streams[decoder->videoIdx]->time_base;
+
+    filter_graph = avfilter_graph_alloc();
+    if (!outputs || !inputs || !filter_graph) {
+        ret = AVERROR(ENOMEM);
+        goto end;
+    }
+
+    /* buffer video source: the decoded frames from the decoder will be inserted here. */
+    snprintf(args, sizeof(args),
+            "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+            decoder->videoCodecCtx->width, decoder->videoCodecCtx->height, decoder->videoCodecCtx->pix_fmt,
+            time_base.num, time_base.den,
+            decoder->videoCodecCtx->sample_aspect_ratio.num, decoder->videoCodecCtx->sample_aspect_ratio.den);
+
+    ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
+                                       args, NULL, filter_graph);
+    if (ret < 0) {
+        av_log(NULL, AV_LOG_ERROR, "Cannot create buffer source\n");
+        goto end;
+    }
+
+    /* buffer video sink: to terminate the filter chain. */
+    ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
+                                       NULL, NULL, filter_graph);
+    if (ret < 0) {
+        av_log(NULL, AV_LOG_ERROR, "Cannot create buffer sink\n");
+        goto end;
+    }
+
+    /*
+     * Set the endpoints for the filter graph. The filter_graph will
+     * be linked to the graph described by filters_descr.
+     */
+
+    /*
+     * The buffer source output must be connected to the input pad of
+     * the first filter described by filters_descr; since the first
+     * filter input label is not specified, it is set to "in" by
+     * default.
+     */
+    outputs->name       = av_strdup("in");
+    outputs->filter_ctx = buffersrc_ctx;
+    outputs->pad_idx    = 0;
+    outputs->next       = NULL;
+
+    /*
+     * The buffer sink input must be connected to the output pad of
+     * the last filter described by filters_descr; since the last
+     * filter output label is not specified, it is set to "out" by
+     * default.
+     */
+    inputs->name       = av_strdup("out");
+    inputs->filter_ctx = buffersink_ctx;
+    inputs->pad_idx    = 0;
+    inputs->next       = NULL;
+
+    if ((ret = avfilter_graph_parse_ptr(filter_graph, filters_descr,
+                                    &inputs, &outputs, NULL)) < 0)
+        goto end;
+
+    if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0)
+        goto end;
+
+end:
+    avfilter_inout_free(&inputs);
+    avfilter_inout_free(&outputs);
+
+    return ret;
+}
+
+
+bool TranscoderFFmpeg::init_filters_wrapper(StreamContext *decoder)
+{
+    std::string d = "";
+    const char *filters_descr;
+    std::string pixelFormat = encodeParameter->get_pixel_format();
+    uint16_t width = encodeParameter->get_width();
+    uint16_t height = encodeParameter->get_height();
+    if (!pixelFormat.empty()) {
+        d += "format=" + pixelFormat;
+    }
+    if (width > 0 && height > 0) {
+        if (!d.empty()) {
+            d += ",";
+        }
+        d += "scale=" + std::to_string(width) + ":" + std::to_string(height);
+    }
+    if (d.empty())
+        return true;// No filters to apply
+    filters_descr = d.c_str();
+    return init_filters(decoder, filters_descr) < 0 ? false : true;
 }
 
 bool TranscoderFFmpeg::transcode(std::string input_path,
@@ -91,6 +197,11 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     }
 
     if (!prepare_decoder(decoder)) {
+        flag = false;
+        goto end;
+    }
+
+    if (!init_filters_wrapper(decoder)) {
         flag = false;
         goto end;
     }
@@ -235,6 +346,23 @@ bool TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
                                     AVFrame *inputFrame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
+
+    if (filter_graph) {
+        /* push the decoded frame into the filtergraph */
+        if (av_buffersrc_add_frame_flags(buffersrc_ctx, inputFrame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0) {
+            av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
+            return false;
+        }
+        /* pull filtered frames from the filtergraph */
+        while (1) {
+            ret = av_buffersink_get_frame(buffersink_ctx, inputFrame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+                break;
+            if (ret < 0)
+                goto end;
+        }
+    }
+
     if (encodeParameter->get_qscale() != -1 && inputFrame) {
         inputFrame->quality = encoder->videoCodecCtx->global_quality;
         inputFrame->pict_type = AV_PICTURE_TYPE_NONE;
@@ -485,8 +613,18 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
                    "keyint=60:min-keyint=60:scenecut=0", 0);
 
     if (decoder->videoCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
-        encoder->videoCodecCtx->height = decoder->videoCodecCtx->height;
-        encoder->videoCodecCtx->width = decoder->videoCodecCtx->width;
+        uint16_t width = encodeParameter->get_width();
+        uint16_t height = encodeParameter->get_height();
+        std::string pixelFormat = encodeParameter->get_pixel_format();
+        if (width > 0)
+            encoder->videoCodecCtx->width = width;
+        else
+            encoder->videoCodecCtx->width = decoder->videoCodecCtx->width;
+        if (height > 0)
+            encoder->videoCodecCtx->height = height;
+        else
+            encoder->videoCodecCtx->height = decoder->videoCodecCtx->height;
+
         if (encodeParameter->get_video_bit_rate())
             encoder->videoCodecCtx->bit_rate = encodeParameter->get_video_bit_rate();
         else
@@ -495,8 +633,9 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
             decoder->videoCodecCtx->sample_aspect_ratio;
         // the AVCodecContext don't have framerate
         // outCodecCtx->time_base = av_inv_q(inCodecCtx->framerate);
-
-        if (decoder->videoCodecCtx->pix_fmt != AV_PIX_FMT_NONE)
+        if (!pixelFormat.empty())
+            encoder->videoCodecCtx->pix_fmt = av_get_pix_fmt(pixelFormat.c_str());
+        else if (decoder->videoCodecCtx->pix_fmt != AV_PIX_FMT_NONE)
             encoder->videoCodecCtx->pix_fmt = decoder->videoCodecCtx->pix_fmt;
         else if (encoder->videoCodec->pix_fmts)
             encoder->videoCodecCtx->pix_fmt = encoder->videoCodec->pix_fmts[0];

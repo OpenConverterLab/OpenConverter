@@ -28,6 +28,10 @@ private:
     std::string videoCodec;
     int64_t videoBitRate;
 
+    std::string pixelFormat;
+    uint16_t width;
+    uint16_t height;
+
     std::string audioCodec;
     int64_t audioBitRate;
 
@@ -43,6 +47,12 @@ public:
 
     void set_qscale(int q);
 
+    void set_pixel_format(std::string p);
+
+    void set_width(uint16_t w);
+
+    void set_height(uint16_t h);
+
     void set_audio_codec_name(std::string ac);
 
     void set_video_bit_rate(int64_t vbr);
@@ -52,6 +62,12 @@ public:
     std::string get_video_codec_name();
 
     int get_qscale();
+
+    std::string get_pixel_format();
+
+    uint16_t get_width();
+
+    uint16_t get_height();
 
     std::string get_audio_codec_name();
 
