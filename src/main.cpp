@@ -11,6 +11,20 @@
     #include <QApplication>
 #endif
 
+namespace fs = std::filesystem;
+
+static bool is_existing_regular_file(const fs::path &p) {
+    return fs::exists(p) && fs::is_regular_file(p);
+}
+
+static bool is_valid_output_candidate(const fs::path &p) {
+    if (!p.has_filename()) return false;        // reject directory-only paths
+    fs::path parent = p.parent_path();
+    if (parent.empty()) parent = fs::current_path();
+    if (fs::exists(p)) return !fs::is_directory(p);        // existing file ok (not a dir)
+    return fs::exists(parent) && fs::is_directory(parent); // non-existing file OK if parent dir exists
+}
+
 void printUsage(const char *programName) {
     std::cout << "Usage: " << programName
               << " [options] input_file output_file\n"
@@ -64,6 +78,25 @@ bool parseBitrate(const std::string &s, int64_t &out_bps) {
 
     out_bps = static_cast<int64_t>(prod);
     return true;
+}
+
+static bool confirm_overwrite(const fs::path &p) {
+    std::string line;
+    while (true) {
+        std::cout << "Output file already exists: '" << p.string()
+                  << "'. Overwrite? (y/n): " << std::flush;
+
+        if (!std::getline(std::cin, line)) {
+            // EOF or error — treat as "no"
+            std::cerr << "\nNo response (EOF). Aborting.\n";
+            return false;
+        }
+
+        if (line == "y" || line == "yes") return true;
+        if (line == "n" || line == "no")  return false;
+
+        std::cout << "Please answer 'y' (yes) or 'n' (no).\n";
+    }
 }
 
 bool handleCLI(int argc, char *argv[]) {
@@ -123,12 +156,22 @@ bool handleCLI(int argc, char *argv[]) {
                 }
             }
         } else {
-            if (!std::filesystem::exists(argv[i]) || !std::filesystem::is_regular_file(argv[i]))
-                std::cout << "Failed to parse argument: " << argv[i] << "\n";
-            else if (inputFile.empty())
-                inputFile = argv[i];
-            else if (outputFile.empty())
-                outputFile = argv[i];
+            // positional argument: validate as input (existing) or output (candidate)
+            fs::path p(argv[i]);
+
+            if (inputFile.empty() && (is_existing_regular_file(p))) {
+                inputFile = p.string();
+            } else if (outputFile.empty() && is_valid_output_candidate(p) && !inputFile.empty()) {
+                if (fs::exists(p))
+                    if (!confirm_overwrite(p))
+                        return false;
+                outputFile = p.string();
+            } else {
+                // This catches stray tokens like "b" "0" as well as duplicates/ambiguous args
+                std::cerr << "Invalid or unexpected argument: '" << argv[i] << "'\n";
+                printUsage(argv[0]);
+                return false;
+            }
         }
     }
 
