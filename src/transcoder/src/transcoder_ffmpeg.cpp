@@ -265,6 +265,8 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
 
             if (!copyVideo) {
+                av_packet_rescale_ts(decoder->pkt, decoder->videoStream->time_base,
+                                     decoder->videoCodecCtx->time_base);
                 transcode_video(decoder, encoder);
             } else {
                 remux(decoder->pkt, encoder->fmtCtx, decoder->videoStream,
@@ -281,6 +283,8 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             }
 
             if (!copyAudio) {
+                av_packet_rescale_ts(decoder->pkt, decoder->audioStream->time_base,
+                                     decoder->audioCodecCtx->time_base);
                 transcode_audio(decoder, encoder);
             } else {
                 remux(decoder->pkt, encoder->fmtCtx, decoder->audioStream,
@@ -383,12 +387,8 @@ bool TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
         }
 
         output_packet->stream_index = encoder->videoStream->index;
-        output_packet->duration = encoder->videoStream->time_base.den /
-                                  encoder->videoStream->time_base.num /
-                                  inStream->avg_frame_rate.num *
-                                  inStream->avg_frame_rate.den;
 
-        av_packet_rescale_ts(output_packet, inStream->time_base,
+        av_packet_rescale_ts(output_packet, encoder->videoCodecCtx->time_base,
                              encoder->videoStream->time_base);
 
         ret = av_interleaved_write_frame(encoder->fmtCtx, output_packet);
@@ -421,7 +421,7 @@ bool TranscoderFFmpeg::encode_audio(AVStream *in_stream, StreamContext *encoder,
             return -1;
         }
         output_packet->stream_index = encoder->audioStream->index;
-        av_packet_rescale_ts(output_packet, in_stream->time_base,
+        av_packet_rescale_ts(output_packet, encoder->audioCodecCtx->time_base,
                              encoder->audioStream->time_base);
         ret = av_interleaved_write_frame(encoder->fmtCtx, output_packet);
         if (ret < 0) {
@@ -527,6 +527,7 @@ bool TranscoderFFmpeg::prepare_decoder(StreamContext *decoder) {
         }
         avcodec_parameters_to_context(decoder->videoCodecCtx,
                                     decoder->videoStream->codecpar);
+        decoder->videoCodecCtx->framerate = av_guess_frame_rate(decoder->fmtCtx, decoder->videoStream, NULL);
         // bind decoder and decoder context
         ret = avcodec_open2(decoder->videoCodecCtx, decoder->videoCodec, NULL);
         if (ret < 0) {
@@ -604,18 +605,12 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
         return false;
     }
 
-    av_opt_set(encoder->videoCodecCtx->priv_data, "preset", "medium", 0);
-    if (encoder->videoCodecCtx->codec_id == AV_CODEC_ID_H264)
-        av_opt_set(encoder->videoCodecCtx->priv_data, "x264-params",
-                   "keyint=60:min-keyint=60:scenecut=0:force-cfr=1", 0);
-    else if (encoder->videoCodecCtx->codec_id == AV_CODEC_ID_HEVC)
-        av_opt_set(encoder->videoCodecCtx->priv_data, "x265-params",
-                   "keyint=60:min-keyint=60:scenecut=0", 0);
 
     if (decoder->videoCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
         uint16_t width = encodeParameter->get_width();
         uint16_t height = encodeParameter->get_height();
         std::string pixelFormat = encodeParameter->get_pixel_format();
+        AVRational tpf = {decoder->videoCodecCtx->ticks_per_frame, 1};
         if (width > 0)
             encoder->videoCodecCtx->width = width;
         else
@@ -628,7 +623,7 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
         if (encodeParameter->get_video_bit_rate())
             encoder->videoCodecCtx->bit_rate = encodeParameter->get_video_bit_rate();
         else
-            encoder->videoCodecCtx->bit_rate = decoder->videoCodecCtx->bit_rate;
+            encoder->videoCodecCtx->bit_rate = 0; // use default rate control(crf)
         encoder->videoCodecCtx->sample_aspect_ratio =
             decoder->videoCodecCtx->sample_aspect_ratio;
         // the AVCodecContext don't have framerate
@@ -643,8 +638,7 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
             encoder->videoCodecCtx->pix_fmt = AV_PIX_FMT_NONE;
 
         // encoder->videoCodecCtx->max_b_frames = 0;
-        encoder->videoCodecCtx->time_base = av_make_q(1, 60);
-        encoder->videoCodecCtx->framerate = av_make_q(60, 1);
+        encoder->videoCodecCtx->time_base = av_inv_q(av_mul_q(decoder->videoCodecCtx->framerate, tpf));
         int qscale = encodeParameter->get_qscale();
         if (qscale != -1) {
             encoder->videoCodecCtx->flags |= AV_CODEC_FLAG_QSCALE;
@@ -664,12 +658,6 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
         av_log(NULL, AV_LOG_ERROR, "Failed allocating output stream\n");
         return false;
     }
-    encoder->videoStream->r_frame_rate =
-        av_make_q(60, 1); // For setting real frame rate
-    encoder->videoStream->avg_frame_rate =
-        av_make_q(60, 1); // For setting average frame rate
-    // the input file's time_base is wrong
-    encoder->videoStream->time_base = encoder->videoCodecCtx->time_base;
 
     ret = avcodec_parameters_from_context(encoder->videoStream->codecpar,
                                           encoder->videoCodecCtx);
@@ -678,6 +666,7 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
                "Failed to copy encoder parameters to output stream #\n");
         return false;
     }
+    encoder->videoStream->time_base = encoder->videoCodecCtx->time_base;
 
     // oFmtCtx->oformat = av_guess_format(NULL, dst, NULL);
     // if(!oFmtCtx->oformat)
