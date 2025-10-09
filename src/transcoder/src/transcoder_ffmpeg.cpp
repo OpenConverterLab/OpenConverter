@@ -646,6 +646,9 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
         }
     }
 
+    if (encoder->fmtCtx->oformat->flags & AVFMT_GLOBALHEADER)
+        encoder->videoCodecCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
     // bind codec and codec context
     ret = avcodec_open2(encoder->videoCodecCtx, encoder->videoCodec, NULL);
     if (ret < 0) {
