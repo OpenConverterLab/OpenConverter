@@ -130,7 +130,7 @@ bool TranscoderFFmpeg::init_filters_wrapper(StreamContext *decoder)
         d += "scale=" + std::to_string(width) + ":" + std::to_string(height);
     }
     if (d.empty())
-        return true;// No filters to apply
+        d = "null";
     filters_descr = d.c_str();
     return init_filters(decoder, filters_descr) < 0 ? false : true;
 }
@@ -351,20 +351,18 @@ bool TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
 
-    if (filter_graph) {
-        /* push the decoded frame into the filtergraph */
-        if (av_buffersrc_add_frame_flags(buffersrc_ctx, inputFrame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0) {
-            av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
-            return false;
-        }
-        /* pull filtered frames from the filtergraph */
-        while (1) {
-            ret = av_buffersink_get_frame(buffersink_ctx, inputFrame);
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-                break;
-            if (ret < 0)
-                goto end;
-        }
+    /* push the decoded frame into the filtergraph */
+    if (av_buffersrc_add_frame_flags(buffersrc_ctx, inputFrame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0) {
+        av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
+        return false;
+    }
+    /* pull filtered frames from the filtergraph */
+    while (1) {
+        ret = av_buffersink_get_frame(buffersink_ctx, inputFrame);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            break;
+        if (ret < 0)
+            goto end;
     }
 
     if (encodeParameter->get_qscale() != -1 && inputFrame) {
