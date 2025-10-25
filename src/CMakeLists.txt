@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10...3.24)
 
-project(OpenConverter VERSION 1.4.2 LANGUAGES CXX)
+project(OpenConverter VERSION 1.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -237,12 +237,32 @@ if(ENABLE_GUI)
 
     # Add GUI-specific sources
     list(APPEND GUI_SOURCES
+        ${CMAKE_SOURCE_DIR}/builder/src/base_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/placeholder_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/info_view_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/compress_picture_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/extract_audio_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/cut_video_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/simple_video_player.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/remux_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/transcode_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/shared_data.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/encode_setting.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.cpp
     )
 
     # Add GUI-specific headers
     list(APPEND GUI_HEADERS
+        ${CMAKE_SOURCE_DIR}/builder/include/base_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/placeholder_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/info_view_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/compress_picture_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/extract_audio_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/cut_video_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/simple_video_player.h
+        ${CMAKE_SOURCE_DIR}/builder/include/remux_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/transcode_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/shared_data.h
         ${CMAKE_SOURCE_DIR}/builder/include/encode_setting.h
         ${CMAKE_SOURCE_DIR}/builder/include/open_converter.h
     )

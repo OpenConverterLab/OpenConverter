@@ -21,6 +21,7 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QApplication>
+#include <QButtonGroup>
 #include <QByteArray>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -37,6 +38,7 @@
 #include <QMimeData>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QStackedWidget>
 #include <QStatusBar>
 #include <QString>
 #include <QThread>
@@ -57,6 +59,13 @@ QT_END_NAMESPACE
 
 class EncodeSetting;
 class Converter;
+class BasePage;
+class InfoViewPage;
+class CompressPicturePage;
+class ExtractAudioPage;
+class RemuxPage;
+class TranscodePage;
+class SharedData;
 
 class OpenConverter : public QMainWindow, public ProcessObserver {
     Q_OBJECT
@@ -77,9 +86,7 @@ protected:
 private slots:
     void SlotLanguageChanged(QAction *action);
     void SlotTranscoderChanged(QAction *action);
-    void ApplyPushed();
-    void ConvertPushed();
-    void EncodeSettingPushed();
+    void OnNavigationButtonClicked(int pageIndex);
 
 private:
     Ui::OpenConverter *ui;
@@ -98,11 +105,24 @@ private:
     QActionGroup *transcoderGroup;
     QActionGroup *languageGroup;
 
+    // Navigation and page management
+    QButtonGroup *navButtonGroup;
+    QList<BasePage *> pages;
+    SharedData *sharedData;
+
     void LoadLanguage(const QString &rLanguage);
     void HandleConverterResult(bool flag);
     void InfoDisplay(QuickInfo *info);
     QString FormatBitrate(int64_t bitsPerSec);
     QString FormatFrequency(int64_t hertz);
+
+    // Page management methods
+    void InitializePages();
+    void SwitchToPage(int pageIndex);
+
+public:
+    // Shared data across pages
+    SharedData* GetSharedData() const;
 };
 
 #endif // OPEN_CONVERTER_H

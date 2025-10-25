@@ -1,3 +1,20 @@
+/*
+ * Copyright 2025 Jack Lau
+ * Email: jacklau1222gm@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
@@ -28,8 +45,17 @@
 #include "../../common/include/process_observer.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
+#include "../include/base_page.h"
+#include "../include/compress_picture_page.h"
+#include "../include/cut_video_page.h"
 #include "../include/encode_setting.h"
+#include "../include/extract_audio_page.h"
+#include "../include/info_view_page.h"
 #include "../include/open_converter.h"
+#include "../include/placeholder_page.h"
+#include "../include/remux_page.h"
+#include "../include/shared_data.h"
+#include "../include/transcode_page.h"
 #include "ui_open_converter.h"
 
 #include <iostream>
@@ -53,10 +79,11 @@ OpenConverter::OpenConverter(QWidget *parent)
     setWindowTitle("OpenConverter");
     setWindowIcon(QIcon(":/icon/icon.png"));
 
-    ui->progressBar->setValue(0);
-
     // Register this class as an observer for process updates
     processParameter->add_observer(this);
+
+    // Initialize shared data
+    sharedData = new SharedData();
 
 #ifdef ENABLE_FFMPEG
     QAction *act_ffmpeg = new QAction(tr("FFMPEG"), this);
@@ -108,19 +135,27 @@ OpenConverter::OpenConverter(QWidget *parent)
         }
     }
 
-    connect(ui->toolButton, &QToolButton::clicked, [&]() {
-        QString filename = QFileDialog::getOpenFileName();
-        ui->lineEdit_inputFile->setText(filename);
-    });
+    // Initialize navigation button group
+    navButtonGroup = new QButtonGroup(this);
+    navButtonGroup->addButton(ui->btnInfoView, 0);
+    navButtonGroup->addButton(ui->btnCompressPicture, 1);
+    navButtonGroup->addButton(ui->btnExtractAudio, 2);
+    navButtonGroup->addButton(ui->btnCutVideo, 3);
+    navButtonGroup->addButton(ui->btnRemux, 4);
+    navButtonGroup->addButton(ui->btnTranscode, 5);
 
-    connect(ui->pushButton_apply, SIGNAL(clicked(bool)), this,
-            SLOT(ApplyPushed()));
+    // Connect navigation button group
+    connect(navButtonGroup, QOverload<int>::of(&QButtonGroup::idClicked),
+            this, &OpenConverter::OnNavigationButtonClicked);
 
-    connect(ui->pushButton_convert, SIGNAL(clicked(bool)), this,
-            SLOT(ConvertPushed()));
+    // Initialize pages
+    InitializePages();
 
-    connect(ui->pushButton_encodeSetting, SIGNAL(clicked(bool)), this,
-            SLOT(EncodeSettingPushed()));
+    // Set first page as active
+    if (!pages.isEmpty()) {
+        ui->btnInfoView->setChecked(true);
+        SwitchToPage(0);
+    }
 
     connect(ui->menuLanguage, SIGNAL(triggered(QAction *)), this,
             SLOT(SlotLanguageChanged(QAction *)));
@@ -138,7 +173,18 @@ void OpenConverter::dragEnterEvent(QDragEnterEvent *event) {
 void OpenConverter::dropEvent(QDropEvent *event) {
     if (event->mimeData()->hasUrls()) {
         const QUrl url = event->mimeData()->urls().first();
-        ui->lineEdit_inputFile->setText(url.toLocalFile());
+        QString filePath = url.toLocalFile();
+
+        // Get current page and handle file drop
+        int currentIndex = ui->stackedWidget->currentIndex();
+        if (currentIndex >= 0 && currentIndex < pages.size()) {
+            // If it's the InfoViewPage, handle the drop
+            InfoViewPage *infoPage = qobject_cast<InfoViewPage *>(pages[currentIndex]);
+            if (infoPage) {
+                infoPage->HandleFileDrop(filePath);
+            }
+        }
+
         event->acceptProposedAction();
     }
 }
@@ -217,19 +263,8 @@ void OpenConverter::LoadLanguage(const QString &rLanguage) {
 
 void OpenConverter::changeEvent(QEvent *event) {
     if (event->type() == QEvent::LanguageChange) {
-        // save the current input and output folders
-        currentInputPath = ui->lineEdit_inputFile->text();
-        currentOutputPath = ui->lineEdit_outputFile->text();
-
         ui->retranslateUi(this);
-
-        // restore the input and output folders
-        ui->lineEdit_inputFile->setText(currentInputPath);
-        ui->lineEdit_outputFile->setText(currentOutputPath);
-
-        if (info && info->get_quick_info()) {
-            InfoDisplay(info->get_quick_info()); // Convert QuickInfo to string
-        }
+        // TODO: Update language in pages
     }
     QMainWindow::changeEvent(event);
 }
@@ -237,7 +272,6 @@ void OpenConverter::changeEvent(QEvent *event) {
 void OpenConverter::HandleConverterResult(bool flag) {
     if (flag) {
         displayResult->setText("Convert success!");
-        ui->label_timeRequiredResult->setText(QString("%1s").arg(0));
     } else {
         displayResult->setText("Convert failed! Please ensure the file path "
                                "and encode setting is correct");
@@ -246,76 +280,11 @@ void OpenConverter::HandleConverterResult(bool flag) {
 }
 
 void OpenConverter::on_process_update(double progress) {
-    int process = progress;
-    ui->progressBar->setValue(process);
-    ui->label_processResult->setText(QString("%1%").arg(process));
+    // This can be implemented later for progress tracking in pages
 }
 
 void OpenConverter::on_time_update(double timeRequired) {
-    ui->label_timeRequiredResult->setText(
-        QString("%1s").arg(QString::number(timeRequired, 'f', 2)));
-}
-
-void OpenConverter::EncodeSettingPushed() { encodeSetting->show(); }
-
-void OpenConverter::ApplyPushed() {
-
-    QByteArray ba = ui->lineEdit_inputFile->text().toLocal8Bit();
-    char *src = ba.data();
-    // get info by Decapsulation
-    info->send_info(src);
-
-    // display info on window
-    InfoDisplay(info->get_quick_info());
-}
-
-void OpenConverter::ConvertPushed() {
-
-    // get the input file path
-    QString inputFilePath = ui->lineEdit_inputFile->text();
-    // check the input file path
-    if (inputFilePath.isEmpty()) {
-        displayResult->setText("Please select an input file.");
-        displayResult->exec();
-        return;
-    }
-    // get the output file path
-    QString outputFilePath = ui->lineEdit_outputFile->text();
-    // if the output file path is empty, generate a default output filename
-    if (outputFilePath.isEmpty()) {
-        QFileInfo fileInfo(inputFilePath);
-        outputFilePath = fileInfo.absolutePath() + "/" +
-                         fileInfo.completeBaseName() + "-oc-output." +
-                         fileInfo.suffix();
-        ui->lineEdit_outputFile->setText(outputFilePath);
-    }
-
-    // Check if the input file and output file are the same
-    if (inputFilePath == outputFilePath) {
-        displayResult->setText(
-            "The input file can't be the same as the output file!");
-        displayResult->exec();
-        return;
-    }
-
-    // Start conversion in worker thread
-
-    // capture everything you need by value
-    auto *thread = QThread::create([=]() {
-        bool ok = converter->convert_format(inputFilePath.toStdString(),
-                                            outputFilePath.toStdString());
-        // When done, marshal back to the GUI thread:
-        QMetaObject::invokeMethod(
-            this, [this, ok]() { HandleConverterResult(ok); },
-            Qt::QueuedConnection);
-    });
-
-    // clean up the QThread object once it finishes
-    connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-
-    // fire off
-    thread->start();
-    ;
+    // This can be implemented later for time tracking in pages
 }
 
 // automatically select kbps/Mbps
@@ -339,33 +308,51 @@ QString OpenConverter::FormatFrequency(int64_t hertz) {
 }
 
 void OpenConverter::InfoDisplay(QuickInfo *quickInfo) {
-    if (!quickInfo)
-        return;
+    // This can be implemented later for displaying info in pages
+}
 
-    // video
-    ui->label_videoStreamResult->setText(
-        QString("%1").arg(quickInfo->videoIdx));
-    ui->label_widthResult->setText(QString("%1 px").arg(quickInfo->width));
-    ui->label_heightResult->setText(QString("%1 px").arg(quickInfo->height));
-    ui->label_colorSpaceResult->setText(
-        QString("%1").arg(QString::fromStdString(quickInfo->colorSpace)));
-    ui->label_videoCodecResult->setText(
-        QString("%1").arg(QString::fromStdString(quickInfo->videoCodec)));
-    ui->label_videoBitRateResult->setText(
-        FormatBitrate(quickInfo->videoBitRate));
-    ui->label_frameRateResult->setText(
-        QString("%1 fps").arg(quickInfo->frameRate, 0, 'f', 2));
-    // audio
-    ui->label_audioStreamResult->setText(
-        QString("%1").arg(quickInfo->audioIdx));
-    ui->label_audioCodecResult->setText(
-        QString("%1").arg(QString::fromStdString(quickInfo->audioCodec)));
-    ui->label_audioBitRateResult->setText(
-        FormatBitrate(quickInfo->audioBitRate));
-    ui->label_channelsResult->setText(QString("%1").arg(quickInfo->channels));
-    ui->label_sampleFmtResult->setText(
-        QString("%1").arg(QString::fromStdString(quickInfo->sampleFmt)));
-    ui->label_sampleRateResult->setText(FormatFrequency(quickInfo->sampleRate));
+void OpenConverter::InitializePages() {
+    // Create pages for each navigation item
+    // Common section
+    pages.append(new InfoViewPage(this));
+    pages.append(new CompressPicturePage(this));
+    pages.append(new ExtractAudioPage(this));
+    pages.append(new CutVideoPage(this));
+    // Advanced section
+    pages.append(new RemuxPage(this));
+    pages.append(new TranscodePage(this));
+
+    // Add all pages to the stacked widget
+    for (BasePage *page : pages) {
+        ui->stackedWidget->addWidget(page);
+    }
+}
+
+void OpenConverter::SwitchToPage(int pageIndex) {
+    if (pageIndex < 0 || pageIndex >= pages.size()) {
+        return;
+    }
+
+    // Deactivate current page
+    int currentIndex = ui->stackedWidget->currentIndex();
+    if (currentIndex >= 0 && currentIndex < pages.size()) {
+        pages[currentIndex]->OnPageDeactivated();
+    }
+
+    // Switch to new page
+    ui->stackedWidget->setCurrentIndex(pageIndex);
+    pages[pageIndex]->OnPageActivated();
+
+    // Update window title
+    setWindowTitle(QString("OpenConverter - %1").arg(pages[pageIndex]->GetPageTitle()));
+}
+
+SharedData* OpenConverter::GetSharedData() const {
+    return sharedData;
+}
+
+void OpenConverter::OnNavigationButtonClicked(int pageIndex) {
+    SwitchToPage(pageIndex);
 }
 
 OpenConverter::~OpenConverter() {
@@ -374,6 +361,10 @@ OpenConverter::~OpenConverter() {
         processParameter->remove_observer(this);
     }
 
+    // Clean up pages
+    qDeleteAll(pages);
+    pages.clear();
+
     delete ui;
     delete info;
     delete encodeParameter;
@@ -381,6 +372,7 @@ OpenConverter::~OpenConverter() {
     delete processParameter;
     delete converter;
     delete displayResult;
+    delete sharedData;
 }
 
 #include "open_converter.moc"

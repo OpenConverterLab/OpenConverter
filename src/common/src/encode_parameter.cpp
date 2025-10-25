@@ -1,3 +1,20 @@
+/*
+ * Copyright 2025 Jack Lau
+ * Email: jacklau1222gm@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "../include/encode_parameter.h"
 
 EncodeParameter::EncodeParameter() {
@@ -11,6 +28,11 @@ EncodeParameter::EncodeParameter() {
     pixelFormat = "";
     width = 0;
     height = 0;
+
+    preset = "";
+
+    startTime = -1.0;
+    endTime = -1.0;
 
     available = false;
 }
@@ -87,5 +109,26 @@ std::string EncodeParameter::get_audio_codec_name() { return audioCodec; }
 int64_t EncodeParameter::get_video_bit_rate() { return videoBitRate; }
 
 int64_t EncodeParameter::get_audio_bit_rate() { return audioBitRate; }
+
+void EncodeParameter::set_preset(std::string p) {
+    preset = p;
+    available = true;
+}
+
+std::string EncodeParameter::get_preset() { return preset; }
+
+void EncodeParameter::SetStartTime(double t) {
+    startTime = t;
+    available = true;
+}
+
+void EncodeParameter::SetEndTime(double t) {
+    endTime = t;
+    available = true;
+}
+
+double EncodeParameter::GetStartTime() { return startTime; }
+
+double EncodeParameter::GetEndTime() { return endTime; }
 
 EncodeParameter::~EncodeParameter() {}
