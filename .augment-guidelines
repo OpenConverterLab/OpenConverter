@@ -1,0 +1,459 @@
+# OpenConverter - Augment Guidelines
+
+## Project Overview
+
+OpenConverter is a multimedia conversion application built on **FFmpeg**, **Qt**, and **BMF** frameworks. It provides simple and user-friendly tools to convert, edit, and process audio and video files with both GUI and CLI support.
+
+**Key Technologies:**
+- **FFmpeg**: Core multimedia processing library
+- **Qt Framework**: Cross-platform GUI framework (Qt 5.14.2+)
+- **BMF Framework**: Advanced multimedia processing framework (optional)
+- **C/C++**: Primary programming languages
+- **CMake**: Build system
+
+**Main Features:**
+1. Video/audio codec conversion (H.264, H.265, AAC, AC3, etc.)
+2. Lossless multimedia remuxing (container format changes without re-encoding)
+3. Media file information display (resolution, codec, bitrate, etc.)
+4. Image compression with format/quality control
+5. Audio extraction from video files
+6. Video cutting with precise time selection
+7. Runtime switching of transcoding cores (FFmpeg API, FFTool, BMF)
+8. Smooth progress tracking with accurate time estimation
+9. Both GUI and CLI interfaces
+
+## Project Structure
+
+```
+OpenConverter/
+├── src/
+│   ├── main.cpp                 # Entry point (CLI + GUI)
+│   ├── CMakeLists.txt           # Build configuration
+│   ├── builder/                 # GUI components (Qt-based)
+│   │   ├── include/             # Header files for GUI
+│   │   └── src/                 # Implementation files for GUI
+│   ├── common/                  # Shared utilities and data structures
+│   │   ├── include/             # Common headers
+│   │   └── src/                 # Common implementations
+│   ├── engine/                  # Conversion engine
+│   │   ├── include/             # Engine headers
+│   │   └── src/                 # Engine implementations
+│   ├── transcoder/              # Transcoding backends
+│   │   ├── include/             # Transcoder headers
+│   │   └── src/                 # Transcoder implementations
+│   ├── resources/               # Qt resources (UI files, translations)
+│   └── tests/                   # Unit tests
+├── doc/                         # Documentation
+├── img/                         # Images for README
+├── tool/                        # Development tools (formatting, testing)
+├── build/                       # Build output directory
+└── README.md                    # Project documentation
+```
+
+### Directory Responsibilities
+
+- **`src/builder/`**: Qt-based GUI components (pages, widgets, UI logic)
+- **`src/common/`**: Shared data structures (EncodeParameter, ProcessParameter, Info, etc.)
+- **`src/engine/`**: Conversion orchestration (Converter class)
+- **`src/transcoder/`**: Backend implementations (FFmpeg, FFTool, BMF)
+- **`src/resources/`**: Qt UI files (.ui), translations (.ts, .qm), resource files (.qrc)
+
+## Architecture
+
+### Core Components
+
+1. **Converter** (`src/engine/`)
+   - Orchestrates the conversion process
+   - Manages transcoder selection and initialization
+   - Coordinates between parameters and transcoder backends
+
+2. **Transcoder** (`src/transcoder/`)
+   - Abstract base class for transcoding backends
+   - Implementations: TranscoderFFmpeg, TranscoderFFTool, TranscoderBMF
+   - Handles actual media processing (decode, encode, filter, mux)
+
+3. **EncodeParameter** (`src/common/`)
+   - Stores encoding settings (codec, bitrate, resolution, pixel format, etc.)
+   - Used by all transcoding operations
+
+4. **ProcessParameter** (`src/common/`)
+   - Manages progress tracking and observer notifications
+   - Implements observer pattern for UI updates
+
+5. **Info** (`src/common/`)
+   - Extracts and stores media file information
+   - Uses FFmpeg to probe media files
+
+6. **GUI Pages** (`src/builder/`)
+   - BasePage: Abstract base class for all pages
+   - InfoViewPage: Display media information
+   - CompressPicturePage: Image compression
+   - ExtractAudioPage: Extract audio from video
+   - CutVideoPage: Cut video with time selection
+   - RemuxPage: Change container format without re-encoding
+   - TranscodePage: Full transcoding with codec/quality control
+
+### Design Patterns
+
+- **Observer Pattern**: ProcessParameter notifies observers (UI) of progress updates
+- **Strategy Pattern**: Transcoder backends (FFmpeg, FFTool, BMF) are interchangeable
+- **Factory Pattern**: Converter creates appropriate transcoder based on selection
+- **Page Pattern**: GUI uses page-based navigation with BasePage abstraction
+
+## Coding Style
+
+### Naming Conventions
+
+**CRITICAL: Different naming conventions for different directories!**
+
+#### For `src/common/`, `src/engine/`, `src/builder/`:
+- **Functions/Methods**: `PascalCase` (e.g., `SetTranscoder`, `GetVideoCodec`, `OnButtonClicked`)
+- **Classes**: `PascalCase` (e.g., `Converter`, `EncodeParameter`, `BasePage`)
+- **Member variables**: `camelCase` (e.g., `videoCodec`, `processParameter`, `inputFilePath`)
+- **Local variables**: `camelCase` (e.g., `filePath`, `codecName`, `frameCount`)
+
+#### For `src/transcoder/`:
+- **Functions/Methods**: `snake_case` (e.g., `transcode`, `get_video_codec`, `set_audio_bitrate`)
+- **Classes**: `PascalCase` (e.g., `Transcoder`, `TranscoderFFmpeg`)
+- **Member variables**: `camelCase` or `snake_case` (be consistent within file)
+- **Local variables**: `snake_case` (e.g., `input_path`, `codec_name`, `frame_count`)
+
+### Code Formatting
+
+- **Indentation**: 4 spaces (no tabs)
+- **Line length**: Prefer ≤100 characters, max 120 characters
+- **Braces**: Opening brace on same line for functions/classes
+  ```cpp
+  void MyFunction() {
+      // code
+  }
+  ```
+- **Pointer/Reference**: Attach to type, not variable
+  ```cpp
+  int *ptr;        // Correct
+  int* ptr;        // Also acceptable
+  int * ptr;       // Avoid
+  ```
+- **Whitespace**: No trailing whitespace, single newline at end of file
+
+### File Headers
+
+All source files (doesn't inlcude FFmpeg code) should include Apache 2.0 license header:
+```cpp
+/*
+ * Copyright 2025 Jack Lau
+ * Email: jacklau1222gm@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+```
+
+**Note**: `src/transcoder/` (use FFmpeg code) should include LGPL 2.1 license (check existing files for header format)
+
+### Qt-Specific Guidelines
+
+1. **Signals and Slots**:
+   - Signal names: `PascalCase` without prefix (e.g., `PositionChanged`, `DurationChanged`)
+   - Slot names: `On` + `PascalCase` (e.g., `OnButtonClicked`, `OnPositionChanged`)
+
+2. **Memory Management**:
+   - Use Qt parent-child ownership when possible
+   - Widgets with parent are automatically deleted
+   - Use `deleteLater()` for QObject deletion in event loop
+
+3. **Threading**:
+   - Long operations MUST run in separate threads (use `QThread::create()`)
+   - UI updates MUST use `QMetaObject::invokeMethod()` with `Qt::QueuedConnection`
+   - Never block the main/UI thread
+
+4. **Includes**:
+   - Qt headers: `<QWidget>`, `<QString>`, etc.
+   - Project headers: Use relative paths `"../include/header.h"`
+   - FFmpeg headers: Wrap in `extern "C" { }`
+
+### FFmpeg-Specific Guidelines
+
+1. **Error Handling**:
+   - Always check return values from FFmpeg functions
+   - Use `< 0` for error detection
+   - Log errors with descriptive messages
+
+2. **Memory Management**:
+   - Always free allocated FFmpeg structures
+   - Use `avformat_close_input()`, `avcodec_free_context()`, `av_frame_free()`, etc.
+   - Free in reverse order of allocation
+
+3. **Time Handling**:
+   - Use stream `time_base` for accurate timestamp conversion
+   - Use `av_rescale_q()` for time base conversion
+   - Duration in `AV_TIME_BASE` units (microseconds) or stream time base
+
+4. **Threading**:
+   - FFmpeg operations are generally not thread-safe
+   - Use mutex locks when accessing FFmpeg contexts from multiple threads
+
+## Development Workflow
+
+### Building the Project
+
+```bash
+# Create build directory
+mkdir build && cd build
+
+# Configure with CMake
+cmake ../src -DENABLE_GUI=ON
+
+# Build
+make -j4
+
+# Run
+./OpenConverter              # GUI mode
+./OpenConverter --help       # CLI mode
+```
+
+### Adding a New GUI Page
+
+1. Create header in `src/builder/include/your_page.h`
+2. Create implementation in `src/builder/src/your_page.cpp`
+3. Inherit from `BasePage`
+4. Implement required virtual methods: `GetPageTitle()`, `OnPageActivated()`, `OnPageDeactivated()`
+5. Add to `CMakeLists.txt` in `GUI_SOURCES` and `GUI_HEADERS`
+6. Register in `OpenConverter::InitializePages()`
+7. Add navigation button in UI file
+
+### Adding a New Transcoder Backend
+
+1. Create header in `src/transcoder/include/transcoder_yourname.h`
+2. Create implementation in `src/transcoder/src/transcoder_yourname.cpp`
+3. Inherit from `Transcoder` base class
+4. Implement `transcode(input_path, output_path)` method
+5. Add to `Converter::set_transcoder()` switch statement
+6. Update CMakeLists.txt with conditional compilation flags
+
+## Testing
+
+- Unit tests in `src/tests/`
+- Use Google Test framework (if available)
+- Test transcoder backends independently
+- Test GUI pages with sample media files
+
+## Common Pitfalls
+
+1. **Mixing naming conventions**: Remember `PascalCase` for builder/common/engine, `snake_case` for transcoder
+2. **Blocking UI thread**: Always use `QThread` for long operations
+3. **Memory leaks**: Always free FFmpeg structures and Qt objects without parents
+4. **Incorrect time base**: Use stream-specific time base, not `AV_TIME_BASE` for seeking
+5. **Missing error checks**: Always check FFmpeg function return values
+
+## GUI Architecture Details
+
+### Page-Based Navigation System
+
+The GUI uses a **stacked widget** approach with page-based navigation:
+
+1. **OpenConverter** (Main Window)
+   - Contains `QStackedWidget` for page switching
+   - Manages `QButtonGroup` for navigation buttons
+   - Handles page lifecycle (activation/deactivation)
+
+2. **BasePage** (Abstract Base Class)
+   - All pages inherit from `BasePage`
+   - Virtual methods: `OnPageActivated()`, `OnPageDeactivated()`, `GetPageTitle()`
+   - Provides consistent interface for page management
+
+3. **SharedData** (Singleton Pattern)
+   - Shares file paths between pages
+   - Auto-generates output paths with pattern: `input_path-oc-operation.ext`
+   - Prevents redundant file selection across pages
+
+### Common UI Patterns
+
+#### Standard Page Layout
+```
+┌─────────────────────────────────────┐
+│ Top Section: Input File Selection  │
+├─────────────────────────────────────┤
+│ Middle Section: Operation-Specific │
+│ (Player, Settings, Preview, etc.)  │
+├─────────────────────────────────────┤
+│ Bottom Section: Output & Action    │
+│ (Output path, Convert/Cut button)  │
+├─────────────────────────────────────┤
+│ Progress Section (hidden by default)│
+│ (Progress bar, time remaining)     │
+└─────────────────────────────────────┘
+```
+
+#### Threading Pattern for Long Operations
+```cpp
+// Standard pattern used in all conversion pages
+void SomePage::OnConvertClicked() {
+    // 1. Validate inputs
+    if (!ValidateInputs()) return;
+
+    // 2. Create parameters
+    EncodeParameter *encodeParam = new EncodeParameter();
+    ProcessParameter *processParam = new ProcessParameter();
+    // ... configure parameters
+
+    // 3. Show progress UI
+    progressBar->setVisible(true);
+    convertButton->setEnabled(false);
+
+    // 4. Run conversion in separate thread
+    QThread *thread = QThread::create([this, encodeParam, processParam]() {
+        Converter converter;
+        bool success = converter.Convert(encodeParam, processParam);
+
+        // 5. Update UI on main thread
+        QMetaObject::invokeMethod(this, [this, success]() {
+            OnConversionFinished(success);
+        }, Qt::QueuedConnection);
+
+        delete encodeParam;
+        delete processParam;
+    });
+
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+```
+
+### Custom Widgets
+
+#### SimpleVideoPlayer
+- **Purpose**: FFmpeg-based video player for Cut Video page
+- **Base Class**: `QLabel` (displays frames as QPixmap)
+- **Key Features**:
+  - Direct FFmpeg decoding (no Qt Multimedia dependency)
+  - Supports all FFmpeg codecs
+  - Real-time playback at ~30 fps
+  - Accurate seeking with stream time base
+  - Thread-safe with QMutex
+
+**Usage Example**:
+```cpp
+SimpleVideoPlayer *player = new SimpleVideoPlayer(parent);
+player->LoadVideo("/path/to/video.mp4");
+player->Play();
+player->Seek(5000); // Seek to 5 seconds
+```
+
+## Implementation Best Practices
+
+### 1. Non-Blocking UI Operations
+
+**Problem**: FFmpeg operations (opening files, seeking, decoding) can block the UI thread.
+
+**Solution**:
+- Limit FFmpeg analysis time: `formatCtx->max_analyze_duration = 5 * AV_TIME_BASE`
+- Defer heavy operations: Use `QTimer::singleShot(0, ...)` for deferred execution
+- Use worker threads for long operations (conversion, cutting, etc.)
+
+### 2. Progress Reporting
+
+**Pattern**: Observer pattern with thread-safe UI updates
+
+```cpp
+// In transcoder (worker thread)
+void Transcoder::send_process_parameter(int64_t current, int64_t total) {
+    double progress = (current * 100.0) / total;
+    processParameter->notify_observers_progress(progress);
+}
+
+// In GUI page (implements ProcessObserver)
+void SomePage::on_process_update(double progress) {
+    QMetaObject::invokeMethod(this, [this, progress]() {
+        progressBar->setValue(static_cast<int>(progress));
+    }, Qt::QueuedConnection);
+}
+```
+
+### 3. Time Base Conversion
+
+**Always use stream-specific time base for accurate seeking**:
+
+```cpp
+// CORRECT: Use stream time base
+AVStream *stream = formatCtx->streams[streamIndex];
+int64_t timestamp = av_rescale_q(positionMs, AVRational{1, 1000}, stream->time_base);
+av_seek_frame(formatCtx, streamIndex, timestamp, AVSEEK_FLAG_BACKWARD);
+
+// WRONG: Using AV_TIME_BASE for seeking (inaccurate)
+int64_t timestamp = (positionMs * AV_TIME_BASE) / 1000;
+av_seek_frame(formatCtx, -1, timestamp, AVSEEK_FLAG_BACKWARD);
+```
+
+### 4. Memory Management Checklist
+
+**FFmpeg Resources** (must be freed manually):
+- `avformat_close_input(&formatCtx)`
+- `avcodec_free_context(&codecCtx)`
+- `av_frame_free(&frame)`
+- `av_packet_free(&packet)`
+- `sws_freeContext(swsCtx)`
+- `av_free(buffer)`
+
+**Qt Resources** (auto-deleted if parent is set):
+- Widgets with parent: Auto-deleted
+- Widgets without parent: Must call `delete` or `deleteLater()`
+- QThread: Connect `finished()` signal to `deleteLater()`
+
+### 5. Error Handling Pattern
+
+```cpp
+// FFmpeg operations
+if (avformat_open_input(&formatCtx, path, nullptr, nullptr) < 0) {
+    qDebug() << "Failed to open file:" << path;
+    // Clean up and return
+    return false;
+}
+
+// Qt operations
+if (!file.open(QIODevice::ReadOnly)) {
+    QMessageBox::warning(this, "Error", "Failed to open file");
+    return;
+}
+```
+
+## Special Considerations
+
+### Video Player Implementation
+
+The `SimpleVideoPlayer` widget demonstrates several advanced techniques:
+
+1. **Deferred Frame Decoding**: First frame decode happens asynchronously to avoid blocking
+2. **Accurate Seeking**: Decodes frames sequentially after seeking to reach exact position
+3. **Mutex Protection**: All FFmpeg operations protected by QMutex for thread safety
+4. **Signal-Based Updates**: Emits `PositionChanged` and `DurationChanged` signals
+
+### Transcoder Implementations
+
+- **TranscoderFFmpeg**: Uses FFmpeg API directly (most flexible)
+- **TranscoderFFTool**: Wraps FFmpeg command-line tool (simpler but less control)
+- **TranscoderBMF**: Uses BMF framework (advanced features, optional dependency)
+
+All transcoders implement the same interface, allowing runtime switching.
+
+## Resources
+
+- FFmpeg Documentation: https://ffmpeg.org/documentation.html
+- Qt Documentation: https://doc.qt.io/
+- BMF Framework: https://babitmf.github.io
+- Learn FFmpeg the Hard Way: https://github.com/TSGU-OSC/Learn_FFmpeg_the_Hard_Way
+
+## Contact
+
+- Author: Jack Lau
+- Email: jacklau1222gm@gmail.com
+- License: Apache 2.0 (most files), LGPL 2.1 (transcoder directory)

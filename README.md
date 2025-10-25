@@ -11,9 +11,12 @@ The converter includes the following main features:
 1. Supports changing video codecs for encoding (e.g., libx264, libx265).
 2. Supports lossless multimedia conversion.
 3. Displays information about video and audio streams in multimedia files.
-4. Shows smooth progress tracking and accurate remaining time while converting files.
-5. Allows runtime switching of transcoding cores (FFmpeg, FFTool, BMF).
-6. Provides both GUI and Command Line Interface (CLI) for flexible usage.
+4. Compresses images with format and quality control.
+5. Extracts audio from video files.
+6. Cuts video with built-in FFmpeg-based player and precise time selection.
+7. Shows smooth progress tracking and accurate remaining time while converting files.
+8. Allows runtime switching of transcoding cores (FFmpeg, FFTool, BMF).
+9. Provides both GUI and Command Line Interface (CLI) for flexible usage.
 
 This project is developed using the [Qt framework](./doc/Qt.md), the FFmpeg library, and the [BMF framework](https://github.com/BabitMF/bmf).
 
@@ -25,9 +28,11 @@ After running OpenConverter, you can see and use the following features:
 
 <div align="center">
 
-<img src="./img/open_converter.png" style="width:100%">
+<img src="./img/info_view.png" style="width:80%">
 
-<img src="./img/encode_setting.png" style="width:50%">
+<img src="./img/compress_picture.png" style="width:80%">
+
+<img src="./img/cut_video.png" style="width:80%">
 
 </div>
 
@@ -43,7 +48,28 @@ The converter also supports lossless multimedia conversion. This means you can d
 
 This converter can display detailed information about video and audio streams, including resolution, frame rate, bitrate, etc. This helps you understand the properties of multimedia files for making appropriate adjustments during conversion.
 
-### 4. Advanced Progress Tracking and Time Estimation
+### 4. Image Compression
+
+Compress images with customizable settings:
+- Format conversion (JPEG, PNG, WebP, BMP)
+- Resolution adjustment
+- Quality control (1-31)
+
+### 5. Audio Extraction
+
+Extract audio from video files with codec selection:
+- Multiple audio formats (MP3, AAC, AC3, FLAC, WAV)
+- Bitrate control
+
+### 6. Video Cutting
+
+Cut video segments with precision:
+- Built-in FFmpeg-based video player
+- Real-time playback and seeking
+- Accurate start/end time selection
+- Supports all FFmpeg-compatible formats
+
+### 7. Advanced Progress Tracking and Time Estimation
 
 During file conversion, the player provides:
 - Smooth progress updates with UI-friendly refresh rates
@@ -51,7 +77,7 @@ During file conversion, the player provides:
 - Real-time progress percentage and duration tracking
 - Detailed console output for monitoring conversion status
 
-### 5. Runtime Switching of Transcoding Cores (FFmpeg, FFTool, BMF)
+### 8. Runtime Switching of Transcoding Cores (FFmpeg, FFTool, BMF)
 
 The software offers three different transcoding cores to choose from:
 - FFmpeg API-based core for direct library integration
@@ -59,7 +85,7 @@ The software offers three different transcoding cores to choose from:
 - BMF framework-based core for advanced processing
 You can also selectively compile these cores based on your needs.
 
-### 6. Command Line Interface (CLI) Support
+### 9. Command Line Interface (CLI) Support
 
 Usage in non-GUI mode:
 ```bash
@@ -68,8 +94,13 @@ Usage in non-GUI mode:
 Options:
   -t, --transcoder TYPE    Set transcoder type (FFMPEG, BMF, FFTOOL)
   -v, --video-codec CODEC  Set video codec
+  -q, --qscale QSCALE      Set qscale for video codec
   -a, --audio-codec CODEC  Set audio codec
-  -h, --help               Show help message
+  -b:v, --bitrate:video BITRATE    Set bitrate for video codec
+  -b:a, --bitrate:audio BITRATE    Set bitrate for audio codec
+  -pix_fmt PIX_FMT         Set pixel format for video
+  -scale SCALE(w)x(h)      Set scale for video (width x height)
+  -h, --help               Show this help message
 ```
 
 Example:
