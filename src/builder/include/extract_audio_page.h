@@ -19,14 +19,20 @@
 #define EXTRACT_AUDIO_PAGE_H
 
 #include "base_page.h"
+#include "../../common/include/process_observer.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QThread>
 
-class ExtractAudioPage : public BasePage {
+class EncodeParameter;
+class ProcessParameter;
+
+class ExtractAudioPage : public BasePage, public ProcessObserver {
     Q_OBJECT
 
 public:
@@ -37,15 +43,25 @@ public:
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Extract Audio"; }
 
+    // ProcessObserver interface
+    void on_process_update(double progress) override;
+    void on_time_update(double timeRequired) override;
+
 private slots:
     void OnBrowseInputClicked();
     void OnBrowseOutputClicked();
     void OnFormatChanged(int index);
     void OnExtractClicked();
+    void OnExtractFinished(bool success);
+
+signals:
+    void ExtractComplete(bool success);
 
 private:
     void SetupUI();
     void UpdateOutputPath();
+    void RunExtractInThread(const QString &inputPath, const QString &outputPath,
+                            EncodeParameter *encodeParam, ProcessParameter *processParam);
 
     // Input section
     QGroupBox *inputGroupBox;
@@ -60,6 +76,10 @@ private:
     QComboBox *codecComboBox;
     QLabel *bitrateLabel;
     QSpinBox *bitrateSpinBox;
+
+    // Progress section
+    QProgressBar *progressBar;
+    QLabel *progressLabel;
 
     // Output section
     QGroupBox *outputGroupBox;

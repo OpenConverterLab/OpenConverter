@@ -19,19 +19,25 @@
 #define REMUX_PAGE_H
 
 #include "base_page.h"
+#include "../../common/include/process_observer.h"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QThread>
 #include <QVBoxLayout>
 #include <QVector>
 
 extern "C" {
 #include <libavformat/avformat.h>
 }
+
+class EncodeParameter;
+class ProcessParameter;
 
 struct StreamInfo {
     int index;
@@ -41,7 +47,7 @@ struct StreamInfo {
     QCheckBox *checkbox;
 };
 
-class RemuxPage : public BasePage {
+class RemuxPage : public BasePage, public ProcessObserver {
     Q_OBJECT
 
 public:
@@ -52,11 +58,19 @@ public:
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Remux"; }
 
+    // ProcessObserver interface
+    void on_process_update(double progress) override;
+    void on_time_update(double timeRequired) override;
+
 private slots:
     void OnBrowseInputClicked();
     void OnBrowseOutputClicked();
     void OnFormatChanged(int index);
     void OnRemuxClicked();
+    void OnRemuxFinished(bool success);
+
+signals:
+    void RemuxComplete(bool success);
 
 private:
     void SetupUI();
@@ -65,6 +79,8 @@ private:
     void ClearStreams();
     QString GetStreamTypeName(int codecType);
     QString FormatBitrate(int64_t bitsPerSec);
+    void RunRemuxInThread(const QString &inputPath, const QString &outputPath,
+                          EncodeParameter *encodeParam, ProcessParameter *processParam);
 
     // Input section
     QGroupBox *inputGroupBox;
@@ -82,6 +98,10 @@ private:
     QGroupBox *settingsGroupBox;
     QLabel *formatLabel;
     QComboBox *formatComboBox;
+
+    // Progress section
+    QProgressBar *progressBar;
+    QLabel *progressLabel;
 
     // Output section
     QGroupBox *outputGroupBox;

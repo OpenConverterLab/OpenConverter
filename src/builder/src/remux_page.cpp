@@ -34,6 +34,7 @@ extern "C" {
 
 RemuxPage::RemuxPage(QWidget *parent) : BasePage(parent) {
     SetupUI();
+    connect(this, &RemuxPage::RemuxComplete, this, &RemuxPage::OnRemuxFinished);
 }
 
 RemuxPage::~RemuxPage() {
@@ -131,6 +132,18 @@ void RemuxPage::SetupUI() {
     settingsLayout->addWidget(formatComboBox, 0, 1);
 
     mainLayout->addWidget(settingsGroupBox);
+
+    // Progress Section
+    progressBar = new QProgressBar(this);
+    progressBar->setRange(0, 100);
+    progressBar->setValue(0);
+    progressBar->setVisible(false);
+
+    progressLabel = new QLabel("", this);
+    progressLabel->setVisible(false);
+
+    mainLayout->addWidget(progressBar);
+    mainLayout->addWidget(progressLabel);
 
     // Output File Section
     outputGroupBox = new QGroupBox("Output File", this);
@@ -238,32 +251,85 @@ void RemuxPage::OnRemuxClicked() {
     EncodeParameter *encodeParam = new EncodeParameter();
     ProcessParameter *processParam = new ProcessParameter();
 
+    // Register this page as observer for progress updates
+    processParam->add_observer(this);
+
     // Empty codec names mean copy streams without re-encoding
     // This is the standard way to perform remuxing
 
-    // Create converter
-    Converter *converter = new Converter(processParam, encodeParam);
-    converter->set_transcoder("FFMPEG");
+    // Show progress bar
+    progressBar->setValue(0);
+    progressBar->setVisible(true);
+    progressLabel->setText("Starting remuxing...");
+    progressLabel->setVisible(true);
 
-    // Perform remuxing
+    // Disable button
     remuxButton->setEnabled(false);
     remuxButton->setText("Remuxing...");
 
-    bool success = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
+    // Run remuxing in a separate thread
+    RunRemuxInThread(inputPath, outputPath, encodeParam, processParam);
+}
 
+void RemuxPage::RunRemuxInThread(const QString &inputPath, const QString &outputPath,
+                                 EncodeParameter *encodeParam, ProcessParameter *processParam) {
+    QThread *thread = QThread::create([this, inputPath, outputPath, encodeParam, processParam]() {
+        // Create converter
+        Converter *converter = new Converter(processParam, encodeParam);
+        converter->set_transcoder("FFMPEG");
+
+        // Perform remuxing
+        bool success = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
+
+        // Clean up converter
+        delete converter;
+
+        // Emit signal to notify completion
+        emit RemuxComplete(success);
+    });
+
+    // Clean up thread when it finishes
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    connect(thread, &QThread::finished, [processParam, encodeParam]() {
+        delete processParam;
+        delete encodeParam;
+    });
+
+    thread->start();
+}
+
+void RemuxPage::OnRemuxFinished(bool success) {
+    // Hide progress bar
+    progressBar->setVisible(false);
+    progressLabel->setVisible(false);
+
+    // Re-enable button
     remuxButton->setEnabled(true);
     remuxButton->setText("Remux");
-
-    // Clean up
-    delete converter;
-    delete processParam;
-    delete encodeParam;
 
     if (success) {
         QMessageBox::information(this, "Success", "File remuxed successfully!");
     } else {
         QMessageBox::critical(this, "Error", "Failed to remux file.");
     }
+}
+
+void RemuxPage::on_process_update(double progress) {
+    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
+    QMetaObject::invokeMethod(this, [this, progress]() {
+        progressBar->setValue(static_cast<int>(progress));
+    }, Qt::QueuedConnection);
+}
+
+void RemuxPage::on_time_update(double timeRequired) {
+    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
+    QMetaObject::invokeMethod(this, [this, timeRequired]() {
+        int minutes = static_cast<int>(timeRequired) / 60;
+        int seconds = static_cast<int>(timeRequired) % 60;
+        progressLabel->setText(QString("Estimated time remaining: %1:%2")
+                               .arg(minutes)
+                               .arg(seconds, 2, 10, QChar('0')));
+    }, Qt::QueuedConnection);
 }
 
 void RemuxPage::UpdateOutputPath() {

@@ -19,14 +19,20 @@
 #define TRANSCODE_PAGE_H
 
 #include "base_page.h"
+#include "../../common/include/process_observer.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QThread>
 
-class TranscodePage : public BasePage {
+class EncodeParameter;
+class ProcessParameter;
+
+class TranscodePage : public BasePage, public ProcessObserver {
     Q_OBJECT
 
 public:
@@ -37,17 +43,27 @@ public:
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Transcode"; }
 
+    // ProcessObserver interface
+    void on_process_update(double progress) override;
+    void on_time_update(double timeRequired) override;
+
 private slots:
     void OnBrowseInputClicked();
     void OnBrowseOutputClicked();
     void OnFormatChanged(int index);
     void OnTranscodeClicked();
     void OnVideoCodecChanged(int index);
+    void OnTranscodeFinished(bool success);
+
+signals:
+    void TranscodeComplete(bool success);
 
 private:
     void SetupUI();
     void UpdateOutputPath();
     QString GetFileExtension(const QString &filePath);
+    void RunTranscodeInThread(const QString &inputPath, const QString &outputPath,
+                              EncodeParameter *encodeParam, ProcessParameter *processParam);
 
     // Input section
     QGroupBox *inputGroupBox;
@@ -85,6 +101,10 @@ private:
     QGroupBox *formatGroupBox;
     QLabel *formatLabel;
     QComboBox *formatComboBox;
+
+    // Progress section
+    QProgressBar *progressBar;
+    QLabel *progressLabel;
 
     // Output section
     QGroupBox *outputGroupBox;
