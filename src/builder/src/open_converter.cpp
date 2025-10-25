@@ -30,6 +30,7 @@
 #include "../../engine/include/converter.h"
 #include "../include/base_page.h"
 #include "../include/encode_setting.h"
+#include "../include/info_view_page.h"
 #include "../include/open_converter.h"
 #include "../include/placeholder_page.h"
 #include "ui_open_converter.h"
@@ -146,7 +147,18 @@ void OpenConverter::dragEnterEvent(QDragEnterEvent *event) {
 void OpenConverter::dropEvent(QDropEvent *event) {
     if (event->mimeData()->hasUrls()) {
         const QUrl url = event->mimeData()->urls().first();
-        // TODO: Handle file drop in the current page
+        QString filePath = url.toLocalFile();
+
+        // Get current page and handle file drop
+        int currentIndex = ui->stackedWidget->currentIndex();
+        if (currentIndex >= 0 && currentIndex < pages.size()) {
+            // If it's the InfoViewPage, handle the drop
+            InfoViewPage *infoPage = qobject_cast<InfoViewPage *>(pages[currentIndex]);
+            if (infoPage) {
+                infoPage->HandleFileDrop(filePath);
+            }
+        }
+
         event->acceptProposedAction();
     }
 }
@@ -274,9 +286,9 @@ void OpenConverter::InfoDisplay(QuickInfo *quickInfo) {
 }
 
 void OpenConverter::InitializePages() {
-    // Create placeholder pages for each navigation item
+    // Create pages for each navigation item
     // Common section
-    pages.append(new PlaceholderPage("Info View", this));
+    pages.append(new InfoViewPage(this));
     pages.append(new PlaceholderPage("Compress Picture", this));
     pages.append(new PlaceholderPage("Extract Audio", this));
     pages.append(new PlaceholderPage("Cut Video", this));

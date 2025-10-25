@@ -239,6 +239,7 @@ if(ENABLE_GUI)
     list(APPEND GUI_SOURCES
         ${CMAKE_SOURCE_DIR}/builder/src/base_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/placeholder_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/info_view_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/encode_setting.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.cpp
     )
@@ -247,6 +248,7 @@ if(ENABLE_GUI)
     list(APPEND GUI_HEADERS
         ${CMAKE_SOURCE_DIR}/builder/include/base_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/placeholder_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/info_view_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/encode_setting.h
         ${CMAKE_SOURCE_DIR}/builder/include/open_converter.h
     )

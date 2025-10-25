@@ -60,6 +60,7 @@ QT_END_NAMESPACE
 class EncodeSetting;
 class Converter;
 class BasePage;
+class InfoViewPage;
 
 class OpenConverter : public QMainWindow, public ProcessObserver {
     Q_OBJECT
