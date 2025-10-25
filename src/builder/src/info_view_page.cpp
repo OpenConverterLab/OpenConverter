@@ -1,4 +1,6 @@
 #include "../include/info_view_page.h"
+#include "../include/open_converter.h"
+#include "../include/shared_data.h"
 #include "../../common/include/info.h"
 #include <QFileDialog>
 #include <QHBoxLayout>
@@ -19,6 +21,17 @@ QString InfoViewPage::GetPageTitle() const {
 
 void InfoViewPage::OnPageActivated() {
     BasePage::OnPageActivated();
+
+    // Check if there's a shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        QString sharedPath = mainWindow->GetSharedData()->GetInputFilePath();
+        // Update if shared path is different from current path
+        if (!sharedPath.isEmpty() && sharedPath != filePathLineEdit->text()) {
+            filePathLineEdit->setText(sharedPath);
+            AnalyzeFile(sharedPath);
+        }
+    }
 }
 
 void InfoViewPage::SetupUI() {
@@ -162,6 +175,12 @@ void InfoViewPage::AnalyzeFile(const QString &filePath) {
 
     // Display info
     DisplayInfo(info->get_quick_info());
+
+    // Update shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetInputFilePath(filePath);
+    }
 }
 
 void InfoViewPage::DisplayInfo(QuickInfo *quickInfo) {

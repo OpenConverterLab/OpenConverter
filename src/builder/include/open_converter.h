@@ -61,6 +61,7 @@ class EncodeSetting;
 class Converter;
 class BasePage;
 class InfoViewPage;
+class SharedData;
 
 class OpenConverter : public QMainWindow, public ProcessObserver {
     Q_OBJECT
@@ -103,6 +104,7 @@ private:
     // Navigation and page management
     QButtonGroup *navButtonGroup;
     QList<BasePage *> pages;
+    SharedData *sharedData;
 
     void LoadLanguage(const QString &rLanguage);
     void HandleConverterResult(bool flag);
@@ -113,6 +115,10 @@ private:
     // Page management methods
     void InitializePages();
     void SwitchToPage(int pageIndex);
+
+public:
+    // Shared data across pages
+    SharedData* GetSharedData() const;
 };
 
 #endif // OPEN_CONVERTER_H

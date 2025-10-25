@@ -29,10 +29,12 @@
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
 #include "../include/base_page.h"
+#include "../include/compress_picture_page.h"
 #include "../include/encode_setting.h"
 #include "../include/info_view_page.h"
 #include "../include/open_converter.h"
 #include "../include/placeholder_page.h"
+#include "../include/shared_data.h"
 #include "ui_open_converter.h"
 
 #include <iostream>
@@ -58,6 +60,9 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // Register this class as an observer for process updates
     processParameter->add_observer(this);
+
+    // Initialize shared data
+    sharedData = new SharedData();
 
 #ifdef ENABLE_FFMPEG
     QAction *act_ffmpeg = new QAction(tr("FFMPEG"), this);
@@ -289,7 +294,7 @@ void OpenConverter::InitializePages() {
     // Create pages for each navigation item
     // Common section
     pages.append(new InfoViewPage(this));
-    pages.append(new PlaceholderPage("Compress Picture", this));
+    pages.append(new CompressPicturePage(this));
     pages.append(new PlaceholderPage("Extract Audio", this));
     pages.append(new PlaceholderPage("Cut Video", this));
     // Advanced section
@@ -321,6 +326,10 @@ void OpenConverter::SwitchToPage(int pageIndex) {
     setWindowTitle(QString("OpenConverter - %1").arg(pages[pageIndex]->GetPageTitle()));
 }
 
+SharedData* OpenConverter::GetSharedData() const {
+    return sharedData;
+}
+
 void OpenConverter::OnNavigationButtonClicked(int pageIndex) {
     SwitchToPage(pageIndex);
 }
@@ -342,6 +351,7 @@ OpenConverter::~OpenConverter() {
     delete processParameter;
     delete converter;
     delete displayResult;
+    delete sharedData;
 }
 
 #include "open_converter.moc"
