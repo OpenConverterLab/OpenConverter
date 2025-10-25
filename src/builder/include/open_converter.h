@@ -61,6 +61,8 @@ class EncodeSetting;
 class Converter;
 class BasePage;
 class InfoViewPage;
+class CompressPicturePage;
+class ExtractAudioPage;
 class SharedData;
 
 class OpenConverter : public QMainWindow, public ProcessObserver {

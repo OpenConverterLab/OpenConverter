@@ -31,6 +31,7 @@
 #include "../include/base_page.h"
 #include "../include/compress_picture_page.h"
 #include "../include/encode_setting.h"
+#include "../include/extract_audio_page.h"
 #include "../include/info_view_page.h"
 #include "../include/open_converter.h"
 #include "../include/placeholder_page.h"
@@ -295,7 +296,7 @@ void OpenConverter::InitializePages() {
     // Common section
     pages.append(new InfoViewPage(this));
     pages.append(new CompressPicturePage(this));
-    pages.append(new PlaceholderPage("Extract Audio", this));
+    pages.append(new ExtractAudioPage(this));
     pages.append(new PlaceholderPage("Cut Video", this));
     // Advanced section
     pages.append(new PlaceholderPage("Remux", this));
