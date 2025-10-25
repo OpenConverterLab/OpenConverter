@@ -144,6 +144,11 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     StreamContext *decoder = new StreamContext;
     StreamContext *encoder = new StreamContext;
 
+    // Declare variables before any goto statements
+    double startTime = encodeParameter->GetStartTime();
+    double endTime = encodeParameter->GetEndTime();
+    int64_t endPts = -1;
+
     av_log_set_level(AV_LOG_DEBUG);
 
     decoder->filename = input_path.c_str();
@@ -255,12 +260,51 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         goto end;
     }
 
+    // Handle start time seeking if specified
+    if (startTime > 0) {
+        int64_t seek_target = static_cast<int64_t>(startTime * AV_TIME_BASE);
+        ret = av_seek_frame(decoder->fmtCtx, -1, seek_target, AVSEEK_FLAG_BACKWARD);
+        if (ret < 0) {
+            av_log(NULL, AV_LOG_WARNING, "Could not seek to start time\n");
+        }
+        // Flush codec buffers after seeking
+        if (decoder->videoCodecCtx) {
+            avcodec_flush_buffers(decoder->videoCodecCtx);
+        }
+        if (decoder->audioCodecCtx) {
+            avcodec_flush_buffers(decoder->audioCodecCtx);
+        }
+    }
+
+    // Calculate end time in stream time base for comparison
+    if (endTime > 0 && decoder->videoIdx >= 0) {
+        endPts = static_cast<int64_t>(endTime / av_q2d(decoder->videoStream->time_base));
+    }
+
     // read video data from multimedia files to write into destination file
     while (av_read_frame(decoder->fmtCtx, decoder->pkt) >= 0) {
+        // Check if we've reached the end time
+        if (endPts > 0 && decoder->pkt->stream_index == decoder->videoIdx) {
+            if (decoder->pkt->pts >= endPts) {
+                av_packet_unref(decoder->pkt);
+                break;
+            }
+        }
+
         if (decoder->pkt->stream_index == decoder->videoIdx) {
             if (encoder->fmtCtx->oformat->video_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
+
+            // Skip frames before start time
+            if (startTime > 0) {
+                double framePts = decoder->pkt->pts * av_q2d(decoder->videoStream->time_base);
+                if (framePts < startTime) {
+                    av_packet_unref(decoder->pkt);
+                    continue;
+                }
+            }
+
             // Update progress based on video stream
             update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
 
@@ -276,6 +320,16 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             if (encoder->fmtCtx->oformat->audio_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
+
+            // Skip frames before start time
+            if (startTime > 0) {
+                double framePts = decoder->pkt->pts * av_q2d(decoder->audioStream->time_base);
+                if (framePts < startTime) {
+                    av_packet_unref(decoder->pkt);
+                    continue;
+                }
+            }
+
             // Update progress based on audio stream if no video stream
             if (decoder->videoIdx < 0) {
                 update_progress(decoder->pkt->pts,

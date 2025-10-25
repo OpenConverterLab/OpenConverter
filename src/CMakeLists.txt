@@ -242,6 +242,8 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/info_view_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/compress_picture_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/extract_audio_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/cut_video_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/simple_video_player.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/remux_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/transcode_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/shared_data.cpp
@@ -256,6 +258,8 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/info_view_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/compress_picture_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/extract_audio_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/cut_video_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/simple_video_player.h
         ${CMAKE_SOURCE_DIR}/builder/include/remux_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/transcode_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/shared_data.h

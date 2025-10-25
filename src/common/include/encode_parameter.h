@@ -39,6 +39,9 @@ private:
 
     std::string preset;
 
+    double startTime;  // in seconds
+    double endTime;    // in seconds
+
 public:
     EncodeParameter();
     ~EncodeParameter();
@@ -63,6 +66,10 @@ public:
 
     void set_preset(std::string p);
 
+    void SetStartTime(double t);
+
+    void SetEndTime(double t);
+
     std::string get_video_codec_name();
 
     int get_qscale();
@@ -80,6 +87,10 @@ public:
     int64_t get_audio_bit_rate();
 
     std::string get_preset();
+
+    double GetStartTime();
+
+    double GetEndTime();
 };
 
 #endif // ENCODEPARAMETER_H

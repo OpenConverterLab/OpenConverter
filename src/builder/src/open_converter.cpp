@@ -30,6 +30,7 @@
 #include "../../engine/include/converter.h"
 #include "../include/base_page.h"
 #include "../include/compress_picture_page.h"
+#include "../include/cut_video_page.h"
 #include "../include/encode_setting.h"
 #include "../include/extract_audio_page.h"
 #include "../include/info_view_page.h"
@@ -299,7 +300,7 @@ void OpenConverter::InitializePages() {
     pages.append(new InfoViewPage(this));
     pages.append(new CompressPicturePage(this));
     pages.append(new ExtractAudioPage(this));
-    pages.append(new PlaceholderPage("Cut Video", this));
+    pages.append(new CutVideoPage(this));
     // Advanced section
     pages.append(new RemuxPage(this));
     pages.append(new TranscodePage(this));

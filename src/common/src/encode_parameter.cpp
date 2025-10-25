@@ -14,6 +14,9 @@ EncodeParameter::EncodeParameter() {
 
     preset = "";
 
+    startTime = -1.0;
+    endTime = -1.0;
+
     available = false;
 }
 
@@ -96,5 +99,19 @@ void EncodeParameter::set_preset(std::string p) {
 }
 
 std::string EncodeParameter::get_preset() { return preset; }
+
+void EncodeParameter::SetStartTime(double t) {
+    startTime = t;
+    available = true;
+}
+
+void EncodeParameter::SetEndTime(double t) {
+    endTime = t;
+    available = true;
+}
+
+double EncodeParameter::GetStartTime() { return startTime; }
+
+double EncodeParameter::GetEndTime() { return endTime; }
 
 EncodeParameter::~EncodeParameter() {}
