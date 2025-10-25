@@ -237,12 +237,16 @@ if(ENABLE_GUI)
 
     # Add GUI-specific sources
     list(APPEND GUI_SOURCES
+        ${CMAKE_SOURCE_DIR}/builder/src/base_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/placeholder_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/encode_setting.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.cpp
     )
 
     # Add GUI-specific headers
     list(APPEND GUI_HEADERS
+        ${CMAKE_SOURCE_DIR}/builder/include/base_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/placeholder_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/encode_setting.h
         ${CMAKE_SOURCE_DIR}/builder/include/open_converter.h
     )
