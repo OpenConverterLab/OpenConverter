@@ -47,26 +47,15 @@ CutVideoPage::~CutVideoPage() {
 
 void CutVideoPage::OnPageActivated() {
     BasePage::OnPageActivated();
+    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit, "mp4");
+}
 
-    // Check if there's a shared input file path
-    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-    if (mainWindow && mainWindow->GetSharedData()) {
-        SharedData *sharedData = mainWindow->GetSharedData();
-        QString sharedPath = sharedData->GetInputFilePath();
+void CutVideoPage::OnInputFileChanged(const QString &newPath) {
+    LoadVideo(newPath);
+}
 
-        // Update if shared path is different from current path
-        if (!sharedPath.isEmpty() && sharedPath != inputFileLineEdit->text()) {
-            inputFileLineEdit->setText(sharedPath);
-            LoadVideo(sharedPath);
-            // Reset output path to auto-generate when input changes
-            sharedData->ResetOutputPath();
-            UpdateOutputPath();
-        } else if (!sharedPath.isEmpty()) {
-            // Input path is the same, but update output path
-            QString outputPath = sharedData->GenerateOutputPath("mp4");
-            outputFileLineEdit->setText(outputPath);
-        }
-    }
+void CutVideoPage::OnOutputPathUpdate() {
+    UpdateOutputPath();
 }
 
 void CutVideoPage::OnPageDeactivated() {

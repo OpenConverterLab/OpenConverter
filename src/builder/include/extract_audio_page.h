@@ -47,6 +47,9 @@ public:
     void on_process_update(double progress) override;
     void on_time_update(double timeRequired) override;
 
+protected:
+    void OnOutputPathUpdate() override;
+
 private slots:
     void OnBrowseInputClicked();
     void OnBrowseOutputClicked();

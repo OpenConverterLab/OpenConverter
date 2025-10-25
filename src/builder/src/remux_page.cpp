@@ -42,27 +42,16 @@ RemuxPage::~RemuxPage() {
 
 void RemuxPage::OnPageActivated() {
     BasePage::OnPageActivated();
+    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit,
+                           formatComboBox->currentText());
+}
 
-    // Check if there's a shared input file path
-    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-    if (mainWindow && mainWindow->GetSharedData()) {
-        SharedData *sharedData = mainWindow->GetSharedData();
-        QString sharedPath = sharedData->GetInputFilePath();
+void RemuxPage::OnInputFileChanged(const QString &newPath) {
+    AnalyzeStreams(newPath);
+}
 
-        // Update if shared path is different from current path
-        if (!sharedPath.isEmpty() && sharedPath != inputFileLineEdit->text()) {
-            inputFileLineEdit->setText(sharedPath);
-            AnalyzeStreams(sharedPath);
-            // Reset output path to auto-generate when input changes
-            sharedData->ResetOutputPath();
-            UpdateOutputPath();
-        } else if (!sharedPath.isEmpty()) {
-            // Input path is the same, but update output path in case format changed
-            QString format = formatComboBox->currentText();
-            QString outputPath = sharedData->GenerateOutputPath(format);
-            outputFileLineEdit->setText(outputPath);
-        }
-    }
+void RemuxPage::OnOutputPathUpdate() {
+    UpdateOutputPath();
 }
 
 void RemuxPage::OnPageDeactivated() {

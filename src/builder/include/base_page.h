@@ -20,6 +20,9 @@
 
 #include <QWidget>
 
+class QLineEdit;
+class SharedData;
+
 class BasePage : public QWidget {
     Q_OBJECT
 
@@ -35,6 +38,19 @@ public:
 
     // Get page title
     virtual QString GetPageTitle() const = 0;
+
+protected:
+    // Helper method to handle shared data updates
+    // Derived classes should call this in OnPageActivated()
+    void HandleSharedDataUpdate(QLineEdit *inputFileLineEdit,
+                                QLineEdit *outputFileLineEdit,
+                                const QString &defaultFormat = QString());
+
+    // Hook method called when input file changes (override in derived classes if needed)
+    virtual void OnInputFileChanged(const QString &newPath);
+
+    // Hook method called when output path needs updating (override in derived classes if needed)
+    virtual void OnOutputPathUpdate();
 };
 
 #endif // BASE_PAGE_H

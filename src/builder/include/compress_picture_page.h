@@ -39,6 +39,9 @@ public:
     QString GetPageTitle() const override;
     void OnPageActivated() override;
 
+protected:
+    void OnOutputPathUpdate() override;
+
 private slots:
     void OnBrowseInputClicked();
     void OnBrowseOutputClicked();
