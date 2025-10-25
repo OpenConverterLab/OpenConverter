@@ -37,6 +37,8 @@ private:
 
     int qscale;
 
+    std::string preset;
+
 public:
     EncodeParameter();
     ~EncodeParameter();
@@ -59,6 +61,8 @@ public:
 
     void set_audio_bit_rate(int64_t abr);
 
+    void set_preset(std::string p);
+
     std::string get_video_codec_name();
 
     int get_qscale();
@@ -74,6 +78,8 @@ public:
     int64_t get_video_bit_rate();
 
     int64_t get_audio_bit_rate();
+
+    std::string get_preset();
 };
 
 #endif // ENCODEPARAMETER_H

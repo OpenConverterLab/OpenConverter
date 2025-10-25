@@ -64,6 +64,7 @@ class InfoViewPage;
 class CompressPicturePage;
 class ExtractAudioPage;
 class RemuxPage;
+class TranscodePage;
 class SharedData;
 
 class OpenConverter : public QMainWindow, public ProcessObserver {

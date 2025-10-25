@@ -603,6 +603,9 @@ bool TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
         return false;
     }
 
+    std::string preset = encodeParameter->get_preset();
+    if (!preset.empty())
+        av_opt_set(encoder->videoCodecCtx->priv_data, "preset", preset.c_str(), 0);
 
     if (decoder->videoCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
         uint16_t width = encodeParameter->get_width();

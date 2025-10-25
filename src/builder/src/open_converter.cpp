@@ -37,6 +37,7 @@
 #include "../include/placeholder_page.h"
 #include "../include/remux_page.h"
 #include "../include/shared_data.h"
+#include "../include/transcode_page.h"
 #include "ui_open_converter.h"
 
 #include <iostream>
@@ -301,7 +302,7 @@ void OpenConverter::InitializePages() {
     pages.append(new PlaceholderPage("Cut Video", this));
     // Advanced section
     pages.append(new RemuxPage(this));
-    pages.append(new PlaceholderPage("Transcode", this));
+    pages.append(new TranscodePage(this));
 
     // Add all pages to the stacked widget
     for (BasePage *page : pages) {

@@ -243,6 +243,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/compress_picture_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/extract_audio_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/remux_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/transcode_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/shared_data.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/encode_setting.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.cpp
@@ -256,6 +257,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/compress_picture_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/extract_audio_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/remux_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/transcode_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/shared_data.h
         ${CMAKE_SOURCE_DIR}/builder/include/encode_setting.h
         ${CMAKE_SOURCE_DIR}/builder/include/open_converter.h

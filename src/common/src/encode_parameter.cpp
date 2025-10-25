@@ -12,6 +12,8 @@ EncodeParameter::EncodeParameter() {
     width = 0;
     height = 0;
 
+    preset = "";
+
     available = false;
 }
 
@@ -87,5 +89,12 @@ std::string EncodeParameter::get_audio_codec_name() { return audioCodec; }
 int64_t EncodeParameter::get_video_bit_rate() { return videoBitRate; }
 
 int64_t EncodeParameter::get_audio_bit_rate() { return audioBitRate; }
+
+void EncodeParameter::set_preset(std::string p) {
+    preset = p;
+    available = true;
+}
+
+std::string EncodeParameter::get_preset() { return preset; }
 
 EncodeParameter::~EncodeParameter() {}
