@@ -39,6 +39,9 @@ public:
     // Get page title
     virtual QString GetPageTitle() const = 0;
 
+    // Virtual method to retranslate UI when language changes
+    virtual void RetranslateUi();
+
 protected:
     // Helper method to handle shared data updates
     // Derived classes should call this in OnPageActivated()

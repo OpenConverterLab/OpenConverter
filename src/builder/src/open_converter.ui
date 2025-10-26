@@ -237,11 +237,17 @@ QLabel {
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="english">
+   <property name="objectName">
+    <string>english</string>
+   </property>
    <property name="text">
     <string>English</string>
    </property>
   </action>
   <action name="chinese">
+   <property name="objectName">
+    <string>chinese</string>
+   </property>
    <property name="text">
     <string>Chinese</string>
    </property>

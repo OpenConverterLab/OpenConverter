@@ -61,14 +61,14 @@ void CompressPicturePage::SetupUI() {
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
     // Input Group
-    inputGroupBox = new QGroupBox("Input File", this);
+    inputGroupBox = new QGroupBox(tr("Input File"), this);
     QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
 
     inputFileLineEdit = new QLineEdit(this);
-    inputFileLineEdit->setPlaceholderText("Select an image file...");
+    inputFileLineEdit->setPlaceholderText(tr("Select an image file..."));
     inputFileLineEdit->setReadOnly(true);
 
-    browseInputButton = new QPushButton("Browse...", this);
+    browseInputButton = new QPushButton(tr("Browse..."), this);
 
     inputLayout->addWidget(inputFileLineEdit, 1);
     inputLayout->addWidget(browseInputButton);
@@ -76,44 +76,44 @@ void CompressPicturePage::SetupUI() {
     mainLayout->addWidget(inputGroupBox);
 
     // Settings Group
-    settingsGroupBox = new QGroupBox("Compression Settings", this);
+    settingsGroupBox = new QGroupBox(tr("Compression Settings"), this);
     QGridLayout *settingsLayout = new QGridLayout(settingsGroupBox);
     settingsLayout->setColumnStretch(1, 1);
 
     // Format
-    formatLabel = new QLabel("Output Format:", this);
+    formatLabel = new QLabel(tr("Output Format:"), this);
     formatComboBox = new QComboBox(this);
     formatComboBox->addItems({"jpg", "png", "webp", "bmp", "tiff"});
     settingsLayout->addWidget(formatLabel, 0, 0);
     settingsLayout->addWidget(formatComboBox, 0, 1);
 
     // Width
-    widthLabel = new QLabel("Width (0 = auto):", this);
+    widthLabel = new QLabel(tr("Width (0 = auto):"), this);
     widthSpinBox = new QSpinBox(this);
     widthSpinBox->setRange(0, 16384);
     widthSpinBox->setValue(0);
-    widthSpinBox->setSuffix(" px");
+    widthSpinBox->setSuffix(tr(" px"));
     settingsLayout->addWidget(widthLabel, 1, 0);
     settingsLayout->addWidget(widthSpinBox, 1, 1);
 
     // Height
-    heightLabel = new QLabel("Height (0 = auto):", this);
+    heightLabel = new QLabel(tr("Height (0 = auto):"), this);
     heightSpinBox = new QSpinBox(this);
     heightSpinBox->setRange(0, 16384);
     heightSpinBox->setValue(0);
-    heightSpinBox->setSuffix(" px");
+    heightSpinBox->setSuffix(tr(" px"));
     settingsLayout->addWidget(heightLabel, 2, 0);
     settingsLayout->addWidget(heightSpinBox, 2, 1);
 
     // Pixel Format
-    pixFmtLabel = new QLabel("Pixel Format:", this);
+    pixFmtLabel = new QLabel(tr("Pixel Format:"), this);
     pixFmtComboBox = new QComboBox(this);
     pixFmtComboBox->addItems({"auto","rgb24", "rgba", "yuv420p", "yuv444p", "gray"});
     settingsLayout->addWidget(pixFmtLabel, 3, 0);
     settingsLayout->addWidget(pixFmtComboBox, 3, 1);
 
     // Quality (qscale)
-    qualityLabel = new QLabel("Quality (2-31, lower=better):", this);
+    qualityLabel = new QLabel(tr("Quality (2-31, lower=better):"), this);
     qualitySpinBox = new QSpinBox(this);
     qualitySpinBox->setRange(2, 31);
     qualitySpinBox->setValue(5);
@@ -123,19 +123,19 @@ void CompressPicturePage::SetupUI() {
     mainLayout->addWidget(settingsGroupBox);
 
     // Output Group
-    outputGroupBox = new QGroupBox("Output", this);
+    outputGroupBox = new QGroupBox(tr("Output"), this);
     QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
 
     QHBoxLayout *outputPathLayout = new QHBoxLayout();
     outputFileLineEdit = new QLineEdit(this);
-    outputFileLineEdit->setPlaceholderText("Output file path will be generated automatically...");
+    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
 
-    browseOutputButton = new QPushButton("Browse...", this);
+    browseOutputButton = new QPushButton(tr("Browse..."), this);
 
     outputPathLayout->addWidget(outputFileLineEdit, 1);
     outputPathLayout->addWidget(browseOutputButton);
 
-    convertButton = new QPushButton("Convert", this);
+    convertButton = new QPushButton(tr("Convert"), this);
     convertButton->setEnabled(false);
     convertButton->setMinimumHeight(40);
 
@@ -160,9 +160,9 @@ void CompressPicturePage::SetupUI() {
 void CompressPicturePage::OnBrowseInputClicked() {
     QString fileName = QFileDialog::getOpenFileName(
         this,
-        "Select Image File",
+        tr("Select Image File"),
         "",
-        "Image Files (*.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;All Files (*.*)"
+        tr("Image Files (*.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;All Files (*.*)")
     );
 
     if (!fileName.isEmpty()) {
@@ -179,11 +179,11 @@ void CompressPicturePage::OnBrowseInputClicked() {
 
 void CompressPicturePage::OnBrowseOutputClicked() {
     QString format = formatComboBox->currentText();
-    QString filter = QString("Image Files (*.%1);;All Files (*.*)").arg(format);
+    QString filter = QString(tr("Image Files (*.%1);;All Files (*.*)")).arg(format);
 
     QString fileName = QFileDialog::getSaveFileName(
         this,
-        "Save Compressed Image",
+        tr("Save Compressed Image"),
         outputFileLineEdit->text(),
         filter
     );
@@ -204,12 +204,12 @@ void CompressPicturePage::OnConvertClicked() {
     QString outputPath = outputFileLineEdit->text();
 
     if (inputPath.isEmpty()) {
-        QMessageBox::warning(this, "Warning", "Please select an input file.");
+        QMessageBox::warning(this, tr("Warning"), tr("Please select an input file."));
         return;
     }
 
     if (outputPath.isEmpty()) {
-        QMessageBox::warning(this, "Warning", "Please specify an output file.");
+        QMessageBox::warning(this, tr("Warning"), tr("Please specify an output file."));
         return;
     }
 
@@ -285,4 +285,25 @@ void CompressPicturePage::UpdateOutputPath() {
             convertButton->setEnabled(true);
         }
     }
+}
+
+void CompressPicturePage::RetranslateUi() {
+    // Update all translatable strings
+    inputGroupBox->setTitle(tr("Input File"));
+    inputFileLineEdit->setPlaceholderText(tr("Select an image file..."));
+    browseInputButton->setText(tr("Browse..."));
+
+    settingsGroupBox->setTitle(tr("Compression Settings"));
+    formatLabel->setText(tr("Output Format:"));
+    widthLabel->setText(tr("Width (0 = auto):"));
+    widthSpinBox->setSuffix(tr(" px"));
+    heightLabel->setText(tr("Height (0 = auto):"));
+    heightSpinBox->setSuffix(tr(" px"));
+    pixFmtLabel->setText(tr("Pixel Format:"));
+    qualityLabel->setText(tr("Quality (2-31, lower=better):"));
+
+    outputGroupBox->setTitle(tr("Output"));
+    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
+    browseOutputButton->setText(tr("Browse..."));
+    convertButton->setText(tr("Convert"));
 }

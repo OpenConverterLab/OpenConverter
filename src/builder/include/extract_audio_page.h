@@ -42,6 +42,7 @@ public:
     void OnPageActivated() override;
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Extract Audio"; }
+    void RetranslateUi() override;
 
     // ProcessObserver interface
     void on_process_update(double progress) override;

@@ -18,6 +18,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
+#include <QDebug>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QEvent>
@@ -126,10 +127,13 @@ OpenConverter::OpenConverter(QWidget *parent)
         languageGroup->addAction(action);
     }
 
+    // Initialize language - default to English (no translation file needed)
     m_currLang = "english";
     m_langPath = ":/";
+
+    // Set the English menu item as checked by default
     for (QAction* action : languageActions) {
-        if (action->objectName() == m_currLang) {
+        if (action->objectName() == "english") {
             action->setChecked(true);
             break;
         }
@@ -238,12 +242,15 @@ void switchTranslator(QTranslator &translator, const QString &filename) {
     qApp->removeTranslator(&translator);
 
     // load the new translator
-    //    QString path = QApplication::applicationDirPath();
-    //    path.append(":/");
-    if (translator.load(QString(":/%1").arg(
-            filename))) // Here Path and Filename has to be entered because the
-                        // system didn't find the QM Files else
+    QString resourcePath = QString(":/%1").arg(filename);
+    qDebug() << "Loading translator from:" << resourcePath;
+
+    if (translator.load(resourcePath)) {
+        qDebug() << "Translator loaded successfully!";
         qApp->installTranslator(&translator);
+    } else {
+        qDebug() << "Failed to load translator!";
+    }
 }
 
 void OpenConverter::LoadLanguage(const QString &rLanguage) {
@@ -264,7 +271,13 @@ void OpenConverter::LoadLanguage(const QString &rLanguage) {
 void OpenConverter::changeEvent(QEvent *event) {
     if (event->type() == QEvent::LanguageChange) {
         ui->retranslateUi(this);
-        // TODO: Update language in pages
+
+        // Update language in all pages
+        for (BasePage *page : pages) {
+            if (page) {
+                page->RetranslateUi();
+            }
+        }
     }
     QMainWindow::changeEvent(event);
 }

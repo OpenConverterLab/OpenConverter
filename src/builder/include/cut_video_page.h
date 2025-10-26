@@ -43,6 +43,7 @@ public:
     void OnPageActivated() override;
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Cut Video"; }
+    void RetranslateUi() override;
 
     // ProcessObserver interface
     void on_process_update(double progress) override;
@@ -89,6 +90,7 @@ private:
     // Media Duration section
     QGroupBox *durationGroupBox;
     QLabel *totalDurationLabel;
+    QLabel *totalDurationValueLabel;
 
     // Video Player section
     QGroupBox *playerGroupBox;
@@ -108,6 +110,7 @@ private:
     QTimeEdit *endTimeEdit;
     QPushButton *setEndButton;
     QLabel *cutDurationLabel;
+    QLabel *cutDurationValueLabel;
 
     // Progress section
     QProgressBar *progressBar;

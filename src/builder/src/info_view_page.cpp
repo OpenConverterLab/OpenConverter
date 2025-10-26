@@ -57,14 +57,14 @@ void InfoViewPage::SetupUI() {
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
     // Input Group
-    inputGroupBox = new QGroupBox("Input File", this);
+    inputGroupBox = new QGroupBox(tr("Input File"), this);
     QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
 
     filePathLineEdit = new QLineEdit(this);
-    filePathLineEdit->setPlaceholderText("Drop a media file here or click Browse...");
+    filePathLineEdit->setPlaceholderText(tr("Drop a media file here or click Browse..."));
     filePathLineEdit->setReadOnly(true);
 
-    browseButton = new QPushButton("Browse...", this);
+    browseButton = new QPushButton(tr("Browse..."), this);
 
     inputLayout->addWidget(filePathLineEdit, 1);
     inputLayout->addWidget(browseButton);
@@ -72,23 +72,23 @@ void InfoViewPage::SetupUI() {
     mainLayout->addWidget(inputGroupBox);
 
     // Video Info Group
-    videoGroupBox = new QGroupBox("Video Information", this);
+    videoGroupBox = new QGroupBox(tr("Video Information"), this);
     QGridLayout *videoLayout = new QGridLayout(videoGroupBox);
     videoLayout->setColumnStretch(1, 1);
 
-    videoStreamLabel = new QLabel("Stream Index:", this);
+    videoStreamLabel = new QLabel(tr("Stream Index:"), this);
     videoStreamValue = new QLabel("-", this);
-    widthLabel = new QLabel("Width:", this);
+    widthLabel = new QLabel(tr("Width:"), this);
     widthValue = new QLabel("-", this);
-    heightLabel = new QLabel("Height:", this);
+    heightLabel = new QLabel(tr("Height:"), this);
     heightValue = new QLabel("-", this);
-    colorSpaceLabel = new QLabel("Color Space:", this);
+    colorSpaceLabel = new QLabel(tr("Color Space:"), this);
     colorSpaceValue = new QLabel("-", this);
-    videoCodecLabel = new QLabel("Video Codec:", this);
+    videoCodecLabel = new QLabel(tr("Video Codec:"), this);
     videoCodecValue = new QLabel("-", this);
-    videoBitRateLabel = new QLabel("Bit Rate:", this);
+    videoBitRateLabel = new QLabel(tr("Bit Rate:"), this);
     videoBitRateValue = new QLabel("-", this);
-    frameRateLabel = new QLabel("Frame Rate:", this);
+    frameRateLabel = new QLabel(tr("Frame Rate:"), this);
     frameRateValue = new QLabel("-", this);
 
     videoLayout->addWidget(videoStreamLabel, 0, 0);
@@ -109,21 +109,21 @@ void InfoViewPage::SetupUI() {
     mainLayout->addWidget(videoGroupBox);
 
     // Audio Info Group
-    audioGroupBox = new QGroupBox("Audio Information", this);
+    audioGroupBox = new QGroupBox(tr("Audio Information"), this);
     QGridLayout *audioLayout = new QGridLayout(audioGroupBox);
     audioLayout->setColumnStretch(1, 1);
 
-    audioStreamLabel = new QLabel("Stream Index:", this);
+    audioStreamLabel = new QLabel(tr("Stream Index:"), this);
     audioStreamValue = new QLabel("-", this);
-    audioCodecLabel = new QLabel("Audio Codec:", this);
+    audioCodecLabel = new QLabel(tr("Audio Codec:"), this);
     audioCodecValue = new QLabel("-", this);
-    audioBitRateLabel = new QLabel("Bit Rate:", this);
+    audioBitRateLabel = new QLabel(tr("Bit Rate:"), this);
     audioBitRateValue = new QLabel("-", this);
-    channelsLabel = new QLabel("Channels:", this);
+    channelsLabel = new QLabel(tr("Channels:"), this);
     channelsValue = new QLabel("-", this);
-    sampleFmtLabel = new QLabel("Sample Format:", this);
+    sampleFmtLabel = new QLabel(tr("Sample Format:"), this);
     sampleFmtValue = new QLabel("-", this);
-    sampleRateLabel = new QLabel("Sample Rate:", this);
+    sampleRateLabel = new QLabel(tr("Sample Rate:"), this);
     sampleRateValue = new QLabel("-", this);
 
     audioLayout->addWidget(audioStreamLabel, 0, 0);
@@ -281,4 +281,28 @@ QString InfoViewPage::FormatFrequency(int64_t hertz) {
 
     double khz = hertz / 1000.0;
     return QString("%1 kHz").arg(khz, 0, 'f', 1);
+}
+
+void InfoViewPage::RetranslateUi() {
+    // Update all translatable strings
+    inputGroupBox->setTitle(tr("Input File"));
+    filePathLineEdit->setPlaceholderText(tr("Drop a media file here or click Browse..."));
+    browseButton->setText(tr("Browse..."));
+
+    videoGroupBox->setTitle(tr("Video Information"));
+    videoStreamLabel->setText(tr("Stream Index:"));
+    widthLabel->setText(tr("Width:"));
+    heightLabel->setText(tr("Height:"));
+    colorSpaceLabel->setText(tr("Color Space:"));
+    videoCodecLabel->setText(tr("Video Codec:"));
+    videoBitRateLabel->setText(tr("Bit Rate:"));
+    frameRateLabel->setText(tr("Frame Rate:"));
+
+    audioGroupBox->setTitle(tr("Audio Information"));
+    audioStreamLabel->setText(tr("Stream Index:"));
+    audioCodecLabel->setText(tr("Audio Codec:"));
+    audioBitRateLabel->setText(tr("Bit Rate:"));
+    channelsLabel->setText(tr("Channels:"));
+    sampleFmtLabel->setText(tr("Sample Format:"));
+    sampleRateLabel->setText(tr("Sample Rate:"));
 }

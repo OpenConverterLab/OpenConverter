@@ -66,14 +66,14 @@ void TranscodePage::SetupUI() {
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
     // Input File Section
-    inputGroupBox = new QGroupBox("Input File", this);
+    inputGroupBox = new QGroupBox(tr("Input File"), this);
     QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
 
     inputFileLineEdit = new QLineEdit(inputGroupBox);
-    inputFileLineEdit->setPlaceholderText("Select a media file...");
+    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
     inputFileLineEdit->setReadOnly(true);
 
-    browseInputButton = new QPushButton("Browse...", inputGroupBox);
+    browseInputButton = new QPushButton(tr("Browse..."), inputGroupBox);
     connect(browseInputButton, &QPushButton::clicked, this, &TranscodePage::OnBrowseInputClicked);
 
     inputLayout->addWidget(inputFileLineEdit);
@@ -82,12 +82,12 @@ void TranscodePage::SetupUI() {
     mainLayout->addWidget(inputGroupBox);
 
     // Video Settings Section
-    videoGroupBox = new QGroupBox("Video Settings", this);
+    videoGroupBox = new QGroupBox(tr("Video Settings"), this);
     QGridLayout *videoLayout = new QGridLayout(videoGroupBox);
     videoLayout->setSpacing(10);
 
     // Video Codec
-    videoCodecLabel = new QLabel("Codec:", videoGroupBox);
+    videoCodecLabel = new QLabel(tr("Codec:"), videoGroupBox);
     videoCodecComboBox = new QComboBox(videoGroupBox);
     videoCodecComboBox->addItems({"auto", "libx264", "libx265", "libvpx", "libvpx-vp9", "mpeg4", "copy"});
     videoCodecComboBox->setCurrentText("auto");
@@ -95,29 +95,29 @@ void TranscodePage::SetupUI() {
             this, &TranscodePage::OnVideoCodecChanged);
 
     // Video Bitrate
-    videoBitrateLabel = new QLabel("Bitrate:", videoGroupBox);
+    videoBitrateLabel = new QLabel(tr("Bitrate:"), videoGroupBox);
     videoBitrateSpinBox = new QSpinBox(videoGroupBox);
     videoBitrateSpinBox->setRange(0, 50000);
     videoBitrateSpinBox->setValue(0);
-    videoBitrateSpinBox->setSuffix(" kbps");
-    videoBitrateSpinBox->setSpecialValueText("auto");
+    videoBitrateSpinBox->setSuffix(tr(" kbps"));
+    videoBitrateSpinBox->setSpecialValueText(tr("auto"));
 
     // Dimension
-    dimensionLabel = new QLabel("Dimension:", videoGroupBox);
+    dimensionLabel = new QLabel(tr("Dimension:"), videoGroupBox);
     widthSpinBox = new QSpinBox(videoGroupBox);
     widthSpinBox->setRange(0, 7680);
     widthSpinBox->setValue(0);
-    widthSpinBox->setSpecialValueText("auto");
+    widthSpinBox->setSpecialValueText(tr("auto"));
 
-    dimensionXLabel = new QLabel("x", videoGroupBox);
+    dimensionXLabel = new QLabel(tr("x"), videoGroupBox);
 
     heightSpinBox = new QSpinBox(videoGroupBox);
     heightSpinBox->setRange(0, 4320);
     heightSpinBox->setValue(0);
-    heightSpinBox->setSpecialValueText("auto");
+    heightSpinBox->setSpecialValueText(tr("auto"));
 
     // Pixel Format
-    pixFmtLabel = new QLabel("Pixel Format:", videoGroupBox);
+    pixFmtLabel = new QLabel(tr("Pixel Format:"), videoGroupBox);
     pixFmtComboBox = new QComboBox(videoGroupBox);
     pixFmtComboBox->addItems({"auto", "yuv420p", "yuv422p", "yuv444p", "rgb24", "bgr24"});
     pixFmtComboBox->setCurrentText("auto");
@@ -136,23 +136,23 @@ void TranscodePage::SetupUI() {
     mainLayout->addWidget(videoGroupBox);
 
     // Audio Settings Section
-    audioGroupBox = new QGroupBox("Audio Settings", this);
+    audioGroupBox = new QGroupBox(tr("Audio Settings"), this);
     QGridLayout *audioLayout = new QGridLayout(audioGroupBox);
     audioLayout->setSpacing(10);
 
     // Audio Codec
-    audioCodecLabel = new QLabel("Codec:", audioGroupBox);
+    audioCodecLabel = new QLabel(tr("Codec:"), audioGroupBox);
     audioCodecComboBox = new QComboBox(audioGroupBox);
     audioCodecComboBox->addItems({"auto", "aac", "libmp3lame", "libvorbis", "libopus", "copy"});
     audioCodecComboBox->setCurrentText("auto");
 
     // Audio Bitrate
-    audioBitrateLabel = new QLabel("Bitrate:", audioGroupBox);
+    audioBitrateLabel = new QLabel(tr("Bitrate:"), audioGroupBox);
     audioBitrateSpinBox = new QSpinBox(audioGroupBox);
     audioBitrateSpinBox->setRange(0, 320);
     audioBitrateSpinBox->setValue(0);
-    audioBitrateSpinBox->setSuffix(" kbps");
-    audioBitrateSpinBox->setSpecialValueText("auto");
+    audioBitrateSpinBox->setSuffix(tr(" kbps"));
+    audioBitrateSpinBox->setSpecialValueText(tr("auto"));
 
     audioLayout->addWidget(audioCodecLabel, 0, 0);
     audioLayout->addWidget(audioCodecComboBox, 0, 1);
@@ -162,10 +162,10 @@ void TranscodePage::SetupUI() {
     mainLayout->addWidget(audioGroupBox);
 
     // Preset Section
-    presetGroupBox = new QGroupBox("Preset", this);
+    presetGroupBox = new QGroupBox(tr("Preset"), this);
     QHBoxLayout *presetLayout = new QHBoxLayout(presetGroupBox);
 
-    presetLabel = new QLabel("Preset:", presetGroupBox);
+    presetLabel = new QLabel(tr("Preset:"), presetGroupBox);
     presetComboBox = new QComboBox(presetGroupBox);
     presetComboBox->addItems({"ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"});
     presetComboBox->setCurrentText("medium");
@@ -177,10 +177,10 @@ void TranscodePage::SetupUI() {
     mainLayout->addWidget(presetGroupBox);
 
     // Format Section
-    formatGroupBox = new QGroupBox("File Format", this);
+    formatGroupBox = new QGroupBox(tr("File Format"), this);
     QHBoxLayout *formatLayout = new QHBoxLayout(formatGroupBox);
 
-    formatLabel = new QLabel("Format:", formatGroupBox);
+    formatLabel = new QLabel(tr("Format:"), formatGroupBox);
     formatComboBox = new QComboBox(formatGroupBox);
     formatComboBox->addItems({"mp4", "mkv", "avi", "mov", "flv", "webm", "ts"});
     formatComboBox->setCurrentText("mp4");
@@ -206,21 +206,21 @@ void TranscodePage::SetupUI() {
     mainLayout->addWidget(progressLabel);
 
     // Output File Section
-    outputGroupBox = new QGroupBox("Output File", this);
+    outputGroupBox = new QGroupBox(tr("Output File"), this);
     QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
 
     QHBoxLayout *outputPathLayout = new QHBoxLayout();
     outputFileLineEdit = new QLineEdit(outputGroupBox);
-    outputFileLineEdit->setPlaceholderText("Output file path will be generated automatically...");
+    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
     outputFileLineEdit->setReadOnly(true);
 
-    browseOutputButton = new QPushButton("Browse...", outputGroupBox);
+    browseOutputButton = new QPushButton(tr("Browse..."), outputGroupBox);
     connect(browseOutputButton, &QPushButton::clicked, this, &TranscodePage::OnBrowseOutputClicked);
 
     outputPathLayout->addWidget(outputFileLineEdit);
     outputPathLayout->addWidget(browseOutputButton);
 
-    transcodeButton = new QPushButton("Transcode", outputGroupBox);
+    transcodeButton = new QPushButton(tr("Transcode"), outputGroupBox);
     transcodeButton->setEnabled(false);
     transcodeButton->setMinimumHeight(40);
     connect(transcodeButton, &QPushButton::clicked, this, &TranscodePage::OnTranscodeClicked);
@@ -446,4 +446,39 @@ void TranscodePage::UpdateOutputPath() {
 QString TranscodePage::GetFileExtension(const QString &filePath) {
     QFileInfo fileInfo(filePath);
     return fileInfo.suffix().toLower();
+}
+
+void TranscodePage::RetranslateUi() {
+    // Update all translatable strings
+    inputGroupBox->setTitle(tr("Input File"));
+    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
+    browseInputButton->setText(tr("Browse..."));
+
+    videoGroupBox->setTitle(tr("Video Settings"));
+    videoCodecLabel->setText(tr("Codec:"));
+    videoBitrateLabel->setText(tr("Bitrate:"));
+    videoBitrateSpinBox->setSuffix(tr(" kbps"));
+    videoBitrateSpinBox->setSpecialValueText(tr("auto"));
+    dimensionLabel->setText(tr("Dimension:"));
+    widthSpinBox->setSpecialValueText(tr("auto"));
+    dimensionXLabel->setText(tr("x"));
+    heightSpinBox->setSpecialValueText(tr("auto"));
+    pixFmtLabel->setText(tr("Pixel Format:"));
+
+    audioGroupBox->setTitle(tr("Audio Settings"));
+    audioCodecLabel->setText(tr("Codec:"));
+    audioBitrateLabel->setText(tr("Bitrate:"));
+    audioBitrateSpinBox->setSuffix(tr(" kbps"));
+    audioBitrateSpinBox->setSpecialValueText(tr("auto"));
+
+    presetGroupBox->setTitle(tr("Preset"));
+    presetLabel->setText(tr("Preset:"));
+
+    formatGroupBox->setTitle(tr("File Format"));
+    formatLabel->setText(tr("Format:"));
+
+    outputGroupBox->setTitle(tr("Output File"));
+    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
+    browseOutputButton->setText(tr("Browse..."));
+    transcodeButton->setText(tr("Transcode"));
 }

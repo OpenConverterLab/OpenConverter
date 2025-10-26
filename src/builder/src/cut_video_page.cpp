@@ -71,14 +71,14 @@ void CutVideoPage::SetupUI() {
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
     // Input File Section
-    inputGroupBox = new QGroupBox("Input File", this);
+    inputGroupBox = new QGroupBox(tr("Input File"), this);
     QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
 
     inputFileLineEdit = new QLineEdit(inputGroupBox);
-    inputFileLineEdit->setPlaceholderText("Select a video file...");
+    inputFileLineEdit->setPlaceholderText(tr("Select a video file..."));
     inputFileLineEdit->setReadOnly(true);
 
-    browseInputButton = new QPushButton("Browse...", inputGroupBox);
+    browseInputButton = new QPushButton(tr("Browse..."), inputGroupBox);
     connect(browseInputButton, &QPushButton::clicked, this, &CutVideoPage::OnBrowseInputClicked);
 
     inputLayout->addWidget(inputFileLineEdit);
@@ -87,19 +87,23 @@ void CutVideoPage::SetupUI() {
     mainLayout->addWidget(inputGroupBox);
 
     // Media Duration Section
-    durationGroupBox = new QGroupBox("Media Duration", this);
+    durationGroupBox = new QGroupBox(tr("Media Duration"), this);
     QHBoxLayout *durationLayout = new QHBoxLayout(durationGroupBox);
 
-    totalDurationLabel = new QLabel("Total Duration: 00:00:00", durationGroupBox);
+    totalDurationLabel = new QLabel(tr("Total Duration:"), durationGroupBox);
     totalDurationLabel->setStyleSheet("font-size: 14px; font-weight: bold;");
 
+    totalDurationValueLabel = new QLabel("00:00:00", durationGroupBox);
+    totalDurationValueLabel->setStyleSheet("font-size: 14px; font-weight: bold;");
+
     durationLayout->addWidget(totalDurationLabel);
+    durationLayout->addWidget(totalDurationValueLabel);
     durationLayout->addStretch();
 
     mainLayout->addWidget(durationGroupBox);
 
     // Video Player Section
-    playerGroupBox = new QGroupBox("Video Player", this);
+    playerGroupBox = new QGroupBox(tr("Video Player"), this);
     QVBoxLayout *playerLayout = new QVBoxLayout(playerGroupBox);
 
     // Simple FFmpeg-based video player
@@ -113,7 +117,7 @@ void CutVideoPage::SetupUI() {
     // Player controls
     QHBoxLayout *controlsLayout = new QHBoxLayout();
 
-    playPauseButton = new QPushButton("Play", playerGroupBox);
+    playPauseButton = new QPushButton(tr("Play"), playerGroupBox);
     playPauseButton->setEnabled(false);
     connect(playPauseButton, &QPushButton::clicked, this, &CutVideoPage::OnPlayPauseClicked);
 
@@ -140,33 +144,36 @@ void CutVideoPage::SetupUI() {
     mainLayout->addWidget(playerGroupBox);
 
     // Time Selection Section
-    timeSelectionGroupBox = new QGroupBox("Time Selection", this);
+    timeSelectionGroupBox = new QGroupBox(tr("Time Selection"), this);
     QGridLayout *timeSelectionLayout = new QGridLayout(timeSelectionGroupBox);
     timeSelectionLayout->setSpacing(10);
 
     // Start time
-    startTimeLabel = new QLabel("Start Time:", timeSelectionGroupBox);
+    startTimeLabel = new QLabel(tr("Start Time:"), timeSelectionGroupBox);
     startTimeEdit = new QTimeEdit(QTime(0, 0, 0), timeSelectionGroupBox);
     startTimeEdit->setDisplayFormat("HH:mm:ss");
     connect(startTimeEdit, &QTimeEdit::timeChanged, this, &CutVideoPage::OnStartTimeChanged);
 
-    setStartButton = new QPushButton("Set from Player", timeSelectionGroupBox);
+    setStartButton = new QPushButton(tr("Set from Player"), timeSelectionGroupBox);
     setStartButton->setEnabled(false);
     connect(setStartButton, &QPushButton::clicked, this, &CutVideoPage::OnSetStartClicked);
 
     // End time
-    endTimeLabel = new QLabel("End Time:", timeSelectionGroupBox);
+    endTimeLabel = new QLabel(tr("End Time:"), timeSelectionGroupBox);
     endTimeEdit = new QTimeEdit(QTime(0, 0, 0), timeSelectionGroupBox);
     endTimeEdit->setDisplayFormat("HH:mm:ss");
     connect(endTimeEdit, &QTimeEdit::timeChanged, this, &CutVideoPage::OnEndTimeChanged);
 
-    setEndButton = new QPushButton("Set from Player", timeSelectionGroupBox);
+    setEndButton = new QPushButton(tr("Set from Player"), timeSelectionGroupBox);
     setEndButton->setEnabled(false);
     connect(setEndButton, &QPushButton::clicked, this, &CutVideoPage::OnSetEndClicked);
 
     // Duration
-    cutDurationLabel = new QLabel("Cut Duration: 00:00:00", timeSelectionGroupBox);
+    cutDurationLabel = new QLabel(tr("Cut Duration:"), timeSelectionGroupBox);
     cutDurationLabel->setStyleSheet("font-weight: bold;");
+
+    cutDurationValueLabel = new QLabel("00:00:00", timeSelectionGroupBox);
+    cutDurationValueLabel->setStyleSheet("font-weight: bold;");
 
     timeSelectionLayout->addWidget(startTimeLabel, 0, 0);
     timeSelectionLayout->addWidget(startTimeEdit, 0, 1);
@@ -174,7 +181,8 @@ void CutVideoPage::SetupUI() {
     timeSelectionLayout->addWidget(endTimeLabel, 1, 0);
     timeSelectionLayout->addWidget(endTimeEdit, 1, 1);
     timeSelectionLayout->addWidget(setEndButton, 1, 2);
-    timeSelectionLayout->addWidget(cutDurationLabel, 2, 0, 1, 3);
+    timeSelectionLayout->addWidget(cutDurationLabel, 2, 0);
+    timeSelectionLayout->addWidget(cutDurationValueLabel, 2, 1, 1, 2);
 
     mainLayout->addWidget(timeSelectionGroupBox);
 
@@ -191,20 +199,20 @@ void CutVideoPage::SetupUI() {
     mainLayout->addWidget(progressLabel);
 
     // Output File Section
-    outputGroupBox = new QGroupBox("Output File", this);
+    outputGroupBox = new QGroupBox(tr("Output File"), this);
     QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
 
     QHBoxLayout *outputPathLayout = new QHBoxLayout();
     outputFileLineEdit = new QLineEdit(outputGroupBox);
-    outputFileLineEdit->setPlaceholderText("Output file path...");
+    outputFileLineEdit->setPlaceholderText(tr("Output file path..."));
 
-    browseOutputButton = new QPushButton("Browse...", outputGroupBox);
+    browseOutputButton = new QPushButton(tr("Browse..."), outputGroupBox);
     connect(browseOutputButton, &QPushButton::clicked, this, &CutVideoPage::OnBrowseOutputClicked);
 
     outputPathLayout->addWidget(outputFileLineEdit);
     outputPathLayout->addWidget(browseOutputButton);
 
-    cutButton = new QPushButton("Cut Video", outputGroupBox);
+    cutButton = new QPushButton(tr("Cut Video"), outputGroupBox);
     cutButton->setEnabled(false);
     cutButton->setStyleSheet("QPushButton { padding: 8px; font-size: 14px; font-weight: bold; }");
     connect(cutButton, &QPushButton::clicked, this, &CutVideoPage::OnCutClicked);
@@ -223,9 +231,9 @@ void CutVideoPage::SetupUI() {
 void CutVideoPage::OnBrowseInputClicked() {
     QString fileName = QFileDialog::getOpenFileName(
         this,
-        "Select Video File",
+        tr("Select Video File"),
         "",
-        "Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"
+        tr("Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)")
     );
 
     if (!fileName.isEmpty()) {
@@ -245,9 +253,9 @@ void CutVideoPage::OnBrowseInputClicked() {
 void CutVideoPage::OnBrowseOutputClicked() {
     QString fileName = QFileDialog::getSaveFileName(
         this,
-        "Save Cut Video As",
+        tr("Save Cut Video As"),
         "",
-        "Video Files (*.mp4 *.avi *.mkv *.mov);;All Files (*.*)"
+        tr("Video Files (*.mp4 *.avi *.mkv *.mov);;All Files (*.*)")
     );
 
     if (!fileName.isEmpty()) {
@@ -314,17 +322,17 @@ void CutVideoPage::LoadVideo(const QString &filePath) {
         timelineSlider->setEnabled(true);
         cutButton->setEnabled(true);
     } else {
-        QMessageBox::warning(this, "Error", "Failed to load video file.");
+        QMessageBox::warning(this, tr("Error"), tr("Failed to load video file."));
     }
 }
 
 void CutVideoPage::OnPlayPauseClicked() {
     if (videoPlayer->IsPlaying()) {
         videoPlayer->Pause();
-        playPauseButton->setText("Play");
+        playPauseButton->setText(tr("Play"));
     } else {
         videoPlayer->Play();
-        playPauseButton->setText("Pause");
+        playPauseButton->setText(tr("Pause"));
     }
 }
 
@@ -392,12 +400,15 @@ void CutVideoPage::OnSetEndClicked() {
 }
 
 void CutVideoPage::UpdateDurationLabel() {
+    // Update total duration value
+    totalDurationValueLabel->setText(FormatTime(videoDuration));
+
+    // Update cut duration value
     if (endTime > startTime) {
         qint64 duration = endTime - startTime;
-        totalDurationLabel->setText(QString("Total Duration: %1").arg(FormatTime(videoDuration)));
-        cutDurationLabel->setText(QString("Cut Duration: %1").arg(FormatTime(duration)));
+        cutDurationValueLabel->setText(FormatTime(duration));
     } else {
-        cutDurationLabel->setText("Cut Duration: Invalid (end time must be after start time)");
+        cutDurationValueLabel->setText(tr("Invalid (end time must be after start time)"));
     }
 }
 
@@ -416,12 +427,12 @@ void CutVideoPage::OnCutClicked() {
     QString outputPath = outputFileLineEdit->text();
 
     if (inputPath.isEmpty() || outputPath.isEmpty()) {
-        QMessageBox::warning(this, "Error", "Please select input and output files.");
+        QMessageBox::warning(this, tr("Error"), tr("Please select input and output files."));
         return;
     }
 
     if (endTime <= startTime) {
-        QMessageBox::warning(this, "Error", "End time must be after start time.");
+        QMessageBox::warning(this, tr("Error"), tr("End time must be after start time."));
         return;
     }
 
@@ -492,12 +503,12 @@ void CutVideoPage::OnCutFinished(bool success) {
 
     // Re-enable button
     cutButton->setEnabled(true);
-    cutButton->setText("Cut Video");
+    cutButton->setText(tr("Cut Video"));
 
     if (success) {
-        QMessageBox::information(this, "Success", "Video cut successfully!");
+        QMessageBox::information(this, tr("Success"), tr("Video cut successfully!"));
     } else {
-        QMessageBox::critical(this, "Error", "Failed to cut video.");
+        QMessageBox::critical(this, tr("Error"), tr("Failed to cut video."));
     }
 }
 
@@ -517,4 +528,36 @@ void CutVideoPage::on_time_update(double timeRequired) {
                                .arg(minutes)
                                .arg(seconds, 2, 10, QChar('0')));
     }, Qt::QueuedConnection);
+}
+
+void CutVideoPage::RetranslateUi() {
+    // Update all translatable strings
+    inputGroupBox->setTitle(tr("Input File"));
+    inputFileLineEdit->setPlaceholderText(tr("Select a video file..."));
+    browseInputButton->setText(tr("Browse..."));
+
+    durationGroupBox->setTitle(tr("Media Duration"));
+    totalDurationLabel->setText(tr("Total Duration:"));
+
+    playerGroupBox->setTitle(tr("Video Player"));
+    if (videoPlayer && videoPlayer->IsPlaying()) {
+        playPauseButton->setText(tr("Pause"));
+    } else {
+        playPauseButton->setText(tr("Play"));
+    }
+
+    timeSelectionGroupBox->setTitle(tr("Time Selection"));
+    startTimeLabel->setText(tr("Start Time:"));
+    setStartButton->setText(tr("Set from Player"));
+    endTimeLabel->setText(tr("End Time:"));
+    setEndButton->setText(tr("Set from Player"));
+    cutDurationLabel->setText(tr("Cut Duration:"));
+
+    // Update dynamic duration values
+    UpdateDurationLabel();
+
+    outputGroupBox->setTitle(tr("Output File"));
+    outputFileLineEdit->setPlaceholderText(tr("Output file path..."));
+    browseOutputButton->setText(tr("Browse..."));
+    cutButton->setText(tr("Cut Video"));
 }

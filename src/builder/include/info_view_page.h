@@ -38,6 +38,7 @@ public:
 
     QString GetPageTitle() const override;
     void OnPageActivated() override;
+    void RetranslateUi() override;
 
     // Handle file drop
     void HandleFileDrop(const QString &filePath);

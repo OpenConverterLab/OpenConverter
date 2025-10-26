@@ -57,6 +57,7 @@ public:
     void OnPageActivated() override;
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Remux"; }
+    void RetranslateUi() override;
 
     // ProcessObserver interface
     void on_process_update(double progress) override;

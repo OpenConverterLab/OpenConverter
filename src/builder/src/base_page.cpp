@@ -81,3 +81,7 @@ void BasePage::OnInputFileChanged(const QString &newPath) {
 void BasePage::OnOutputPathUpdate() {
     // Default implementation - can be overridden by derived classes
 }
+
+void BasePage::RetranslateUi() {
+    // Default implementation - can be overridden by derived classes
+}

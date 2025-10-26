@@ -64,14 +64,14 @@ void RemuxPage::SetupUI() {
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
     // Input File Section
-    inputGroupBox = new QGroupBox("Input File", this);
+    inputGroupBox = new QGroupBox(tr("Input File"), this);
     QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
 
     inputFileLineEdit = new QLineEdit(inputGroupBox);
-    inputFileLineEdit->setPlaceholderText("Select a media file...");
+    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
     inputFileLineEdit->setReadOnly(true);
 
-    browseInputButton = new QPushButton("Browse...", inputGroupBox);
+    browseInputButton = new QPushButton(tr("Browse..."), inputGroupBox);
     connect(browseInputButton, &QPushButton::clicked, this, &RemuxPage::OnBrowseInputClicked);
 
     inputLayout->addWidget(inputFileLineEdit);
@@ -80,7 +80,7 @@ void RemuxPage::SetupUI() {
     mainLayout->addWidget(inputGroupBox);
 
     // Streams Section
-    streamsGroupBox = new QGroupBox("Streams (Select streams to include)", this);
+    streamsGroupBox = new QGroupBox(tr("Streams (Select streams to include)"), this);
     QVBoxLayout *streamsGroupLayout = new QVBoxLayout(streamsGroupBox);
 
     streamsScrollArea = new QScrollArea(streamsGroupBox);
@@ -93,7 +93,7 @@ void RemuxPage::SetupUI() {
     streamsLayout->setSpacing(5);
     streamsLayout->setContentsMargins(5, 5, 5, 5);
 
-    QLabel *noStreamsLabel = new QLabel("No file selected", streamsContainer);
+    QLabel *noStreamsLabel = new QLabel(tr("No file selected"), streamsContainer);
     noStreamsLabel->setStyleSheet("color: gray; font-style: italic;");
     streamsLayout->addWidget(noStreamsLabel);
     streamsLayout->addStretch();
@@ -105,12 +105,12 @@ void RemuxPage::SetupUI() {
     mainLayout->addWidget(streamsGroupBox);
 
     // Settings Section
-    settingsGroupBox = new QGroupBox("Output Settings", this);
+    settingsGroupBox = new QGroupBox(tr("Output Settings"), this);
     QGridLayout *settingsLayout = new QGridLayout(settingsGroupBox);
     settingsLayout->setSpacing(10);
 
     // Output Format
-    formatLabel = new QLabel("Output Format:", settingsGroupBox);
+    formatLabel = new QLabel(tr("Output Format:"), settingsGroupBox);
     formatComboBox = new QComboBox(settingsGroupBox);
     formatComboBox->addItems({"mp4", "mkv", "avi", "mov", "flv", "webm", "ts"});
     formatComboBox->setCurrentText("mp4");
@@ -135,21 +135,21 @@ void RemuxPage::SetupUI() {
     mainLayout->addWidget(progressLabel);
 
     // Output File Section
-    outputGroupBox = new QGroupBox("Output File", this);
+    outputGroupBox = new QGroupBox(tr("Output File"), this);
     QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
 
     QHBoxLayout *outputPathLayout = new QHBoxLayout();
     outputFileLineEdit = new QLineEdit(outputGroupBox);
-    outputFileLineEdit->setPlaceholderText("Output file path will be generated automatically...");
+    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
     outputFileLineEdit->setReadOnly(true);
 
-    browseOutputButton = new QPushButton("Browse...", outputGroupBox);
+    browseOutputButton = new QPushButton(tr("Browse..."), outputGroupBox);
     connect(browseOutputButton, &QPushButton::clicked, this, &RemuxPage::OnBrowseOutputClicked);
 
     outputPathLayout->addWidget(outputFileLineEdit);
     outputPathLayout->addWidget(browseOutputButton);
 
-    remuxButton = new QPushButton("Remux", outputGroupBox);
+    remuxButton = new QPushButton(tr("Remux"), outputGroupBox);
     remuxButton->setEnabled(false);
     remuxButton->setMinimumHeight(40);
     connect(remuxButton, &QPushButton::clicked, this, &RemuxPage::OnRemuxClicked);
@@ -467,4 +467,21 @@ QString RemuxPage::FormatBitrate(int64_t bitsPerSec) {
 
     double mbps = kbps / 1000.0;
     return QString("%1 Mbps").arg(mbps, 0, 'f', 2);
+}
+
+void RemuxPage::RetranslateUi() {
+    // Update all translatable strings
+    inputGroupBox->setTitle(tr("Input File"));
+    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
+    browseInputButton->setText(tr("Browse..."));
+
+    streamsGroupBox->setTitle(tr("Streams (Select streams to include)"));
+
+    settingsGroupBox->setTitle(tr("Output Settings"));
+    formatLabel->setText(tr("Output Format:"));
+
+    outputGroupBox->setTitle(tr("Output File"));
+    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
+    browseOutputButton->setText(tr("Browse..."));
+    remuxButton->setText(tr("Remux"));
 }

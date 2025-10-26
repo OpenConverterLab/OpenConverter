@@ -40,6 +40,7 @@ public:
 
     QString GetPageTitle() const override;
     void OnPageActivated() override;
+    void RetranslateUi() override;
 
 protected:
     void OnOutputPathUpdate() override;
