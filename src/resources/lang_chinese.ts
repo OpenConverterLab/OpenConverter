@@ -299,52 +299,6 @@
     </message>
 </context>
 <context>
-    <name>EncodeSetting</name>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="14"/>
-        <source>MainWindow</source>
-        <translation>编码器设置</translation>
-    </message>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="36"/>
-        <source>video:</source>
-        <translation>视频流：</translation>
-    </message>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="46"/>
-        <location filename="../builder/src/encode_setting.ui" line="95"/>
-        <source>codec</source>
-        <translation>编码</translation>
-    </message>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="53"/>
-        <location filename="../builder/src/encode_setting.ui" line="102"/>
-        <source>bit_rate</source>
-        <translation>比特率</translation>
-    </message>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="60"/>
-        <location filename="../builder/src/encode_setting.ui" line="109"/>
-        <source>preset</source>
-        <translation>预设</translation>
-    </message>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="85"/>
-        <source>audio:</source>
-        <translation>音频流：</translation>
-    </message>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="128"/>
-        <source>Cancel</source>
-        <translation>取消</translation>
-    </message>
-    <message>
-        <location filename="../builder/src/encode_setting.ui" line="135"/>
-        <source>Apply</source>
-        <translation>应用</translation>
-    </message>
-</context>
-<context>
     <name>ExtractAudioPage</name>
     <message>
         <location filename="../builder/src/extract_audio_page.cpp" line="58"/>
@@ -561,61 +515,9 @@
         <translation type="vanished">开源转换器</translation>
     </message>
     <message>
-        <source>convert</source>
-        <translation type="vanished">转换</translation>
-    </message>
-    <message>
-        <source>sample_rate:</source>
-        <translation type="vanished">采样率：</translation>
-    </message>
-    <message>
         <location filename="../builder/src/open_converter.ui" line="14"/>
         <source>MainWindow</source>
         <translation>OpenConverter</translation>
-    </message>
-    <message>
-        <source>           Audio Stream:</source>
-        <translation type="vanished">音频流：</translation>
-    </message>
-    <message>
-        <source>color_space:</source>
-        <translation type="vanished">色彩空间：</translation>
-    </message>
-    <message>
-        <source>           Video Stream:</source>
-        <translation type="vanished">视频流：</translation>
-    </message>
-    <message>
-        <source>frame_rate:</source>
-        <translation type="vanished">帧率</translation>
-    </message>
-    <message>
-        <source>bit_rate:</source>
-        <translation type="vanished">比特率：</translation>
-    </message>
-    <message>
-        <source>codec:</source>
-        <translation type="vanished">编码格式：</translation>
-    </message>
-    <message>
-        <source>height:</source>
-        <translation type="vanished">高度：</translation>
-    </message>
-    <message>
-        <source>width:</source>
-        <translation type="vanished">宽度：</translation>
-    </message>
-    <message>
-        <source>sample_fmt:</source>
-        <translation type="vanished">采样格式：</translation>
-    </message>
-    <message>
-        <source>channels</source>
-        <translation type="vanished">声道数：</translation>
-    </message>
-    <message>
-        <source>             Sub Stream: </source>
-        <translation type="vanished">字幕流：</translation>
     </message>
     <message>
         <location filename="../builder/src/open_converter.ui" line="97"/>
@@ -711,23 +613,6 @@
         <location filename="../builder/src/open_converter.cpp" line="101"/>
         <source>FFTOOL</source>
         <translation>FFTOOL</translation>
-    </message>
-    <message>
-        <source>Apply</source>
-        <translation type="vanished">应用</translation>
-    </message>
-    <message>
-        <source>encode_setting</source>
-        <translation type="vanished">编码器设置</translation>
-    </message>
-    <message>
-        <source> Process: </source>
-        <oldsource> Process:   %   </oldsource>
-        <translation type="vanished">处理进度：</translation>
-    </message>
-    <message>
-        <source> Time required:  </source>
-        <translation type="vanished">剩余时间：</translation>
     </message>
 </context>
 <context>

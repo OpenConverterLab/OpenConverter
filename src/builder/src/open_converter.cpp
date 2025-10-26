@@ -49,7 +49,6 @@
 #include "../include/base_page.h"
 #include "../include/compress_picture_page.h"
 #include "../include/cut_video_page.h"
-#include "../include/encode_setting.h"
 #include "../include/extract_audio_page.h"
 #include "../include/info_view_page.h"
 #include "../include/open_converter.h"
@@ -66,8 +65,6 @@ OpenConverter::OpenConverter(QWidget *parent)
     /* init objects */
     info = new Info;
     encodeParameter = new EncodeParameter;
-    encodeSetting = new EncodeSetting(nullptr, encodeParameter);
-    encodeSetting->setWindowTitle("Encode Setting");
     processParameter = new ProcessParameter;
     converter = new Converter(processParameter, encodeParameter);
     displayResult = new QMessageBox;
@@ -381,7 +378,6 @@ OpenConverter::~OpenConverter() {
     delete ui;
     delete info;
     delete encodeParameter;
-    delete encodeSetting;
     delete processParameter;
     delete converter;
     delete displayResult;
