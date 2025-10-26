@@ -19,6 +19,7 @@
 #include "../include/open_converter.h"
 #include "../include/shared_data.h"
 #include "../../common/include/encode_parameter.h"
+#include "../../common/include/info.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
 #include <QFileDialog>
@@ -78,33 +79,24 @@ void ExtractAudioPage::SetupUI() {
     // Output Format
     formatLabel = new QLabel(tr("Output Format:"), settingsGroupBox);
     formatComboBox = new QComboBox(settingsGroupBox);
-    formatComboBox->addItems({"aac", "mp3", "wav", "flac", "ogg", "m4a"});
-    formatComboBox->setCurrentText("auto");
+    formatComboBox->addItems({"auto", "aac", "mp3", "wav", "flac", "ogg", "m4a"});
+    formatComboBox->setCurrentIndex(0);  // Default to "auto"
     connect(formatComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &ExtractAudioPage::OnFormatChanged);
 
     settingsLayout->addWidget(formatLabel, 0, 0);
     settingsLayout->addWidget(formatComboBox, 0, 1);
 
-    // Audio Codec
-    codecLabel = new QLabel(tr("Audio Codec:"), settingsGroupBox);
-    codecComboBox = new QComboBox(settingsGroupBox);
-    codecComboBox->addItems({"auto", "aac", "libmp3lame", "pcm_s16le", "flac", "libvorbis"});
-    codecComboBox->setCurrentText("auto");
-
-    settingsLayout->addWidget(codecLabel, 1, 0);
-    settingsLayout->addWidget(codecComboBox, 1, 1);
-
     // Bitrate
     bitrateLabel = new QLabel(tr("Bitrate (kbps):"), settingsGroupBox);
     bitrateSpinBox = new QSpinBox(settingsGroupBox);
     bitrateSpinBox->setRange(0, 320);
-    bitrateSpinBox->setValue(128);
+    bitrateSpinBox->setValue(0);
     bitrateSpinBox->setSpecialValueText(tr("auto"));
     bitrateSpinBox->setSuffix(tr(" kbps"));
 
-    settingsLayout->addWidget(bitrateLabel, 2, 0);
-    settingsLayout->addWidget(bitrateSpinBox, 2, 1);
+    settingsLayout->addWidget(bitrateLabel, 1, 0);
+    settingsLayout->addWidget(bitrateSpinBox, 1, 1);
 
     mainLayout->addWidget(settingsGroupBox);
 
@@ -211,37 +203,36 @@ void ExtractAudioPage::OnExtractClicked() {
         return;
     }
 
-    // Get settings
-    QString format = formatComboBox->currentText();
-    QString codec = codecComboBox->currentText();
-    int bitrate = bitrateSpinBox->value();
-
-    // Determine actual format and codec
-    if (format == "auto") {
-        QFileInfo outputInfo(outputPath);
-        format = outputInfo.suffix();
-    }
-
-    // Map format to codec if codec is auto
-    if (codec == "auto") {
-        if (format == "mp3") {
-            codec = "libmp3lame";
-        } else if (format == "aac" || format == "m4a") {
-            codec = "aac";
-        } else if (format == "wav") {
-            codec = "pcm_s16le";
-        } else if (format == "flac") {
-            codec = "flac";
-        } else if (format == "ogg") {
-            codec = "libvorbis";
-        } else {
-            codec = "aac";  // Default
-        }
-    }
-
     // Create parameters
     EncodeParameter *encodeParam = new EncodeParameter();
     ProcessParameter *processParam = new ProcessParameter();
+
+    // Get settings
+    QString format = formatComboBox->currentText();
+    int bitrate = bitrateSpinBox->value();
+
+    // Determine actual format
+    if (format == "auto") {
+        // Detect from input file
+        QString detectedCodec = DetectAudioCodecFromFile(inputPath);
+        format = MapCodecToFormat(detectedCodec);
+
+        // Update output path with detected format
+        QFileInfo inputInfo(inputPath);
+        QString baseName = inputInfo.completeBaseName();
+        QString dirPath = inputInfo.absolutePath();
+        outputPath = QString("%1/%2-oc-output.%3").arg(dirPath, baseName, format);
+        outputFileLineEdit->setText(outputPath);
+
+        // Default use copy mode (no re-encoding)
+        encodeParam->set_audio_codec_name("");
+    } else {
+        // Map format to codec
+        QString codec = MapFormatToCodec(format);
+        if (!codec.isEmpty()) {
+            encodeParam->set_audio_codec_name(codec.toStdString());
+        }
+    }
 
     // Register this page as observer for progress updates
     processParam->add_observer(this);
@@ -249,8 +240,6 @@ void ExtractAudioPage::OnExtractClicked() {
     // Disable video (extract audio only)
     encodeParam->set_video_codec_name("");
 
-    // Set audio parameters
-    encodeParam->set_audio_codec_name(codec.toStdString());
     if (bitrate > 0) {
         encodeParam->set_audio_bit_rate(bitrate * 1000);  // Convert kbps to bps
     }
@@ -337,12 +326,65 @@ void ExtractAudioPage::UpdateOutputPath() {
         if (mainWindow && mainWindow->GetSharedData()) {
             QString format = formatComboBox->currentText();
             if (format == "auto") {
-                format = "aac";  // Default format
+                // Detect audio codec from input file and map to format
+                QString detectedCodec = DetectAudioCodecFromFile(inputPath);
+                format = MapCodecToFormat(detectedCodec);
             }
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
             outputFileLineEdit->setText(outputPath);
             extractButton->setEnabled(true);
         }
+    }
+}
+
+QString ExtractAudioPage::DetectAudioCodecFromFile(const QString &filePath) {
+    Info info;
+    QByteArray ba = filePath.toLocal8Bit();
+    char *src = ba.data();
+
+    info.send_info(src);
+    QuickInfo *quickInfo = info.get_quick_info();
+
+    if (quickInfo && quickInfo->audioIdx >= 0) {
+        return QString::fromStdString(quickInfo->audioCodec);
+    }
+
+    return QString();  // Return empty string if detection fails
+}
+
+QString ExtractAudioPage::MapCodecToFormat(const QString &codec) {
+    if (codec.isEmpty()) {
+        return "aac";  // Default fallback
+    }
+
+    if (codec == "aac") {
+        return "aac";
+    } else if (codec == "mp3") {
+        return "mp3";
+    } else if (codec == "pcm_s16le" || codec.startsWith("pcm_")) {
+        return "wav";
+    } else if (codec == "flac") {
+        return "flac";
+    } else if (codec == "vorbis") {
+        return "ogg";
+    } else {
+        return "aac";  // Default fallback
+    }
+}
+
+QString ExtractAudioPage::MapFormatToCodec(const QString &format) {
+    if (format == "mp3") {
+        return "libmp3lame";
+    } else if (format == "aac" || format == "m4a") {
+        return "aac";
+    } else if (format == "wav") {
+        return "pcm_s16le";
+    } else if (format == "flac") {
+        return "flac";
+    } else if (format == "ogg") {
+        return "libvorbis";
+    } else {
+        return "aac";  // Default
     }
 }
 
@@ -354,7 +396,6 @@ void ExtractAudioPage::RetranslateUi() {
 
     settingsGroupBox->setTitle(tr("Audio Settings"));
     formatLabel->setText(tr("Output Format:"));
-    codecLabel->setText(tr("Audio Codec:"));
     bitrateLabel->setText(tr("Bitrate (kbps):"));
     bitrateSpinBox->setSpecialValueText(tr("auto"));
     bitrateSpinBox->setSuffix(tr(" kbps"));

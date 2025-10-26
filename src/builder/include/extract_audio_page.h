@@ -66,6 +66,9 @@ private:
     void UpdateOutputPath();
     void RunExtractInThread(const QString &inputPath, const QString &outputPath,
                             EncodeParameter *encodeParam, ProcessParameter *processParam);
+    QString DetectAudioCodecFromFile(const QString &filePath);
+    QString MapCodecToFormat(const QString &codec);
+    QString MapFormatToCodec(const QString &format);
 
     // Input section
     QGroupBox *inputGroupBox;
@@ -76,8 +79,6 @@ private:
     QGroupBox *settingsGroupBox;
     QLabel *formatLabel;
     QComboBox *formatComboBox;
-    QLabel *codecLabel;
-    QComboBox *codecComboBox;
     QLabel *bitrateLabel;
     QSpinBox *bitrateSpinBox;
 

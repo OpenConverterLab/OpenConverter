@@ -301,106 +301,104 @@
 <context>
     <name>ExtractAudioPage</name>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="58"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="351"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="59"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="392"/>
         <source>Input File</source>
         <translation>输入文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="62"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="352"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="63"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="393"/>
         <source>Select a video file...</source>
         <translation>选择视频文件...</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="65"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="132"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="353"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="364"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="66"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="124"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="394"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="404"/>
         <source>Browse...</source>
         <translation>浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="74"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="355"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="75"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="396"/>
         <source>Audio Settings</source>
         <translation>音频设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="79"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="356"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="80"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="397"/>
         <source>Output Format:</source>
         <translation>输出格式：</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="90"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="357"/>
         <source>Audio Codec:</source>
-        <translation>音频编码：</translation>
+        <translation type="vanished">音频编码：</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="99"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="358"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="91"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="398"/>
         <source>Bitrate (kbps):</source>
         <translation>比特率（kbps）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="103"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="359"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="95"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="399"/>
         <source>auto</source>
         <translation>自动</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="104"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="360"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="96"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="400"/>
         <source> kbps</source>
         <translation> kbps</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="124"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="362"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="116"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="402"/>
         <source>Output File</source>
         <translation>输出文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="129"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="363"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="121"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="403"/>
         <source>Output file path will be generated automatically...</source>
         <translation>输出文件路径将自动生成...</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="138"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="365"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="130"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="405"/>
         <source>Extract Audio</source>
         <translation>提取音频</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="157"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="149"/>
         <source>Select Video File</source>
         <translation>选择视频文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="159"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="151"/>
         <source>Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)</source>
         <translation>视频文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="180"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="172"/>
         <source>Audio Files (*.%1);;All Files (*.*)</source>
         <translation>音频文件 (*.%1);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="184"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="176"/>
         <source>Save Extracted Audio</source>
         <translation>保存提取的音频</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="210"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="205"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="210"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="205"/>
         <source>Please select input and output files.</source>
         <translation>请选择输入和输出文件。</translation>
     </message>
@@ -590,27 +588,27 @@
         <translation>中文</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="222"/>
+        <location filename="../builder/src/open_converter.cpp" line="219"/>
         <source>Current Transcoder changed to %1</source>
         <translation>当前转码器已切换至 %1</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="267"/>
+        <location filename="../builder/src/open_converter.cpp" line="264"/>
         <source>Current Language changed to %1</source>
         <translation>当前语言已切换至 %1</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="90"/>
+        <location filename="../builder/src/open_converter.cpp" line="87"/>
         <source>FFMPEG</source>
         <translation>FFMPEG</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="96"/>
+        <location filename="../builder/src/open_converter.cpp" line="93"/>
         <source>BMF</source>
         <translation>BMF</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="101"/>
+        <location filename="../builder/src/open_converter.cpp" line="98"/>
         <source>FFTOOL</source>
         <translation>FFTOOL</translation>
     </message>
