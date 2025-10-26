@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>lang_chinese.qm</file>
+        <file>OpenConverter-logo.png</file>
     </qresource>
 </RCC>

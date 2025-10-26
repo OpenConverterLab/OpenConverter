@@ -75,7 +75,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     ui->setupUi(this);
     setAcceptDrops(true);
     setWindowTitle("OpenConverter");
-    setWindowIcon(QIcon(":/icon/icon.png"));
+    setWindowIcon(QIcon(":/OpenConverter-logo.png"));
 
     // Register this class as an observer for process updates
     processParameter->add_observer(this);

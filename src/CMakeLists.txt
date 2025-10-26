@@ -312,10 +312,17 @@ if(ENABLE_GUI)
     # Set translation files
     set(TRANSLATIONS ${CMAKE_SOURCE_DIR}/resources/lang_chinese.ts)
 
+    # Set application icon
+    set(MACOSX_BUNDLE_ICON_FILE OpenConverter.icns)
+    set(APP_ICON_MACOSX ${CMAKE_SOURCE_DIR}/resources/OpenConverter.icns)
+    set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(OpenConverter PRIVATE ${APP_ICON_MACOSX})
+
     set_target_properties(OpenConverter PROPERTIES
-        MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+        MACOSX_BUNDLE_GUI_IDENTIFIER com.openconverter.app
         MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        MACOSX_BUNDLE_ICON_FILE OpenConverter.icns
         MACOSX_BUNDLE TRUE
         WIN32_EXECUTABLE TRUE
     )
