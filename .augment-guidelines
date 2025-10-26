@@ -184,22 +184,41 @@ All source files (doesn't inlcude FFmpeg code) should include Apache 2.0 license
 ### FFmpeg-Specific Guidelines
 
 1. **Error Handling**:
-   - Always check return values from FFmpeg functions
-   - Use `< 0` for error detection
-   - Log errors with descriptive messages
+   - Functions return `int` (FFmpeg error codes), not `bool`
+   - Return `0` on success, negative on error (e.g., `AVERROR(ENOMEM)`, `AVERROR_DECODER_NOT_FOUND`)
+   - **Code Style**: Combine assignment and comparison in if statements
+     ```cpp
+     // CORRECT
+     if ((ret = avcodec_open2(ctx, codec, NULL)) < 0) {
+         print_error("Failed to open codec", ret);
+         return ret;
+     }
+
+     // AVOID
+     ret = avcodec_open2(ctx, codec, NULL);
+     if (ret < 0) {
+         print_error("Failed to open codec", ret);
+         return ret;
+     }
+     ```
+   - **Multiple conditions**: Assignment in condition works with multiple checks
+     ```cpp
+     if ((ret = avcodec_receive_packet(ctx, pkt)) == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+         ret = 0;
+         goto end;
+     }
+     ```
 
 2. **Memory Management**:
-   - Always free allocated FFmpeg structures
-   - Use `avformat_close_input()`, `avcodec_free_context()`, `av_frame_free()`, etc.
-   - Free in reverse order of allocation
+   - Always free FFmpeg structures: `avformat_close_input()`, `avcodec_free_context()`, `av_frame_free()`, etc.
+   - Use `goto end` pattern for cleanup in error paths
 
 3. **Time Handling**:
    - Use stream `time_base` for accurate timestamp conversion
    - Use `av_rescale_q()` for time base conversion
-   - Duration in `AV_TIME_BASE` units (microseconds) or stream time base
 
 4. **Threading**:
-   - FFmpeg operations are generally not thread-safe
+   - FFmpeg operations are not thread-safe
    - Use mutex locks when accessing FFmpeg contexts from multiple threads
 
 ## Development Workflow
@@ -457,3 +476,13 @@ All transcoders implement the same interface, allowing runtime switching.
 - Author: Jack Lau
 - Email: jacklau1222gm@gmail.com
 - License: Apache 2.0 (most files), LGPL 2.1 (transcoder directory)
+
+---
+
+## 📝 Note for AI Assistant
+
+**ALWAYS UPDATE THIS FILE** when you learn new project conventions, patterns, or best practices.
+
+Update after: refactoring, discovering undocumented patterns, fixing bugs, adding features, or code reviews.
+
+Keep it concise with clear examples.
