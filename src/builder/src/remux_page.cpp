@@ -254,7 +254,7 @@ void RemuxPage::OnRemuxClicked() {
 
     // Disable button
     remuxButton->setEnabled(false);
-    remuxButton->setText("Remuxing...");
+    remuxButton->setText(tr("Remuxing..."));
 
     // Run remuxing in a separate thread
     RunRemuxInThread(inputPath, outputPath, encodeParam, processParam);
@@ -294,7 +294,7 @@ void RemuxPage::OnRemuxFinished(bool success) {
 
     // Re-enable button
     remuxButton->setEnabled(true);
-    remuxButton->setText("Remux");
+    remuxButton->setText(tr("Remux"));
 
     if (success) {
         QMessageBox::information(this, "Success", "File remuxed successfully!");

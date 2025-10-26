@@ -251,12 +251,12 @@ void CompressPicturePage::OnConvertClicked() {
 
     // Perform conversion
     convertButton->setEnabled(false);
-    convertButton->setText("Converting...");
+    convertButton->setText(tr("Converting..."));
 
     bool result = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
 
     convertButton->setEnabled(true);
-    convertButton->setText("Convert");
+    convertButton->setText(tr("Convert"));
 
     if (result) {
         QMessageBox::information(this, "Success", "Image compressed successfully!");

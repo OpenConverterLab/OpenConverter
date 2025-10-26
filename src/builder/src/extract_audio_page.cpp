@@ -252,7 +252,7 @@ void ExtractAudioPage::OnExtractClicked() {
 
     // Disable button
     extractButton->setEnabled(false);
-    extractButton->setText("Extracting...");
+    extractButton->setText(tr("Extracting..."));
 
     // Run extraction in a separate thread
     RunExtractInThread(inputPath, outputPath, encodeParam, processParam);
@@ -292,7 +292,7 @@ void ExtractAudioPage::OnExtractFinished(bool success) {
 
     // Re-enable button
     extractButton->setEnabled(true);
-    extractButton->setText("Extract Audio");
+    extractButton->setText(tr("Extract Audio"));
 
     if (success) {
         QMessageBox::information(this, "Success", "Audio extracted successfully!");

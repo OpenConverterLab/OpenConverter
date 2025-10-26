@@ -463,7 +463,7 @@ void CutVideoPage::OnCutClicked() {
 
     // Disable button
     cutButton->setEnabled(false);
-    cutButton->setText("Cutting...");
+    cutButton->setText(tr("Cutting..."));
 
     // Run cutting in a separate thread
     RunCutInThread(inputPath, outputPath, encodeParam, processParam);

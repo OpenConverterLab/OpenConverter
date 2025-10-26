@@ -363,7 +363,7 @@ void TranscodePage::OnTranscodeClicked() {
 
     // Disable button
     transcodeButton->setEnabled(false);
-    transcodeButton->setText("Transcoding...");
+    transcodeButton->setText(tr("Transcoding..."));
 
     // Run transcoding in a separate thread
     RunTranscodeInThread(inputPath, outputPath, encodeParam, processParam);
@@ -403,7 +403,7 @@ void TranscodePage::OnTranscodeFinished(bool success) {
 
     // Re-enable button
     transcodeButton->setEnabled(true);
-    transcodeButton->setText("Transcode");
+    transcodeButton->setText(tr("Transcode"));
 
     if (success) {
         QMessageBox::information(this, "Success", "File transcoded successfully!");
