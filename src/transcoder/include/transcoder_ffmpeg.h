@@ -37,35 +37,35 @@ public:
 
     bool transcode(std::string input_path, std::string output_path);
 
-    bool open_media(StreamContext *decoder, StreamContext *encoder);
+    int open_media(StreamContext *decoder, StreamContext *encoder);
 
     int init_filters(StreamContext *decoder, const char *filters_descr);
 
-    bool init_filters_wrapper(StreamContext *decoder);
+    int init_filters_wrapper(StreamContext *decoder);
 
     bool copy_frame(AVFrame *oldFrame, AVFrame *newFrame);
 
-    bool encode_video(AVStream *inStream, StreamContext *encoder,
-                      AVFrame *inputFrame);
+    int encode_video(AVStream *inStream, StreamContext *encoder,
+                     AVFrame *inputFrame);
 
-    bool transcode_video(StreamContext *decoder, StreamContext *encoder);
+    int transcode_video(StreamContext *decoder, StreamContext *encoder);
 
-    bool encode_audio(AVStream *inStream, StreamContext *encoder,
-                      AVFrame *inputFrame);
+    int encode_audio(AVStream *inStream, StreamContext *encoder,
+                     AVFrame *inputFrame);
 
-    bool transcode_audio(StreamContext *decoder, StreamContext *encoder);
+    int transcode_audio(StreamContext *decoder, StreamContext *encoder);
 
-    bool prepare_decoder(StreamContext *decoder);
+    int prepare_decoder(StreamContext *decoder);
 
-    bool prepare_encoder_video(StreamContext *decoder, StreamContext *encoder);
+    int prepare_encoder_video(StreamContext *decoder, StreamContext *encoder);
 
-    bool prepare_encoder_audio(StreamContext *decoder, StreamContext *encoder);
+    int prepare_encoder_audio(StreamContext *decoder, StreamContext *encoder);
 
-    bool prepare_copy(AVFormatContext *avCtx, AVStream **stream,
-                      AVCodecParameters *codecParam);
+    int prepare_copy(AVFormatContext *avCtx, AVStream **stream,
+                     AVCodecParameters *codecParam);
 
-    bool remux(AVPacket *pkt, AVFormatContext *avCtx, AVStream *inStream,
-               AVStream *outStream);
+    int remux(AVPacket *pkt, AVFormatContext *avCtx, AVStream *inStream,
+              AVStream *outStream);
 
 private:
     char errorMsg[128];
