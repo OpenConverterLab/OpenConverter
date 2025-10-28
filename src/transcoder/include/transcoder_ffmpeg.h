@@ -29,6 +29,12 @@ extern "C" {
 
 #define ENCODE_BIT_RATE 5000000
 
+typedef struct FilteringContext {
+    AVFilterContext *buffersrc_ctx;
+    AVFilterContext *buffersink_ctx;
+    AVFilterGraph *filter_graph;
+} FilteringContext;
+
 class TranscoderFFmpeg : public Transcoder {
 public:
     TranscoderFFmpeg(ProcessParameter *processParameter,
@@ -39,7 +45,7 @@ public:
 
     int open_media(StreamContext *decoder, StreamContext *encoder);
 
-    int init_filters(StreamContext *decoder, const char *filters_descr);
+    int init_filter(AVCodecContext *dec_ctx, FilteringContext *filter_ctx, const char *filters_descr);
 
     int init_filters_wrapper(StreamContext *decoder);
 
@@ -73,9 +79,7 @@ private:
     bool copyVideo;
     bool copyAudio;
 
-    AVFilterContext *buffersrc_ctx;
-    AVFilterContext *buffersink_ctx;
-    AVFilterGraph *filter_graph;
+    FilteringContext *filters_ctx;
 
     // Progress tracking
     int64_t total_duration;   // Total duration in microseconds

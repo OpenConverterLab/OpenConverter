@@ -26,7 +26,6 @@ TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
     frameTotalNumber = 0;
     total_duration = 0;
     current_duration = 0;
-    filter_graph = nullptr;
 }
 
 void TranscoderFFmpeg::print_error(const char *msg, int ret) {
@@ -48,28 +47,54 @@ void TranscoderFFmpeg::update_progress(int64_t current_pts,
     }
 }
 
-int TranscoderFFmpeg::init_filters(StreamContext *decoder, const char *filters_descr)
+int TranscoderFFmpeg::init_filter(AVCodecContext *dec_ctx, FilteringContext *filter_ctx, const char *filters_descr)
 {
     char args[512];
     int ret = 0;
-    const AVFilter *buffersrc  = avfilter_get_by_name("buffer");
-    const AVFilter *buffersink = avfilter_get_by_name("buffersink");
+    const AVFilter *buffersrc = NULL;
+    const AVFilter *buffersink = NULL;
     AVFilterInOut *outputs = avfilter_inout_alloc();
     AVFilterInOut *inputs  = avfilter_inout_alloc();
-    AVRational time_base = decoder->fmtCtx->streams[decoder->videoIdx]->time_base;
-
-    filter_graph = avfilter_graph_alloc();
+    AVFilterContext *buffersink_ctx = NULL;
+    AVFilterContext *buffersrc_ctx = NULL;
+    AVFilterGraph *filter_graph = avfilter_graph_alloc();
     if (!outputs || !inputs || !filter_graph) {
         ret = AVERROR(ENOMEM);
         goto end;
     }
 
-    /* buffer video source: the decoded frames from the decoder will be inserted here. */
-    snprintf(args, sizeof(args),
-            "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
-            decoder->videoCodecCtx->width, decoder->videoCodecCtx->height, decoder->videoCodecCtx->pix_fmt,
-            time_base.num, time_base.den,
-            decoder->videoCodecCtx->sample_aspect_ratio.num, decoder->videoCodecCtx->sample_aspect_ratio.den);
+    if (dec_ctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+        buffersrc  = avfilter_get_by_name("buffer");
+        buffersink = avfilter_get_by_name("buffersink");
+        /* buffer video source: the decoded frames from the decoder will be inserted here. */
+        snprintf(args, sizeof(args),
+                "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+                dec_ctx->width, dec_ctx->height, dec_ctx->pix_fmt,
+                dec_ctx->time_base.num, dec_ctx->time_base.den,
+                dec_ctx->sample_aspect_ratio.num, dec_ctx->sample_aspect_ratio.den);
+    } else if (dec_ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
+        char buf[64];
+        buffersrc  = avfilter_get_by_name("abuffer");
+        buffersink = avfilter_get_by_name("abuffersink");
+        if (dec_ctx->ch_layout.order == AV_CHANNEL_ORDER_UNSPEC)
+            av_channel_layout_default(&dec_ctx->ch_layout, dec_ctx->ch_layout.nb_channels);
+        av_channel_layout_describe(&dec_ctx->ch_layout, buf, sizeof(buf));
+        snprintf(args, sizeof(args),
+            "time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%s",
+            dec_ctx->time_base.num, dec_ctx->time_base.den, dec_ctx->sample_rate,
+            av_get_sample_fmt_name(dec_ctx->sample_fmt),
+            buf);
+    } else {
+        ret = AVERROR_UNKNOWN;
+        goto end;
+    }
+
+    if (!buffersrc || !buffersink) {
+        av_log(NULL, AV_LOG_ERROR, "filtering source or sink element not found\n");
+        ret = AVERROR_UNKNOWN;
+        goto end;
+    }
+
 
     ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
                                        args, NULL, filter_graph);
@@ -120,6 +145,10 @@ int TranscoderFFmpeg::init_filters(StreamContext *decoder, const char *filters_d
     if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0)
         goto end;
 
+    filter_ctx->buffersink_ctx = buffersink_ctx;
+    filter_ctx->buffersrc_ctx = buffersrc_ctx;
+    filter_ctx->filter_graph = filter_graph;
+
 end:
     avfilter_inout_free(&inputs);
     avfilter_inout_free(&outputs);
@@ -130,24 +159,45 @@ end:
 
 int TranscoderFFmpeg::init_filters_wrapper(StreamContext *decoder)
 {
-    std::string d = "";
+    int i, ret;
     const char *filters_descr;
-    std::string pixelFormat = encodeParameter->get_pixel_format();
-    uint16_t width = encodeParameter->get_width();
-    uint16_t height = encodeParameter->get_height();
-    if (!pixelFormat.empty()) {
-        d += "format=" + pixelFormat;
-    }
-    if (width > 0 && height > 0) {
-        if (!d.empty()) {
-            d += ",";
+    AVCodecContext *dec_ctx = NULL;
+    filters_ctx = reinterpret_cast<FilteringContext *>(av_malloc_array(decoder->fmtCtx->nb_streams, sizeof(*filters_ctx)));
+    if (!filters_ctx)
+        return AVERROR(ENOMEM);
+
+    for (i = 0; i < decoder->fmtCtx->nb_streams; i++) {
+        filters_ctx[i].buffersrc_ctx  = NULL;
+        filters_ctx[i].buffersink_ctx = NULL;
+        filters_ctx[i].filter_graph   = NULL;
+        if (!(decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ||
+            decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO))
+            continue;
+        if (decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            std::string d = "";
+            std::string pixelFormat = encodeParameter->get_pixel_format();
+            uint16_t width = encodeParameter->get_width();
+            uint16_t height = encodeParameter->get_height();
+            if (!pixelFormat.empty()) {
+                d += "format=" + pixelFormat;
+            }
+            if (width > 0 && height > 0) {
+                if (!d.empty()) {
+                    d += ",";
+                }
+                d += "scale=" + std::to_string(width) + ":" + std::to_string(height);
+            }
+            if (d.empty())
+                d = "null";
+            filters_descr = d.c_str();
+            dec_ctx = decoder->videoCodecCtx;
+        } else {
+            filters_descr = "anull";
+            dec_ctx = decoder->audioCodecCtx;
         }
-        d += "scale=" + std::to_string(width) + ":" + std::to_string(height);
+        ret = init_filter(dec_ctx, &filters_ctx[i], filters_descr);
     }
-    if (d.empty())
-        d = "null";
-    filters_descr = d.c_str();
-    return init_filters(decoder, filters_descr);
+    return ret;
 }
 
 bool TranscoderFFmpeg::transcode(std::string input_path,
@@ -429,15 +479,16 @@ int TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
                                    AVFrame *inputFrame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
+    FilteringContext *fc = &filters_ctx[inStream->index];
 
     /* push the decoded frame into the filtergraph */
-    if ((ret = av_buffersrc_add_frame_flags(buffersrc_ctx, inputFrame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
+    if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, inputFrame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
         goto end;
     }
     /* pull filtered frames from the filtergraph */
     while (1) {
-        if ((ret = av_buffersink_get_frame(buffersink_ctx, inputFrame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, inputFrame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             break;
         if (ret < 0)
             goto end;
@@ -482,6 +533,20 @@ int TranscoderFFmpeg::encode_audio(AVStream *in_stream, StreamContext *encoder,
                                    AVFrame *input_frame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
+    FilteringContext *fc = &filters_ctx[in_stream->index];
+
+    /* push the decoded frame into the filtergraph */
+    if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, input_frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
+        av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
+        goto end;
+    }
+    /* pull filtered frames from the filtergraph */
+    while (1) {
+        if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, input_frame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            break;
+        if (ret < 0)
+            goto end;
+    }
     // send frame to encoder
     if ((ret = avcodec_send_frame(encoder->audioCodecCtx, input_frame)) < 0) {
         print_error("Failed to send frame to encoder", ret);
