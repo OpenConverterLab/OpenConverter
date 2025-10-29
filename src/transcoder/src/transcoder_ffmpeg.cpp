@@ -873,6 +873,8 @@ int TranscoderFFmpeg::prepare_encoder_audio(StreamContext *decoder,
         print_error("Couldn't open the codec", ret);
         goto end;
     }
+    if (!(encoder->audioCodec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE))
+        av_buffersink_set_frame_size(filters_ctx[decoder->audioIdx].buffersink_ctx, encoder->audioCodecCtx->frame_size);
     encoder->audioStream = avformat_new_stream(encoder->fmtCtx, NULL);
     if (!encoder->audioStream) {
         av_log(NULL, AV_LOG_ERROR, "Failed allocating output stream\n");
