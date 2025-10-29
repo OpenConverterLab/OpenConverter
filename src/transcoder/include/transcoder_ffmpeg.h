@@ -49,15 +49,17 @@ public:
 
     int init_filters_wrapper(StreamContext *decoder);
 
-    bool copy_frame(AVFrame *oldFrame, AVFrame *newFrame);
-
     int encode_video(AVStream *inStream, StreamContext *encoder,
-                     AVFrame *inputFrame);
+                     AVFrame *frame);
+
+    int encode_write_video(StreamContext *encoder, AVFrame *frame);
 
     int transcode_video(StreamContext *decoder, StreamContext *encoder);
 
     int encode_audio(AVStream *inStream, StreamContext *encoder,
-                     AVFrame *inputFrame);
+                     AVFrame *frame);
+
+    int encode_write_audio(StreamContext *encoder, AVFrame *frame);
 
     int transcode_audio(StreamContext *decoder, StreamContext *encoder);
 

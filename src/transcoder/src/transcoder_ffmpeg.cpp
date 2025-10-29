@@ -418,8 +418,15 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     if (!copyVideo) {
         encoder->frame = NULL;
         // write the buffered frame
-        if ((ret = encode_video(decoder->videoStream, encoder, NULL)) < 0) {
+        if ((ret = encode_write_video(encoder, NULL)) < 0) {
             av_log(NULL, AV_LOG_ERROR, "Failed to flush video encoder\n");
+            goto end;
+        }
+    }
+    if (!copyAudio) {
+        encoder->frame = NULL;
+        if ((ret = encode_write_audio(encoder, NULL)) < 0) {
+            av_log(NULL, AV_LOG_ERROR, "Failed to flush audio encoder\n");
             goto end;
         }
     }
@@ -476,30 +483,41 @@ int TranscoderFFmpeg::open_media(StreamContext *decoder,
 }
 
 int TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
-                                   AVFrame *inputFrame) {
+                                   AVFrame *frame) {
     int ret = -1;
-    AVPacket *output_packet = av_packet_alloc();
     FilteringContext *fc = &filters_ctx[inStream->index];
 
     /* push the decoded frame into the filtergraph */
-    if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, inputFrame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
+    if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
         goto end;
     }
     /* pull filtered frames from the filtergraph */
     while (1) {
-        if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, inputFrame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, frame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            ret = 0;
             break;
+        }
+        if (ret < 0)
+            goto end;
+        ret = encode_write_video(encoder, frame);
         if (ret < 0)
             goto end;
     }
+end:
+    return ret;
+}
 
-    if (encodeParameter->get_qscale() != -1 && inputFrame) {
-        inputFrame->quality = encoder->videoCodecCtx->global_quality;
-        inputFrame->pict_type = AV_PICTURE_TYPE_NONE;
+int TranscoderFFmpeg::encode_write_video(StreamContext *encoder, AVFrame *frame) {
+    int ret = -1;
+    AVPacket *output_packet = av_packet_alloc();
+
+    if (encodeParameter->get_qscale() != -1 && frame) {
+        frame->quality = encoder->videoCodecCtx->global_quality;
+        frame->pict_type = AV_PICTURE_TYPE_NONE;
     }
     // send frame to encoder
-    if ((ret = avcodec_send_frame(encoder->videoCodecCtx, inputFrame)) < 0) {
+    if ((ret = avcodec_send_frame(encoder->videoCodecCtx, frame)) < 0) {
         print_error("Failed to send frame to encoder", ret);
         goto end;
     }
@@ -523,32 +541,43 @@ int TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
 
         av_packet_unref(output_packet);
     }
-
 end:
     av_packet_free(&output_packet);
     return ret;
 }
 
 int TranscoderFFmpeg::encode_audio(AVStream *in_stream, StreamContext *encoder,
-                                   AVFrame *input_frame) {
+                                   AVFrame *frame) {
     int ret = -1;
-    AVPacket *output_packet = av_packet_alloc();
+
     FilteringContext *fc = &filters_ctx[in_stream->index];
 
     /* push the decoded frame into the filtergraph */
-    if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, input_frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
+    if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
         goto end;
     }
     /* pull filtered frames from the filtergraph */
     while (1) {
-        if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, input_frame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, frame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            ret = 0;
             break;
+        }
+        if (ret < 0)
+            goto end;
+        ret = encode_write_audio(encoder, frame);
         if (ret < 0)
             goto end;
     }
+end:
+    return ret;
+}
+
+int TranscoderFFmpeg::encode_write_audio(StreamContext *encoder, AVFrame *frame) {
+    int ret = -1;
+    AVPacket *output_packet = av_packet_alloc();
     // send frame to encoder
-    if ((ret = avcodec_send_frame(encoder->audioCodecCtx, input_frame)) < 0) {
+    if ((ret = avcodec_send_frame(encoder->audioCodecCtx, frame)) < 0) {
         print_error("Failed to send frame to encoder", ret);
         goto end;
     }
@@ -567,7 +596,6 @@ int TranscoderFFmpeg::encode_audio(AVStream *in_stream, StreamContext *encoder,
         }
         av_packet_unref(output_packet);
     }
-
 end:
     av_packet_free(&output_packet);
     return ret;
