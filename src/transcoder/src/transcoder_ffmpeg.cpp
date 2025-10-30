@@ -159,7 +159,7 @@ end:
 
 int TranscoderFFmpeg::init_filters_wrapper(StreamContext *decoder)
 {
-    int i, ret;
+    int i, ret = -1;
     const char *filters_descr;
     AVCodecContext *dec_ctx = NULL;
     filters_ctx = reinterpret_cast<FilteringContext *>(av_malloc_array(decoder->fmtCtx->nb_streams, sizeof(*filters_ctx)));

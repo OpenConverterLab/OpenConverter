@@ -149,7 +149,7 @@ bool handleCLI(int argc, char *argv[]) {
         printUsage(argv[0]);
         return false;
     }
-
+    bool result;
     std::string inputFile;
     std::string outputFile;
     std::string transcoderType = "FFMPEG";
@@ -271,6 +271,8 @@ bool handleCLI(int argc, char *argv[]) {
     // Create parameters
     ProcessParameter *processParam = new ProcessParameter();
     EncodeParameter *encodeParam = new EncodeParameter();
+    // Create converter
+    Converter converter(processParam, encodeParam);
 
     // Set codecs if specified
     if (!videoCodec.empty()) {
@@ -320,29 +322,26 @@ bool handleCLI(int argc, char *argv[]) {
         if (encodeParam->GetEndTime() <= startTime) {
             std::cerr << "Error: End time (" << encodeParam->GetEndTime()
                       << "s) must be greater than start time (" << startTime << "s)\n";
-            return false;
+            result = false;
+            goto end;
         }
     }
-
-    // Create converter
-    Converter converter(processParam, encodeParam);
 
     // Set transcoder
     if (!converter.set_transcoder(transcoderType)) {
         std::cerr << "Error: Failed to set transcoder\n";
-        delete processParam;
-        delete encodeParam;
-        return false;
+        result = false;
+        goto end;
     }
 
     // Perform conversion
-    bool result = converter.convert_format(inputFile, outputFile);
+    result = converter.convert_format(inputFile, outputFile);
     if (result) {
         std::cout << "Conversion completed successfully\n";
     } else {
         std::cerr << "Conversion failed\n";
     }
-
+end:
     // Cleanup
     delete processParam;
     delete encodeParam;
