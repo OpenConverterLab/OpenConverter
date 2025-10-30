@@ -264,6 +264,33 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         }
     }
 
+    // Validate time range parameters
+    if (startTime >= 0.0 && endTime >= 0.0) {
+        if (endTime <= startTime) {
+            print_error("End time must be greater than start time", 0);
+            ret = AVERROR(EINVAL);
+            goto end;
+        }
+    }
+
+    // Validate against media duration if available
+    if (total_duration > 0) {
+        double mediaDurationSec = total_duration / 1000000.0;  // Convert from microseconds
+
+        if (startTime >= mediaDurationSec) {
+            print_error("Start time exceeds media duration", 0);
+            ret = AVERROR(EINVAL);
+            goto end;
+        }
+
+        if (endTime > mediaDurationSec) {
+            av_log(NULL, AV_LOG_WARNING,
+                   "End time (%.2fs) exceeds media duration (%.2fs), will cut to end\n",
+                   endTime, mediaDurationSec);
+            // Don't fail, just warn - we'll stop at EOF naturally
+        }
+    }
+
     if ((ret = prepare_decoder(decoder)) < 0)
         goto end;
 

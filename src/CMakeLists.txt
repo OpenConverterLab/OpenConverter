@@ -14,6 +14,7 @@ if(MSVC)
 endif()
 
 option(ENABLE_GUI "enable GUI" ON)
+option(ENABLE_TESTS "enable unit tests" OFF)
 # BMF is experimental feature, so we can't enable it by default
 option(BMF_TRANSCODER "enable BMF Transcoder" OFF)
 option(FFTOOL_TRANSCODER "enable FFmpeg Command Tool Transcoder" ON)

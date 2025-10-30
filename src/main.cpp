@@ -29,7 +29,7 @@ void printUsage(const char *programName) {
     std::cout << "Usage: " << programName
               << " [options] input_file output_file\n"
               << "Options:\n"
-              << "  -t, --transcoder TYPE    Set transcoder type (FFMPEG, BMF, "
+              << "  --transcoder TYPE        Set transcoder type (FFMPEG, BMF, "
                  "FFTOOL)\n"
               << "  -v, --video-codec CODEC  Set video codec\n"
               << "  -q, --qscale QSCALE      Set qscale for video codec\n"
@@ -38,7 +38,50 @@ void printUsage(const char *programName) {
               << "  -b:a, --bitrate:audio BITRATE    Set bitrate for audio codec\n"
               << "  -pix_fmt PIX_FMT         Set pixel format for video\n"
               << "  -scale SCALE(w)x(h)      Set scale for video (width x height)\n"
-              << "  -h, --help               Show this help message\n";
+              << "  -ss START_TIME           Set start time for cutting (format: HH:MM:SS or seconds)\n"
+              << "  -to END_TIME             Set end time for cutting (format: HH:MM:SS or seconds)\n"
+              << "  -t DURATION              Set duration for cutting (format: HH:MM:SS or seconds)\n"
+              << "  -h, --help               Show this help message\n"
+              << "\n"
+              << "Note: Use either -to or -t, not both. If both are specified, -to takes precedence.\n";
+}
+
+bool parseTime(const std::string &s, double &out_seconds) {
+    // Try to parse as HH:MM:SS format first
+    size_t colon1 = s.find(':');
+    if (colon1 != std::string::npos) {
+        size_t colon2 = s.find(':', colon1 + 1);
+        if (colon2 != std::string::npos) {
+            // HH:MM:SS format
+            try {
+                int hours = std::stoi(s.substr(0, colon1));
+                int minutes = std::stoi(s.substr(colon1 + 1, colon2 - colon1 - 1));
+                double seconds = std::stod(s.substr(colon2 + 1));
+                out_seconds = hours * 3600.0 + minutes * 60.0 + seconds;
+                return true;
+            } catch (...) {
+                return false;
+            }
+        } else {
+            // MM:SS format
+            try {
+                int minutes = std::stoi(s.substr(0, colon1));
+                double seconds = std::stod(s.substr(colon1 + 1));
+                out_seconds = minutes * 60.0 + seconds;
+                return true;
+            } catch (...) {
+                return false;
+            }
+        }
+    }
+
+    // Try to parse as plain seconds
+    try {
+        out_seconds = std::stod(s);
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
 bool parseBitrate(const std::string &s, int64_t &out_bps) {
@@ -118,14 +161,16 @@ bool handleCLI(int argc, char *argv[]) {
     uint16_t height = 0;
     int64_t videoBitRate = -1;
     int64_t audioBitRate = -1;
+    double startTime = -1.0;
+    double endTime = -1.0;
+    double duration = -1.0;
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv[0]);
             return false;
-        } else if (strcmp(argv[i], "-t") == 0 ||
-                   strcmp(argv[i], "--transcoder") == 0) {
+        } else if (strcmp(argv[i], "--transcoder") == 0) {
             if (i + 1 < argc) {
                 transcoderType = argv[++i];
             }
@@ -173,6 +218,27 @@ bool handleCLI(int argc, char *argv[]) {
             if (i + 1 < argc) {
                 if (!parseBitrate(argv[++i], audioBitRate)) {
                     std::cerr << "Error: Invalid audio bitrate format\n";
+                    return false;
+                }
+            }
+        } else if (strcmp(argv[i], "-ss") == 0) {
+            if (i + 1 < argc) {
+                if (!parseTime(argv[++i], startTime)) {
+                    std::cerr << "Error: Invalid start time format\n";
+                    return false;
+                }
+            }
+        } else if (strcmp(argv[i], "-to") == 0) {
+            if (i + 1 < argc) {
+                if (!parseTime(argv[++i], endTime)) {
+                    std::cerr << "Error: Invalid end time format\n";
+                    return false;
+                }
+            }
+        } else if (strcmp(argv[i], "-t") == 0) {
+            if (i + 1 < argc) {
+                if (!parseTime(argv[++i], duration)) {
+                    std::cerr << "Error: Invalid duration format\n";
                     return false;
                 }
             }
@@ -230,6 +296,32 @@ bool handleCLI(int argc, char *argv[]) {
     }
     if (audioBitRate != -1) {
         encodeParam->set_audio_bit_rate(audioBitRate);
+    }
+
+    // Handle time parameters with validation
+    if (startTime >= 0.0) {
+        encodeParam->SetStartTime(startTime);
+    }
+
+    // Calculate endTime from duration if -t is specified
+    // Note: -to takes precedence over -t if both are specified
+    if (endTime >= 0.0) {
+        encodeParam->SetEndTime(endTime);
+    } else if (duration >= 0.0) {
+        // Calculate endTime = startTime + duration
+        double calculatedEndTime = (startTime >= 0.0 ? startTime : 0.0) + duration;
+        encodeParam->SetEndTime(calculatedEndTime);
+        std::cout << "Duration: " << duration << "s, calculated end time: "
+                  << calculatedEndTime << "s\n";
+    }
+
+    // Validate time range (will be checked in transcoder as well)
+    if (startTime >= 0.0 && encodeParam->GetEndTime() >= 0.0) {
+        if (encodeParam->GetEndTime() <= startTime) {
+            std::cerr << "Error: End time (" << encodeParam->GetEndTime()
+                      << "s) must be greater than start time (" << startTime << "s)\n";
+            return false;
+        }
     }
 
     // Create converter
