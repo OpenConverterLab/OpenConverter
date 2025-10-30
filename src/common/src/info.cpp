@@ -75,16 +75,10 @@ void Info::send_info(char *src) {
             avCtx->streams[quickInfo->videoIdx]->codecpar->height;
         quickInfo->width = avCtx->streams[quickInfo->videoIdx]->codecpar->width;
 
-#ifdef OC_FFMPEG_VERSION
-    if (avCtx->streams[quickInfo->videoIdx]->codecpar->color_space != AVCOL_SPC_UNSPECIFIED)
-    #if OC_FFMPEG_VERSION > 51
-        quickInfo->colorSpace = av_color_space_name(
-            avCtx->streams[quickInfo->videoIdx]->codecpar->color_space);
-    #else
-        quickInfo->colorSpace = av_get_colorspace_name(
-            avCtx->streams[quickInfo->videoIdx]->codecpar->color_space);
-    #endif
-#endif
+        if (avCtx->streams[quickInfo->videoIdx]->codecpar->color_space != AVCOL_SPC_UNSPECIFIED) {
+            quickInfo->colorSpace = av_color_space_name(
+                avCtx->streams[quickInfo->videoIdx]->codecpar->color_space);
+        }
         if (avCtx->streams[quickInfo->videoIdx]->codecpar->codec_id != AV_CODEC_ID_NONE)
             quickInfo->videoCodec = avcodec_get_name(
                 avCtx->streams[quickInfo->videoIdx]->codecpar->codec_id);
@@ -121,15 +115,8 @@ void Info::send_info(char *src) {
         avCtx->streams[quickInfo->audioIdx]->codecpar->codec_id);
     quickInfo->audioBitRate =
         avCtx->streams[quickInfo->audioIdx]->codecpar->bit_rate;
-#ifdef OC_FFMPEG_VERSION
-    #if OC_FFMPEG_VERSION < 60
-    quickInfo->channels =
-        avCtx->streams[quickInfo->audioIdx]->codecpar->channels;
-    #else
     quickInfo->channels =
         avCtx->streams[quickInfo->audioIdx]->codecpar->ch_layout.nb_channels;
-    #endif
-#endif
     quickInfo->sampleFmt = av_get_sample_fmt_name(audioCtx->sample_fmt);
     quickInfo->sampleRate =
         avCtx->streams[quickInfo->audioIdx]->codecpar->sample_rate;

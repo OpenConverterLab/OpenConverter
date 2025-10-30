@@ -23,7 +23,7 @@ On the installation page, select the **Qt for Desktop Development** component an
 
 ## 2. Install and Configure FFmpeg
 
-Supported versions are 4.x to 7.x. The following example uses version 5.1.6.
+Supported versions are 5.x to 7.x. The following example uses version 5.1.6.
 
 ### 2.1 Download FFmpeg 5.1.6
 

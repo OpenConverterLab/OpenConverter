@@ -874,15 +874,9 @@ int TranscoderFFmpeg::prepare_encoder_audio(StreamContext *decoder,
         return AVERROR(ENOMEM);
     }
     if (decoder->audioCodecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
-#ifdef OC_FFMPEG_VERSION
-    #if OC_FFMPEG_VERSION < 50
-        encoder->audioCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
-    #else
-        AVChannelLayout stereoLayout = AV_CHANNEL_LAYOUT_STEREO;
-        av_channel_layout_copy(&encoder->audioCodecCtx->ch_layout,
-                               &stereoLayout);
-    #endif
-#endif
+        if ((ret = av_channel_layout_copy(
+            &encoder->audioCodecCtx->ch_layout, &decoder->audioCodecCtx->ch_layout)) < 0)
+            return ret;
         encoder->audioCodecCtx->sample_rate =
             decoder->audioCodecCtx->sample_rate;
         encoder->audioCodecCtx->sample_fmt =

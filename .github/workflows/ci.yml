@@ -29,10 +29,10 @@ jobs:
 
     - name: Get FFmpeg
       run: |
-        wget https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-03-31-17-28/ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
-        tar xJvf ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
-        ls ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4
-        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4" >> $GITHUB_ENV
+        wget https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
+        tar xJvf ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
+        ls ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1
+        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1" >> $GITHUB_ENV
 
     - name: Build with CMake
       run: |

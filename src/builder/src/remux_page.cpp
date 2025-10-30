@@ -389,13 +389,7 @@ void RemuxPage::AnalyzeStreams(const QString &filePath) {
             if (codecpar->bit_rate > 0) {
                 detailsList << FormatBitrate(codecpar->bit_rate);
             }
-#ifdef OC_FFMPEG_VERSION
-    #if OC_FFMPEG_VERSION < 60
-            detailsList << QString("%1 channels").arg(codecpar->channels);
-    #else
             detailsList << QString("%1 channels").arg(codecpar->ch_layout.nb_channels);
-    #endif
-#endif
             if (codecpar->sample_rate > 0) {
                 detailsList << QString("%1 Hz").arg(codecpar->sample_rate);
             }

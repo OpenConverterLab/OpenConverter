@@ -40,10 +40,10 @@ jobs:
 
     - name: Get FFmpeg
       run: |
-        wget https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-03-31-17-28/ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
-        tar xJvf ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4.tar.xz
-        ls ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4
-        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg-n4.4.4-94-g5d07afd482-linux64-gpl-shared-4.4" >> $GITHUB_ENV
+        wget https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
+        tar xJvf ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
+        ls ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1
+        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1" >> $GITHUB_ENV
 
     # - name: Set up BMF if not cached
     #   run: |
@@ -215,17 +215,17 @@ jobs:
       - name: Download FFmpeg
         shell: powershell
         run: |
-          $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-03-31-17-28/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4.zip"
+          $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1.zip"
           $outputZip = "ffmpeg.zip"
           Invoke-WebRequest -Uri $ffmpegUrl -OutFile $outputZip
           Expand-Archive -Path $outputZip -DestinationPath ffmpeg
-          echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" >> $GITHUB_ENV
+          echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" >> $GITHUB_ENV
 
       # Create a build directory, run qmake, and build the project.
       - name: Build Qt project
         run: |
           (cd src &&
-          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4" -DFFTOOL_TRANSCODER=OFF &&
+          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" -DFFTOOL_TRANSCODER=OFF &&
           cmake --build build --config Release --parallel)
 
       - name : Deploy project
@@ -243,7 +243,7 @@ jobs:
 
           # 4) Copy FFmpeg DLLs into OpenConverter_win64/
           Copy-Item `
-            -Path "ffmpeg\ffmpeg-n4.4.4-94-g5d07afd482-win64-gpl-shared-4.4\bin\*.dll" `
+            -Path "ffmpeg\ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1\bin\*.dll" `
             -Destination "OpenConverter_win64"
 
       # Upload the build artifacts (upload-artifact will automatically zip the folder)
