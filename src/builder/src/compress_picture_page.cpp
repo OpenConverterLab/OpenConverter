@@ -108,7 +108,19 @@ void CompressPicturePage::SetupUI() {
     // Pixel Format
     pixFmtLabel = new QLabel(tr("Pixel Format:"), this);
     pixFmtComboBox = new QComboBox(this);
-    pixFmtComboBox->addItems({"auto","rgb24", "rgba", "yuv420p", "yuv444p", "gray"});
+    pixFmtComboBox->addItems({
+        "auto",
+        // RGB formats
+        "rgb24", "rgba", "rgb48be", "rgba64be",
+        // YUV formats (limited range)
+        "yuv420p", "yuv422p", "yuv444p",
+        // YUVJ formats (full range, common for JPEG)
+        "yuvj420p", "yuvj422p", "yuvj444p",
+        // Grayscale
+        "gray", "gray16be",
+        // Other common formats
+        "bgr24", "bgra"
+    });
     settingsLayout->addWidget(pixFmtLabel, 3, 0);
     settingsLayout->addWidget(pixFmtComboBox, 3, 1);
 
