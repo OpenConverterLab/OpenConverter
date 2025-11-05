@@ -54,6 +54,7 @@ int TranscoderFFmpeg::init_filter(AVCodecContext *dec_ctx, FilteringContext *fil
 {
     char args[512];
     int ret = 0;
+    char buf[64];
     const AVFilter *buffersrc = NULL;
     const AVFilter *buffersink = NULL;
     AVFilterInOut *outputs = avfilter_inout_alloc();
@@ -76,7 +77,6 @@ int TranscoderFFmpeg::init_filter(AVCodecContext *dec_ctx, FilteringContext *fil
                 dec_ctx->time_base.num, dec_ctx->time_base.den,
                 dec_ctx->sample_aspect_ratio.num, dec_ctx->sample_aspect_ratio.den);
     } else if (dec_ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-        char buf[64];
         buffersrc  = avfilter_get_by_name("abuffer");
         buffersink = avfilter_get_by_name("abuffersink");
         if (dec_ctx->ch_layout.order == AV_CHANNEL_ORDER_UNSPEC)
@@ -112,6 +112,40 @@ int TranscoderFFmpeg::init_filter(AVCodecContext *dec_ctx, FilteringContext *fil
     if (ret < 0) {
         av_log(NULL, AV_LOG_ERROR, "Cannot create buffer sink\n");
         goto end;
+    }
+
+    if (dec_ctx->codec_type == AVMEDIA_TYPE_VIDEO && encoder->videoCodecCtx) {
+        ret = av_opt_set_bin(buffersink_ctx, "pix_fmts",
+                (uint8_t*)&encoder->videoCodecCtx->pix_fmt, sizeof(encoder->videoCodecCtx->pix_fmt),
+                AV_OPT_SEARCH_CHILDREN);
+        if (ret < 0) {
+            av_log(NULL, AV_LOG_ERROR, "Cannot set output pixel format\n");
+            goto end;
+        }
+    } else if (dec_ctx->codec_type == AVMEDIA_TYPE_AUDIO && encoder->audioCodecCtx) {
+        ret = av_opt_set_bin(buffersink_ctx, "sample_fmts",
+                (uint8_t*)&encoder->audioCodecCtx->sample_fmt, sizeof(encoder->audioCodecCtx->sample_fmt),
+                AV_OPT_SEARCH_CHILDREN);
+        if (ret < 0) {
+            av_log(NULL, AV_LOG_ERROR, "Cannot set output sample format\n");
+            goto end;
+        }
+
+        av_channel_layout_describe(&encoder->audioCodecCtx->ch_layout, buf, sizeof(buf));
+        ret = av_opt_set(buffersink_ctx, "ch_layouts",
+                         buf, AV_OPT_SEARCH_CHILDREN);
+        if (ret < 0) {
+            av_log(NULL, AV_LOG_ERROR, "Cannot set output channel layout\n");
+            goto end;
+        }
+
+        ret = av_opt_set_bin(buffersink_ctx, "sample_rates",
+                (uint8_t*)&encoder->audioCodecCtx->sample_rate, sizeof(encoder->audioCodecCtx->sample_rate),
+                AV_OPT_SEARCH_CHILDREN);
+        if (ret < 0) {
+            av_log(NULL, AV_LOG_ERROR, "Cannot set output sample rate\n");
+            goto end;
+        }
     }
 
     /*
@@ -151,6 +185,11 @@ int TranscoderFFmpeg::init_filter(AVCodecContext *dec_ctx, FilteringContext *fil
     filter_ctx->buffersink_ctx = buffersink_ctx;
     filter_ctx->buffersrc_ctx = buffersrc_ctx;
     filter_ctx->filter_graph = filter_graph;
+    if (dec_ctx->codec_type == AVMEDIA_TYPE_AUDIO && encoder->audioCodecCtx) {
+        if (!(encoder->audioCodec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE))
+            av_buffersink_set_frame_size(filters_ctx[decoder->audioIdx].buffersink_ctx,
+                                         encoder->audioCodecCtx->frame_size);
+    }
 
 end:
     avfilter_inout_free(&inputs);
@@ -298,9 +337,6 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     if ((ret = prepare_decoder()) < 0)
         goto end;
 
-    if ((ret = init_filters_wrapper()) < 0)
-        goto end;
-
     for (int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
         if (decoder->fmtCtx->streams[i]->codecpar->codec_type ==
             AVMEDIA_TYPE_VIDEO) {
@@ -334,6 +370,10 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             }
         }
     }
+
+    if ((ret = init_filters_wrapper()) < 0)
+        goto end;
+
     // binding
     ret = avio_open2(&encoder->fmtCtx->pb, encoder->filename, AVIO_FLAG_WRITE,
                      NULL, NULL);
@@ -835,10 +875,10 @@ int TranscoderFFmpeg::prepare_encoder_video() {
         // outCodecCtx->time_base = av_inv_q(inCodecCtx->framerate);
         if (!pixelFormat.empty())
             encoder->videoCodecCtx->pix_fmt = av_get_pix_fmt(pixelFormat.c_str());
-        else if (decoder->videoCodecCtx->pix_fmt != AV_PIX_FMT_NONE)
-            encoder->videoCodecCtx->pix_fmt = decoder->videoCodecCtx->pix_fmt;
         else if (encoder->videoCodec->pix_fmts)
             encoder->videoCodecCtx->pix_fmt = encoder->videoCodec->pix_fmts[0];
+        else if (decoder->videoCodecCtx->pix_fmt != AV_PIX_FMT_NONE)
+            encoder->videoCodecCtx->pix_fmt = decoder->videoCodecCtx->pix_fmt;
         else
             encoder->videoCodecCtx->pix_fmt = AV_PIX_FMT_NONE;
 
@@ -925,8 +965,6 @@ int TranscoderFFmpeg::prepare_encoder_audio() {
         print_error("Couldn't open the codec", ret);
         goto end;
     }
-    if (!(encoder->audioCodec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE))
-        av_buffersink_set_frame_size(filters_ctx[decoder->audioIdx].buffersink_ctx, encoder->audioCodecCtx->frame_size);
     encoder->audioStream = avformat_new_stream(encoder->fmtCtx, NULL);
     if (!encoder->audioStream) {
         av_log(NULL, AV_LOG_ERROR, "Failed allocating output stream\n");
