@@ -14,7 +14,7 @@ target_compile_features(transcoder_test PRIVATE cxx_std_17)
 target_compile_definitions(transcoder_test PRIVATE
     _LIBCPP_ENABLE_CXX17_REMOVED_FEATURES
     GTEST_HAS_PTHREAD=1
-    TEST_MEDIA_PATH="${CMAKE_SOURCE_DIR}/build/tests/media"
+    TEST_MEDIA_PATH="${CMAKE_BINARY_DIR}/tests/media"
 )
 
 # Include directories

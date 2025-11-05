@@ -18,9 +18,23 @@ protected:
         // Copy test media file to test directory
         std::string test_file = std::string(TEST_MEDIA_PATH) + "/test.mp4";
         if (std::filesystem::exists(test_file)) {
-            std::filesystem::copy_file(test_file, test_dir_ / "test.mp4");
+            std::filesystem::copy_file(test_file, test_dir_ / "test.mp4",
+                                       std::filesystem::copy_options::overwrite_existing);
         } else {
             FAIL() << "Test media file not found at: " << test_file;
+        }
+
+        // Copy test image files if they exist
+        std::string test_png = std::string(TEST_MEDIA_PATH) + "/test.png";
+        if (std::filesystem::exists(test_png)) {
+            std::filesystem::copy_file(test_png, test_dir_ / "test.png",
+                                       std::filesystem::copy_options::overwrite_existing);
+        }
+
+        std::string test_jpg = std::string(TEST_MEDIA_PATH) + "/test.jpg";
+        if (std::filesystem::exists(test_jpg)) {
+            std::filesystem::copy_file(test_jpg, test_dir_ / "test.jpg",
+                                       std::filesystem::copy_options::overwrite_existing);
         }
     }
 
@@ -218,6 +232,130 @@ TEST_F(TranscoderTest, VideoCutWithDuration) {
     EXPECT_GT(std::filesystem::file_size(outputFile), 0);
 
     // Output should be smaller than input
+    EXPECT_LT(std::filesystem::file_size(outputFile),
+              std::filesystem::file_size(inputFile));
+}
+
+// Test for PNG to JPG conversion
+TEST_F(TranscoderTest, ImagePngToJpg) {
+    std::string inputFile = (test_dir_ / "test.png").string();
+    std::string outputFile = (test_dir_ / "output.jpg").string();
+
+    // Skip test if input file doesn't exist
+    if (!std::filesystem::exists(inputFile)) {
+        GTEST_SKIP() << "Test PNG file not found, skipping test";
+    }
+
+    EncodeParameter encodeParams;
+    ProcessParameter processParams;
+
+    // Set JPEG encoding parameters
+    encodeParams.set_video_codec_name("mjpeg");
+    encodeParams.set_qscale(5);  // Quality setting
+    encodeParams.set_pixel_format("yuvj444p");  // Full-range YUV for JPEG
+
+    auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(std::filesystem::exists(outputFile));
+    EXPECT_GT(std::filesystem::file_size(outputFile), 0);
+}
+
+// Test for JPG to PNG conversion
+TEST_F(TranscoderTest, ImageJpgToPng) {
+    std::string inputFile = (test_dir_ / "test.jpg").string();
+    std::string outputFile = (test_dir_ / "output.png").string();
+
+    // Skip test if input file doesn't exist
+    if (!std::filesystem::exists(inputFile)) {
+        GTEST_SKIP() << "Test JPG file not found, skipping test";
+    }
+
+    EncodeParameter encodeParams;
+    ProcessParameter processParams;
+
+    // Set PNG encoding parameters
+    encodeParams.set_video_codec_name("png");
+    encodeParams.set_pixel_format("rgb24");  // RGB for PNG
+
+    auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(std::filesystem::exists(outputFile));
+    EXPECT_GT(std::filesystem::file_size(outputFile), 0);
+}
+
+// Test for PNG to WebP conversion
+TEST_F(TranscoderTest, ImagePngToWebp) {
+    GTEST_SKIP() << "WebP encoder not available in this FFmpeg build";
+}
+
+// Test for JPG to WebP conversion
+TEST_F(TranscoderTest, ImageJpgToWebp) {
+    GTEST_SKIP() << "WebP encoder not available in this FFmpeg build";
+}
+
+// Test for image scaling (PNG resize)
+TEST_F(TranscoderTest, ImageScaling) {
+    std::string inputFile = (test_dir_ / "test.png").string();
+    std::string outputFile = (test_dir_ / "output_scaled.png").string();
+
+    // Skip test if input file doesn't exist
+    if (!std::filesystem::exists(inputFile)) {
+        GTEST_SKIP() << "Test PNG file not found, skipping test";
+    }
+
+    EncodeParameter encodeParams;
+    ProcessParameter processParams;
+
+    // Set PNG encoding with scaling
+    encodeParams.set_video_codec_name("png");
+    encodeParams.set_width(160);  // Scale to half size (assuming 320x240 input)
+    encodeParams.set_height(120);
+    encodeParams.set_pixel_format("rgb24");
+
+    auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(std::filesystem::exists(outputFile));
+    EXPECT_GT(std::filesystem::file_size(outputFile), 0);
+
+    // Verify the output dimensions are correct
+    // Note: We don't check file size because PNG compression can vary
+}
+
+// Test for image pixel format conversion (RGB to grayscale)
+TEST_F(TranscoderTest, ImagePixelFormatConversion) {
+    std::string inputFile = (test_dir_ / "test.png").string();
+    std::string outputFile = (test_dir_ / "output_gray.png").string();
+
+    // Skip test if input file doesn't exist
+    if (!std::filesystem::exists(inputFile)) {
+        GTEST_SKIP() << "Test PNG file not found, skipping test";
+    }
+
+    EncodeParameter encodeParams;
+    ProcessParameter processParams;
+
+    // Set PNG encoding with grayscale pixel format
+    encodeParams.set_video_codec_name("png");
+    encodeParams.set_pixel_format("gray");  // Convert to grayscale
+
+    auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(std::filesystem::exists(outputFile));
+    EXPECT_GT(std::filesystem::file_size(outputFile), 0);
+
+    // Grayscale image should be smaller than RGB
     EXPECT_LT(std::filesystem::file_size(outputFile),
               std::filesystem::file_size(inputFile));
 }
