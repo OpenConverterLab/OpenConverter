@@ -202,7 +202,7 @@ end:
 int TranscoderFFmpeg::init_filters_wrapper()
 {
     int i, ret = -1;
-    const char *filters_descr;
+    std::string filter_str = "";
     AVCodecContext *dec_ctx = NULL;
     filters_ctx = reinterpret_cast<FilteringContext *>(av_malloc_array(decoder->fmtCtx->nb_streams, sizeof(*filters_ctx)));
     if (!filters_ctx)
@@ -216,28 +216,28 @@ int TranscoderFFmpeg::init_filters_wrapper()
             decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO))
             continue;
         if (decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-            std::string d = "";
             std::string pixelFormat = encodeParameter->get_pixel_format();
             uint16_t width = encodeParameter->get_width();
             uint16_t height = encodeParameter->get_height();
             if (!pixelFormat.empty()) {
-                d += "format=" + pixelFormat;
+                filter_str += "format=" + pixelFormat;
             }
             if (width > 0 && height > 0) {
-                if (!d.empty()) {
-                    d += ",";
+                if (!filter_str.empty()) {
+                    filter_str += ",";
                 }
-                d += "scale=" + std::to_string(width) + ":" + std::to_string(height);
+                filter_str += "scale=" + std::to_string(width) + ":" + std::to_string(height);
             }
-            if (d.empty())
-                d = "null";
-            filters_descr = d.c_str();
+            if (filter_str.empty())
+                filter_str = "null";
             dec_ctx = decoder->videoCodecCtx;
         } else {
-            filters_descr = "anull";
+            filter_str = "anull";
             dec_ctx = decoder->audioCodecCtx;
         }
-        ret = init_filter(dec_ctx, &filters_ctx[i], filters_descr);
+        ret = init_filter(dec_ctx, &filters_ctx[i], filter_str.c_str());
+        if (ret < 0)
+            return ret;
     }
     return ret;
 }
