@@ -26,6 +26,9 @@ TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
     frameTotalNumber = 0;
     total_duration = 0;
     current_duration = 0;
+    decoder = nullptr;
+    encoder = nullptr;
+    filters_ctx = nullptr;
 }
 
 void TranscoderFFmpeg::print_error(const char *msg, int ret) {
@@ -157,7 +160,7 @@ end:
 }
 
 
-int TranscoderFFmpeg::init_filters_wrapper(StreamContext *decoder)
+int TranscoderFFmpeg::init_filters_wrapper()
 {
     int i, ret = -1;
     const char *filters_descr;
@@ -206,8 +209,9 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     int ret = -1;
     // deal with arguments
 
-    StreamContext *decoder = new StreamContext;
-    StreamContext *encoder = new StreamContext;
+    // Initialize member variables
+    decoder = new StreamContext;
+    encoder = new StreamContext;
 
     // Declare variables before any goto statements
     double startTime = encodeParameter->GetStartTime();
@@ -231,7 +235,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         copyAudio = false;
     }
 
-    if ((ret = open_media(decoder, encoder)) < 0)
+    if ((ret = open_media()) < 0)
         goto end;
 
     // Calculate total duration from the input file
@@ -291,10 +295,10 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         }
     }
 
-    if ((ret = prepare_decoder(decoder)) < 0)
+    if ((ret = prepare_decoder()) < 0)
         goto end;
 
-    if ((ret = init_filters_wrapper(decoder)) < 0)
+    if ((ret = init_filters_wrapper()) < 0)
         goto end;
 
     for (int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
@@ -305,7 +309,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
                 continue;
             }
             if (!copyVideo) {
-                if ((ret = prepare_encoder_video(decoder, encoder)) < 0)
+                if ((ret = prepare_encoder_video()) < 0)
                     goto end;
             } else {
                 ret = prepare_copy(encoder->fmtCtx, &encoder->videoStream,
@@ -320,7 +324,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
                 continue;
             }
             if (!copyAudio) {
-                if ((ret = prepare_encoder_audio(decoder, encoder)) < 0)
+                if ((ret = prepare_encoder_audio()) < 0)
                     goto end;
             } else {
                 ret = prepare_copy(encoder->fmtCtx, &encoder->audioStream,
@@ -393,7 +397,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             if (!copyVideo) {
                 av_packet_rescale_ts(decoder->pkt, decoder->videoStream->time_base,
                                      decoder->videoCodecCtx->time_base);
-                if ((ret = transcode_video(decoder, encoder)) < 0) {
+                if ((ret = transcode_video()) < 0) {
                     av_log(NULL, AV_LOG_ERROR, "Failed to transcode video frame\n");
                     goto end;
                 }
@@ -428,7 +432,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             if (!copyAudio) {
                 av_packet_rescale_ts(decoder->pkt, decoder->audioStream->time_base,
                                      decoder->audioCodecCtx->time_base);
-                if ((ret = transcode_audio(decoder, encoder)) < 0) {
+                if ((ret = transcode_audio()) < 0) {
                     av_log(NULL, AV_LOG_ERROR, "Failed to transcode audio frame\n");
                     goto end;
                 }
@@ -445,14 +449,14 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     if (!copyVideo) {
         encoder->frame = NULL;
         // write the buffered frame
-        if ((ret = encode_write_video(encoder, NULL)) < 0) {
+        if ((ret = encode_write_video(NULL)) < 0) {
             av_log(NULL, AV_LOG_ERROR, "Failed to flush video encoder\n");
             goto end;
         }
     }
     if (!copyAudio) {
         encoder->frame = NULL;
-        if ((ret = encode_write_audio(encoder, NULL)) < 0) {
+        if ((ret = encode_write_audio(NULL)) < 0) {
             av_log(NULL, AV_LOG_ERROR, "Failed to flush audio encoder\n");
             goto end;
         }
@@ -468,22 +472,27 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     flag = true;
 // free memory
 end:
-    if (decoder->fmtCtx) {
+    if (decoder && decoder->fmtCtx) {
         avformat_close_input(&decoder->fmtCtx);
         decoder->fmtCtx = NULL;
     }
-    delete decoder;
+    if (decoder) {
+        delete decoder;
+        decoder = nullptr;
+    }
 
-    if (encoder->fmtCtx && !(encoder->fmtCtx->oformat->flags & AVFMT_NOFILE)) {
+    if (encoder && encoder->fmtCtx && !(encoder->fmtCtx->oformat->flags & AVFMT_NOFILE)) {
         avio_closep(&encoder->fmtCtx->pb);
     }
-    delete encoder;
+    if (encoder) {
+        delete encoder;
+        encoder = nullptr;
+    }
 
     return flag;
 }
 
-int TranscoderFFmpeg::open_media(StreamContext *decoder,
-                                 StreamContext *encoder) {
+int TranscoderFFmpeg::open_media() {
     int ret = -1;
     /* set the frameNumber to zero to avoid some bugs */
     frameNumber = 0;
@@ -509,8 +518,7 @@ int TranscoderFFmpeg::open_media(StreamContext *decoder,
     return 0;
 }
 
-int TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
-                                   AVFrame *frame) {
+int TranscoderFFmpeg::encode_video(AVStream *inStream, AVFrame *frame) {
     int ret = -1;
     FilteringContext *fc = &filters_ctx[inStream->index];
 
@@ -527,7 +535,7 @@ int TranscoderFFmpeg::encode_video(AVStream *inStream, StreamContext *encoder,
         }
         if (ret < 0)
             goto end;
-        ret = encode_write_video(encoder, frame);
+        ret = encode_write_video(frame);
         if (ret < 0)
             goto end;
     }
@@ -535,7 +543,7 @@ end:
     return ret;
 }
 
-int TranscoderFFmpeg::encode_write_video(StreamContext *encoder, AVFrame *frame) {
+int TranscoderFFmpeg::encode_write_video(AVFrame *frame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
 
@@ -573,8 +581,7 @@ end:
     return ret;
 }
 
-int TranscoderFFmpeg::encode_audio(AVStream *in_stream, StreamContext *encoder,
-                                   AVFrame *frame) {
+int TranscoderFFmpeg::encode_audio(AVStream *in_stream, AVFrame *frame) {
     int ret = -1;
 
     FilteringContext *fc = &filters_ctx[in_stream->index];
@@ -592,7 +599,7 @@ int TranscoderFFmpeg::encode_audio(AVStream *in_stream, StreamContext *encoder,
         }
         if (ret < 0)
             goto end;
-        ret = encode_write_audio(encoder, frame);
+        ret = encode_write_audio(frame);
         if (ret < 0)
             goto end;
     }
@@ -600,7 +607,7 @@ end:
     return ret;
 }
 
-int TranscoderFFmpeg::encode_write_audio(StreamContext *encoder, AVFrame *frame) {
+int TranscoderFFmpeg::encode_write_audio(AVFrame *frame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
     // send frame to encoder
@@ -628,8 +635,7 @@ end:
     return ret;
 }
 
-int TranscoderFFmpeg::transcode_video(StreamContext *decoder,
-                                      StreamContext *encoder) {
+int TranscoderFFmpeg::transcode_video() {
     int ret = -1;
 
     // send packet to decoder
@@ -646,7 +652,7 @@ int TranscoderFFmpeg::transcode_video(StreamContext *decoder,
             goto end;
         }
 
-        if ((ret = encode_video(decoder->videoStream, encoder, decoder->frame)) < 0) {
+        if ((ret = encode_video(decoder->videoStream, decoder->frame)) < 0) {
             goto end;
         }
 
@@ -661,8 +667,7 @@ end:
     return ret;
 }
 
-int TranscoderFFmpeg::transcode_audio(StreamContext *decoder,
-                                      StreamContext *encoder) {
+int TranscoderFFmpeg::transcode_audio() {
     int ret;
     if ((ret = avcodec_send_packet(decoder->audioCodecCtx, decoder->pkt)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Failed to send packet to decoder!\n");
@@ -679,7 +684,7 @@ int TranscoderFFmpeg::transcode_audio(StreamContext *decoder,
             return ret;
         }
 
-        if ((ret = encode_audio(decoder->audioStream, encoder, decoder->frame)) < 0) {
+        if ((ret = encode_audio(decoder->audioStream, decoder->frame)) < 0) {
             return ret;
         }
 
@@ -691,7 +696,7 @@ int TranscoderFFmpeg::transcode_audio(StreamContext *decoder,
     return ret;
 }
 
-int TranscoderFFmpeg::prepare_decoder(StreamContext *decoder) {
+int TranscoderFFmpeg::prepare_decoder() {
     int ret = -1;
 
     for (int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
@@ -773,8 +778,7 @@ int TranscoderFFmpeg::prepare_decoder(StreamContext *decoder) {
     return 0;
 }
 
-int TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
-                                            StreamContext *encoder) {
+int TranscoderFFmpeg::prepare_encoder_video() {
     int ret = -1;
 
     /* set the total numbers of frame */
@@ -880,8 +884,7 @@ int TranscoderFFmpeg::prepare_encoder_video(StreamContext *decoder,
     return 0;
 }
 
-int TranscoderFFmpeg::prepare_encoder_audio(StreamContext *decoder,
-                                            StreamContext *encoder) {
+int TranscoderFFmpeg::prepare_encoder_audio() {
     int ret = -1;
     /**
      * set the output file parameters
@@ -978,4 +981,7 @@ int TranscoderFFmpeg::remux(AVPacket *pkt, AVFormatContext *avCtx,
     return 0;
 }
 
-TranscoderFFmpeg::~TranscoderFFmpeg() {}
+TranscoderFFmpeg::~TranscoderFFmpeg() {
+    // Cleanup is handled in transcode() function's end label
+    // decoder and encoder are deleted there
+}
