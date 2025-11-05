@@ -27,6 +27,9 @@
     #include "../../transcoder/include/transcoder_fftool.h"
 #endif
 
+// Required for debug logging
+#include <iostream>
+
 Converter::Converter() {}
 /* Receive pointers from widget */
 Converter::Converter(ProcessParameter *processParamter,
@@ -49,7 +52,8 @@ Converter::Converter(ProcessParameter *processParamter,
         new TranscoderFFmpeg(this->processParameter, this->encodeParameter);
 #endif
 
-    this->encodeParameter = encodeParamter;
+    // Removed redundant assignment as per feedback (encodeParameter is already initialized)
+    // this->encodeParameter = encodeParamter;
 }
 
 bool Converter::set_transcoder(std::string transcoderName) {
@@ -99,6 +103,35 @@ bool Converter::convert_format(const std::string &src, const std::string &dst) {
         copyAudio = true;
     } else {
         copyAudio = false;
+    }
+
+    // Handle video cutting parameters if enabled
+    if (processParameter && processParameter->get_enable_cut()) {
+        double start_time = processParameter->get_cut_start_time();
+        double end_time = processParameter->get_cut_end_time();
+
+        // Validate cutting parameters
+        if (start_time < 0) {
+            std::cerr << "Converter Error: Cut start time (" << start_time << ") cannot be negative. Aborting conversion." << std::endl;
+            return false;
+        }
+        if (end_time <= start_time) {
+            std::cerr << "Converter Error: Cut end time (" << end_time << ") must be greater than start time (" << start_time << "). Aborting conversion." << std::endl;
+            return false;
+        }
+
+        double duration = end_time - start_time;
+
+        // Debug logs for cutting parameters
+        std::cout << "Converter Debug: Video cutting enabled." << std::endl;
+        std::cout << "Converter Debug: Cut Start Time: " << start_time << " seconds." << std::endl;
+        std::cout << "Converter Debug: Cut End Time: " << end_time << " seconds." << std::endl;
+        std::cout << "Converter Debug: Calculated Clip Duration: " << duration << " seconds." << std::endl;
+
+        // Store the calculated duration back into processParameter for the transcoder to use.
+        // This assumes that ProcessParameter has a setter like set_cut_duration(double).
+        // This ensures the transcoder has a pre-calculated duration available, addressing the feedback.
+        processParameter->set_cut_duration(duration);
     }
 
     return transcoder->transcode(src, dst);
