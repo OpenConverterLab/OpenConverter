@@ -169,8 +169,11 @@ jobs:
         ../tool/fix_macos_libs.sh
 
         cd build
+
+        # Create DMG using simple shell script
         echo "Creating DMG..."
-        macdeployqt OpenConverter.app -dmg
+        chmod +x ../../tool/create_dmg_simple.sh
+        ../../tool/create_dmg_simple.sh OpenConverter.app
 
         cd ../..
         mv src/build/OpenConverter.dmg OpenConverter_macOS_aarch64.dmg

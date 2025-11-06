@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════
+
+    📦  HOW TO INSTALL OPENCONVERTER
+
+═══════════════════════════════════════════════════════════
+
+STEP 1: Install the Application
+────────────────────────────────────────────────────────────
+
+    Drag "OpenConverter.app" to the "Applications" folder
+
+    OpenConverter.app  ──────────▶  Applications
+
+
+STEP 2: Fix Gatekeeper Restrictions (if needed)
+────────────────────────────────────────────────────────────
+
+If macOS prevents the app from opening with an "unidentified
+developer" error, follow these steps:
+
+Method 1: Simple Terminal Command (Recommended) ⭐
+────────────────────────────────────────────────────────────
+
+1. Open Terminal:
+   • Press Cmd+Space, type "Terminal", press Enter
+   OR
+   • Go to Applications → Utilities → Terminal
+
+2. Copy and paste this command (all on one line):
+
+   sudo xattr -r -d com.apple.quarantine /Applications/OpenConverter.app
+
+3. Press Enter
+
+4. Enter your password when prompted
+   (You won't see it as you type - this is normal)
+
+5. Done! You can now open OpenConverter normally
+
+
+Method 2: Use Bundled Script (Alternative)
+────────────────────────────────────────────────────────────
+
+1. Open Terminal (see Method 1 for how to open Terminal)
+
+2. Copy and paste this command:
+
+   /Applications/OpenConverter.app/Contents/Resources/fix_gatekeeper.sh
+
+3. Press Enter and follow the prompts
+
+4. Done! You can now open OpenConverter
+
+
+WHAT DOES THIS DO?
+────────────────────────────────────────────────────────────
+
+This removes the "quarantine" flag that macOS sets on apps
+downloaded from the internet. It's safe and only affects
+this specific app.
+
+
+NEED HELP?
+────────────────────────────────────────────────────────────
+
+Visit: https://github.com/TSGU-OSC/OpenConverter
+Email: jacklau1222gm@gmail.com
+
+
+═══════════════════════════════════════════════════════════
+
+    Enjoy using OpenConverter! 🎉
+
+═══════════════════════════════════════════════════════════
