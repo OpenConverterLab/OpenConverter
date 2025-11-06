@@ -155,7 +155,7 @@ void InfoViewPage::OnBrowseButtonClicked() {
         this,
         "Select Media File",
         "",
-        "Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.mp3 *.wav *.aac *.flac);;All Files (*.*)"
+        "Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.mp3 *.wav *.aac *.flac *.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;All Files (*.*)"
     );
 
     if (!fileName.isEmpty()) {
