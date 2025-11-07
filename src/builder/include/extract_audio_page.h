@@ -68,7 +68,6 @@ private:
                             EncodeParameter *encodeParam, ProcessParameter *processParam);
     QString DetectAudioCodecFromFile(const QString &filePath);
     QString MapCodecToFormat(const QString &codec);
-    QString MapFormatToCodec(const QString &format);
 
     // Input section
     QGroupBox *inputGroupBox;

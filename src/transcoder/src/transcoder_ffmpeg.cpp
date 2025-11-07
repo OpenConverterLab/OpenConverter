@@ -262,13 +262,13 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     decoder->filename = input_path.c_str();
     encoder->filename = output_path.c_str();
 
-    if (encodeParameter->get_video_codec_name() == "") {
+    if (encodeParameter->get_video_codec_name() == "copy") {
         copyVideo = true;
     } else {
         copyVideo = false;
     }
 
-    if (encodeParameter->get_audio_codec_name() == "") {
+    if (encodeParameter->get_audio_codec_name() == "copy") {
         copyAudio = true;
     } else {
         copyAudio = false;
@@ -486,7 +486,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             }
         }
     }
-    if (!copyVideo) {
+    if (!copyVideo && encoder->videoStream) {
         encoder->frame = NULL;
         // write the buffered frame
         if ((ret = encode_write_video(NULL)) < 0) {
@@ -494,7 +494,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             goto end;
         }
     }
-    if (!copyAudio) {
+    if (!copyAudio && encoder->audioStream) {
         encoder->frame = NULL;
         if ((ret = encode_write_audio(NULL)) < 0) {
             av_log(NULL, AV_LOG_ERROR, "Failed to flush audio encoder\n");
@@ -826,14 +826,14 @@ int TranscoderFFmpeg::prepare_encoder_video() {
     /**
      * set the output file parameters
      */
-    // find the encodec by Name
-    //  QByteArray ba = encodeParamter->get_video_codec_name().toLocal8Bit();
     std::string codec = encodeParameter->get_video_codec_name();
-    encoder->videoCodec = avcodec_find_encoder_by_name(codec.c_str());
+    if (codec.empty()) {
+        AVCodecID videoCodecID = av_guess_codec(encoder->fmtCtx->oformat, NULL, encoder->filename,
+                                                NULL, AVMEDIA_TYPE_VIDEO);
+        encoder->videoCodec = avcodec_find_encoder(videoCodecID);
+    } else
+        encoder->videoCodec = avcodec_find_encoder_by_name(codec.c_str());
 
-    // find the encodec by ID
-    // encoder->videoCodec =
-    // avcodec_find_encoder(decoder->videoCodecCtx->codec_id);
     if (!encoder->videoCodec) {
         av_log(NULL, AV_LOG_ERROR, "Couldn't find video codec: %s\n",
                codec.c_str());
@@ -931,7 +931,13 @@ int TranscoderFFmpeg::prepare_encoder_audio() {
      */
     // find the encodec by name
     std::string codec = encodeParameter->get_audio_codec_name();
-    encoder->audioCodec = avcodec_find_encoder_by_name(codec.c_str());
+    if (codec.empty()) {
+        AVCodecID audioCodecID = av_guess_codec(encoder->fmtCtx->oformat, NULL, encoder->filename,
+                                                NULL, AVMEDIA_TYPE_AUDIO);
+        encoder->audioCodec = avcodec_find_encoder(audioCodecID);
+    } else
+        encoder->audioCodec = avcodec_find_encoder_by_name(codec.c_str());
+
     if (!encoder->audioCodec) {
         av_log(NULL, AV_LOG_ERROR, "Couldn't find audio codec: %s\n",
                codec.c_str());
