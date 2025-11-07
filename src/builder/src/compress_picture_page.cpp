@@ -226,23 +226,7 @@ void CompressPicturePage::OnConvertClicked() {
     }
 
     // Set encode parameters
-    QString format = formatComboBox->currentText();
-
-    // Map format to codec
-    QString codec;
-    if (format == "jpg") {
-        codec = "mjpeg";
-    } else if (format == "png") {
-        codec = "png";
-    } else if (format == "webp") {
-        codec = "libwebp";
-    } else if (format == "bmp") {
-        codec = "bmp";
-    } else if (format == "tiff") {
-        codec = "tiff";
-    }
-
-    encodeParameter->set_video_codec_name(codec.toStdString());
+    // Note: Codec is auto-selected by backend based on output file extension
     encodeParameter->set_qscale(qualitySpinBox->value());
     if (pixFmtComboBox->currentText() != "auto")
         encodeParameter->set_pixel_format(pixFmtComboBox->currentText().toStdString());

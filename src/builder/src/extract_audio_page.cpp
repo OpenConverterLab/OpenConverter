@@ -226,13 +226,8 @@ void ExtractAudioPage::OnExtractClicked() {
 
         // Default use copy mode (no re-encoding)
         encodeParam->set_audio_codec_name("");
-    } else {
-        // Map format to codec
-        QString codec = MapFormatToCodec(format);
-        if (!codec.isEmpty()) {
-            encodeParam->set_audio_codec_name(codec.toStdString());
-        }
     }
+    // Note: For non-auto formats, codec is auto-selected by backend based on output file extension
 
     // Register this page as observer for progress updates
     processParam->add_observer(this);
@@ -372,21 +367,7 @@ QString ExtractAudioPage::MapCodecToFormat(const QString &codec) {
     }
 }
 
-QString ExtractAudioPage::MapFormatToCodec(const QString &format) {
-    if (format == "mp3") {
-        return "libmp3lame";
-    } else if (format == "aac" || format == "m4a") {
-        return "aac";
-    } else if (format == "wav") {
-        return "pcm_s16le";
-    } else if (format == "flac") {
-        return "flac";
-    } else if (format == "ogg") {
-        return "libvorbis";
-    } else {
-        return "aac";  // Default
-    }
-}
+
 
 void ExtractAudioPage::RetranslateUi() {
     // Update all translatable strings
