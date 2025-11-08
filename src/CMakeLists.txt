@@ -242,6 +242,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/placeholder_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/info_view_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/compress_picture_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/create_gif_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/extract_audio_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/cut_video_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/simple_video_player.cpp
@@ -257,6 +258,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/placeholder_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/info_view_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/compress_picture_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/create_gif_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/extract_audio_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/cut_video_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/simple_video_player.h

@@ -2,6 +2,115 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh" sourcelanguage="en">
 <context>
+    <name>CreateGifPage</name>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="63"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="261"/>
+        <source>Input File</source>
+        <translation>输入文件</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="67"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="262"/>
+        <source>Select a video or image sequence...</source>
+        <translation>选择视频或图片序列...</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="70"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="119"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="263"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="276"/>
+        <source>Browse...</source>
+        <translation>浏览...</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="78"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="265"/>
+        <source>GIF Settings</source>
+        <translation>GIF 设置</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="83"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="266"/>
+        <source>Width (0 = auto):</source>
+        <translation>宽度（0=自动）：</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="87"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="96"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="267"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="269"/>
+        <source> px</source>
+        <translation> 像素</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="92"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="268"/>
+        <source>Height (0 = auto):</source>
+        <translation>高度（0=自动）：</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="112"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="274"/>
+        <source>Output</source>
+        <translation>输出</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="117"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="275"/>
+        <source>Output file path will be generated automatically...</source>
+        <translation>输出文件路径将自动生成...</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="124"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="229"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="277"/>
+        <source>Create GIF</source>
+        <translation>创建 GIF</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="150"/>
+        <source>Select Video File</source>
+        <translation>选择视频文件</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="152"/>
+        <source>Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)</source>
+        <translation>视频文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;所有文件 (*.*)</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="168"/>
+        <source>GIF Files (*.gif);;All Files (*.*)</source>
+        <translation>GIF 文件 (*.gif);;所有文件 (*.*)</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="172"/>
+        <source>Save GIF File</source>
+        <translation>保存 GIF 文件</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="193"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="198"/>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="193"/>
+        <source>Please select an input file.</source>
+        <translation>请选择输入文件。</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="198"/>
+        <source>Please specify an output file.</source>
+        <translation>请指定输出文件。</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="224"/>
+        <source>Creating GIF...</source>
+        <translation>正在创建 GIF...</translation>
+    </message>
+</context>
+<context>
     <name>CompressPicturePage</name>
     <message>
         <location filename="../builder/src/compress_picture_page.cpp" line="64"/>
@@ -544,6 +653,11 @@
     </message>
     <message>
         <location filename="../builder/src/open_converter.ui" line="144"/>
+        <source>Create GIF</source>
+        <translation>创建 GIF</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/open_converter.ui" line="154"/>
         <source>ADVANCED</source>
         <translation>高级功能</translation>
     </message>
