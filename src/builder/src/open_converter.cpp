@@ -48,6 +48,7 @@
 #include "../../engine/include/converter.h"
 #include "../include/base_page.h"
 #include "../include/compress_picture_page.h"
+#include "../include/create_gif_page.h"
 #include "../include/cut_video_page.h"
 #include "../include/extract_audio_page.h"
 #include "../include/info_view_page.h"
@@ -142,8 +143,9 @@ OpenConverter::OpenConverter(QWidget *parent)
     navButtonGroup->addButton(ui->btnCompressPicture, 1);
     navButtonGroup->addButton(ui->btnExtractAudio, 2);
     navButtonGroup->addButton(ui->btnCutVideo, 3);
-    navButtonGroup->addButton(ui->btnRemux, 4);
-    navButtonGroup->addButton(ui->btnTranscode, 5);
+    navButtonGroup->addButton(ui->btnCreateGif, 4);
+    navButtonGroup->addButton(ui->btnRemux, 5);
+    navButtonGroup->addButton(ui->btnTranscode, 6);
 
     // Connect navigation button group
     connect(navButtonGroup, QOverload<int>::of(&QButtonGroup::idClicked),
@@ -328,6 +330,7 @@ void OpenConverter::InitializePages() {
     pages.append(new CompressPicturePage(this));
     pages.append(new ExtractAudioPage(this));
     pages.append(new CutVideoPage(this));
+    pages.append(new CreateGifPage(this));
     // Advanced section
     pages.append(new RemuxPage(this));
     pages.append(new TranscodePage(this));

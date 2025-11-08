@@ -139,6 +139,16 @@ QLabel {
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="btnCreateGif">
+         <property name="text">
+          <string>Create GIF</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="labelAdvancedSection">
          <property name="text">
           <string>ADVANCED</string>

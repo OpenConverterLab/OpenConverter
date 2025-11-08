@@ -62,6 +62,7 @@ class Converter;
 class BasePage;
 class InfoViewPage;
 class CompressPicturePage;
+class CreateGifPage;
 class ExtractAudioPage;
 class RemuxPage;
 class TranscodePage;
