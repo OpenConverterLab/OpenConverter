@@ -202,7 +202,6 @@ end:
 int TranscoderFFmpeg::init_filters_wrapper()
 {
     int i, ret = -1;
-    std::string filter_str = "";
     AVCodecContext *dec_ctx = NULL;
     filters_ctx = reinterpret_cast<FilteringContext *>(av_malloc_array(decoder->fmtCtx->nb_streams, sizeof(*filters_ctx)));
     if (!filters_ctx)
@@ -215,6 +214,10 @@ int TranscoderFFmpeg::init_filters_wrapper()
         if (!(decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ||
             decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO))
             continue;
+
+        // Reset filter_str for each stream to avoid mixing video/audio filters
+        std::string filter_str = "";
+
         if (decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             std::string pixelFormat = encodeParameter->get_pixel_format();
             uint16_t width = encodeParameter->get_width();
