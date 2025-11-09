@@ -36,6 +36,13 @@ protected:
             std::filesystem::copy_file(test_jpg, test_dir_ / "test.jpg",
                                        std::filesystem::copy_options::overwrite_existing);
         }
+
+        // Copy test_av.mp4 (stream 0 = audio, stream 1 = video) if it exists
+        std::string test_av = std::string(TEST_MEDIA_PATH) + "/test_av.mp4";
+        if (std::filesystem::exists(test_av)) {
+            std::filesystem::copy_file(test_av, test_dir_ / "test_av.mp4",
+                                       std::filesystem::copy_options::overwrite_existing);
+        }
     }
 
     void TearDown() override {
@@ -358,4 +365,38 @@ TEST_F(TranscoderTest, ImagePixelFormatConversion) {
     // Grayscale image should be smaller than RGB
     EXPECT_LT(std::filesystem::file_size(outputFile),
               std::filesystem::file_size(inputFile));
+}
+
+// Test for transcoding file with stream 0 = audio, stream 1 = video
+// This tests the fix for the filter graph initialization bug where filter_str
+// was not being reset between streams, causing video filters to leak into audio filters
+TEST_F(TranscoderTest, AudioVideoStreamOrder) {
+    std::string inputFile = (test_dir_ / "test_av.mp4").string();
+    std::string outputFile = (test_dir_ / "output_av.mp4").string();
+
+    // Skip if test_av.mp4 doesn't exist
+    if (!std::filesystem::exists(inputFile)) {
+        GTEST_SKIP() << "test_av.mp4 not found, skipping test";
+    }
+
+    // Transcode the file with stream 0 = audio, stream 1 = video
+    EncodeParameter encodeParams;
+    ProcessParameter processParams;
+
+    // Set video and audio encoding parameters
+    encodeParams.set_video_codec_name("libx264");
+    encodeParams.set_video_bit_rate(2000000); // 2Mbps
+    encodeParams.set_audio_codec_name("aac");
+    encodeParams.set_audio_bit_rate(128000); // 128kbps
+
+    auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
+    converter->set_transcoder("FFMPEG");
+    bool result = converter->convert_format(inputFile, outputFile);
+
+    // Before the fix, this would fail with:
+    // "Media type mismatch between the 'in' filter output pad 0 (video)
+    //  and the 'Parsed_anull_0' filter input pad 0 (audio)"
+    EXPECT_TRUE(result) << "Transcoding file with audio=stream0, video=stream1 should succeed";
+    EXPECT_TRUE(std::filesystem::exists(outputFile));
+    EXPECT_GT(std::filesystem::file_size(outputFile), 0);
 }
