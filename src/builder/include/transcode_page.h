@@ -19,20 +19,19 @@
 #define TRANSCODE_PAGE_H
 
 #include "base_page.h"
+#include "converter_runner.h"
 #include "file_selector_widget.h"
-#include "../../common/include/process_observer.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QThread>
 
 class EncodeParameter;
 class ProcessParameter;
 
-class TranscodePage : public BasePage, public ProcessObserver {
+class TranscodePage : public BasePage {
     Q_OBJECT
 
 public:
@@ -43,10 +42,6 @@ public:
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Transcode"; }
     void RetranslateUi() override;
-
-    // ProcessObserver interface
-    void on_process_update(double progress) override;
-    void on_time_update(double timeRequired) override;
 
 protected:
     void OnInputFileChanged(const QString &newPath) override;
@@ -67,8 +62,6 @@ private:
     void SetupUI();
     void UpdateOutputPath();
     QString GetFileExtension(const QString &filePath);
-    void RunTranscodeInThread(const QString &inputPath, const QString &outputPath,
-                              EncodeParameter *encodeParam, ProcessParameter *processParam);
 
     // Input/Output section
     FileSelectorWidget *inputFileSelector;
@@ -112,6 +105,9 @@ private:
 
     // Action section
     QPushButton *transcodeButton;
+
+    // Conversion runner
+    ConverterRunner *converterRunner;
 };
 
 #endif // TRANSCODE_PAGE_H

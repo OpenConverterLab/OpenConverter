@@ -19,21 +19,20 @@
 #define CUT_VIDEO_PAGE_H
 
 #include "base_page.h"
+#include "converter_runner.h"
 #include "file_selector_widget.h"
 #include "simple_video_player.h"
-#include "../../common/include/process_observer.h"
 #include <QGroupBox>
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSlider>
-#include <QThread>
 #include <QTimeEdit>
 
 class EncodeParameter;
 class ProcessParameter;
 
-class CutVideoPage : public BasePage, public ProcessObserver {
+class CutVideoPage : public BasePage {
     Q_OBJECT
 
 public:
@@ -44,10 +43,6 @@ public:
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Cut Video"; }
     void RetranslateUi() override;
-
-    // ProcessObserver interface
-    void on_process_update(double progress) override;
-    void on_time_update(double timeRequired) override;
 
 protected:
     void OnInputFileChanged(const QString &newPath) override;
@@ -79,8 +74,6 @@ private:
     void UpdateTimeLabels();
     void UpdateDurationLabel();
     QString FormatTime(qint64 milliseconds);
-    void RunCutInThread(const QString &inputPath, const QString &outputPath,
-                        EncodeParameter *encodeParam, ProcessParameter *processParam);
 
     // Input/Output section
     FileSelectorWidget *inputFileSelector;
@@ -117,6 +110,9 @@ private:
 
     // Action section
     QPushButton *cutButton;
+
+    // Conversion runner
+    ConverterRunner *converterRunner;
 
     // State
     qint64 videoDuration;  // in milliseconds

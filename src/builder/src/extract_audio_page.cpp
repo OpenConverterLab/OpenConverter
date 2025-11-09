@@ -28,9 +28,8 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 
-ExtractAudioPage::ExtractAudioPage(QWidget *parent) : BasePage(parent) {
+ExtractAudioPage::ExtractAudioPage(QWidget *parent) : BasePage(parent), converterRunner(nullptr) {
     SetupUI();
-    connect(this, &ExtractAudioPage::ExtractComplete, this, &ExtractAudioPage::OnExtractFinished);
 }
 
 ExtractAudioPage::~ExtractAudioPage() {
@@ -127,6 +126,16 @@ void ExtractAudioPage::SetupUI() {
     connect(extractButton, &QPushButton::clicked, this, &ExtractAudioPage::OnExtractClicked);
     mainLayout->addWidget(extractButton);
 
+    // Create conversion runner
+    converterRunner = new ConverterRunner(
+        progressBar, progressLabel, extractButton,
+        tr("Extracting..."), tr("Extract Audio"),
+        tr("Success"), tr("Audio extracted successfully!"),
+        tr("Error"), tr("Failed to extract audio."),
+        this
+    );
+    connect(converterRunner, &ConverterRunner::ConversionFinished, this, &ExtractAudioPage::OnExtractFinished);
+
     // Add stretch to push everything to the top
     mainLayout->addStretch();
 
@@ -159,11 +168,6 @@ void ExtractAudioPage::OnExtractClicked() {
     QString inputPath = inputFileSelector->GetFilePath();
     QString outputPath = outputFileSelector->GetFilePath();
 
-    if (inputPath.isEmpty() || outputPath.isEmpty()) {
-        QMessageBox::warning(this, tr("Error"), tr("Please select input and output files."));
-        return;
-    }
-
     // Create parameters
     EncodeParameter *encodeParam = new EncodeParameter();
     ProcessParameter *processParam = new ProcessParameter();
@@ -190,9 +194,6 @@ void ExtractAudioPage::OnExtractClicked() {
     }
     // Note: For non-auto formats, codec is auto-selected by backend based on output file extension
 
-    // Register this page as observer for progress updates
-    processParam->add_observer(this);
-
     // Disable video (extract audio only)
     encodeParam->set_video_codec_name("");
 
@@ -200,79 +201,14 @@ void ExtractAudioPage::OnExtractClicked() {
         encodeParam->set_audio_bit_rate(bitrate * 1000);  // Convert kbps to bps
     }
 
-    // Show progress bar
-    progressBar->setValue(0);
-    progressBar->setVisible(true);
-    progressLabel->setText("Starting audio extraction...");
-    progressLabel->setVisible(true);
-
-    // Disable button
-    extractButton->setEnabled(false);
-    extractButton->setText(tr("Extracting..."));
-
-    // Run extraction in a separate thread
-    RunExtractInThread(inputPath, outputPath, encodeParam, processParam);
-}
-
-void ExtractAudioPage::RunExtractInThread(const QString &inputPath, const QString &outputPath,
-                                          EncodeParameter *encodeParam, ProcessParameter *processParam) {
-    QThread *thread = QThread::create([this, inputPath, outputPath, encodeParam, processParam]() {
-        // Create converter
-        Converter *converter = new Converter(processParam, encodeParam);
-        converter->set_transcoder("FFMPEG");
-
-        // Perform extraction
-        bool success = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
-
-        // Clean up converter
-        delete converter;
-
-        // Emit signal to notify completion
-        emit ExtractComplete(success);
-    });
-
-    // Clean up thread when it finishes
-    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-    connect(thread, &QThread::finished, [processParam, encodeParam]() {
-        delete processParam;
-        delete encodeParam;
-    });
-
-    thread->start();
+    // Run conversion using ConverterRunner
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
 }
 
 void ExtractAudioPage::OnExtractFinished(bool success) {
-    // Hide progress bar
-    progressBar->setVisible(false);
-    progressLabel->setVisible(false);
-
-    // Re-enable button
-    extractButton->setEnabled(true);
-    extractButton->setText(tr("Extract Audio"));
-
-    if (success) {
-        QMessageBox::information(this, "Success", "Audio extracted successfully!");
-    } else {
-        QMessageBox::critical(this, "Error", "Failed to extract audio.");
-    }
-}
-
-void ExtractAudioPage::on_process_update(double progress) {
-    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
-    QMetaObject::invokeMethod(this, [this, progress]() {
-        progressBar->setValue(static_cast<int>(progress));
-    }, Qt::QueuedConnection);
-}
-
-void ExtractAudioPage::on_time_update(double timeRequired) {
-    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
-    QMetaObject::invokeMethod(this, [this, timeRequired]() {
-        int minutes = static_cast<int>(timeRequired) / 60;
-        int seconds = static_cast<int>(timeRequired) % 60;
-        progressLabel->setText(QString("Estimated time remaining: %1:%2")
-                               .arg(minutes)
-                               .arg(seconds, 2, 10, QChar('0')));
-    }, Qt::QueuedConnection);
+    Q_UNUSED(success);
+    // ConverterRunner handles all UI updates and message boxes
+    // This slot is kept for potential custom post-processing
 }
 
 void ExtractAudioPage::UpdateOutputPath() {
