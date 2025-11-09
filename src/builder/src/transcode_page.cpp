@@ -189,16 +189,8 @@ void TranscodePage::SetupUI() {
     mainLayout->addWidget(formatGroupBox);
 
     // Progress Section
-    progressBar = new QProgressBar(this);
-    progressBar->setRange(0, 100);
-    progressBar->setValue(0);
-    progressBar->setVisible(false);
-
-    progressLabel = new QLabel("", this);
-    progressLabel->setVisible(false);
-
-    mainLayout->addWidget(progressBar);
-    mainLayout->addWidget(progressLabel);
+    progressWidget = new ProgressWidget(this);
+    mainLayout->addWidget(progressWidget);
 
     // Output File Selector
     outputFileSelector = new FileSelectorWidget(
@@ -221,7 +213,7 @@ void TranscodePage::SetupUI() {
 
     // Create conversion runner
     converterRunner = new ConverterRunner(
-        progressBar, progressLabel, transcodeButton,
+        progressWidget->GetProgressBar(), progressWidget->GetProgressLabel(), transcodeButton,
         tr("Transcoding..."), tr("Transcode"),
         tr("Success"), tr("File transcoded successfully!"),
         tr("Error"), tr("Failed to transcode file."),

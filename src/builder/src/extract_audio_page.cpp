@@ -96,16 +96,8 @@ void ExtractAudioPage::SetupUI() {
     mainLayout->addWidget(settingsGroupBox);
 
     // Progress Section
-    progressBar = new QProgressBar(this);
-    progressBar->setRange(0, 100);
-    progressBar->setValue(0);
-    progressBar->setVisible(false);
-
-    progressLabel = new QLabel("", this);
-    progressLabel->setVisible(false);
-
-    mainLayout->addWidget(progressBar);
-    mainLayout->addWidget(progressLabel);
+    progressWidget = new ProgressWidget(this);
+    mainLayout->addWidget(progressWidget);
 
     // Output File Selector
     outputFileSelector = new FileSelectorWidget(
@@ -128,7 +120,7 @@ void ExtractAudioPage::SetupUI() {
 
     // Create conversion runner
     converterRunner = new ConverterRunner(
-        progressBar, progressLabel, extractButton,
+        progressWidget->GetProgressBar(), progressWidget->GetProgressLabel(), extractButton,
         tr("Extracting..."), tr("Extract Audio"),
         tr("Success"), tr("Audio extracted successfully!"),
         tr("Error"), tr("Failed to extract audio."),

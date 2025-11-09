@@ -182,16 +182,8 @@ void CutVideoPage::SetupUI() {
     mainLayout->addWidget(timeSelectionGroupBox);
 
     // Progress Section
-    progressBar = new QProgressBar(this);
-    progressBar->setRange(0, 100);
-    progressBar->setValue(0);
-    progressBar->setVisible(false);
-
-    progressLabel = new QLabel("", this);
-    progressLabel->setVisible(false);
-
-    mainLayout->addWidget(progressBar);
-    mainLayout->addWidget(progressLabel);
+    progressWidget = new ProgressWidget(this);
+    mainLayout->addWidget(progressWidget);
 
     // Output File Selector
     outputFileSelector = new FileSelectorWidget(
@@ -214,7 +206,7 @@ void CutVideoPage::SetupUI() {
 
     // Create conversion runner
     converterRunner = new ConverterRunner(
-        progressBar, progressLabel, cutButton,
+        progressWidget->GetProgressBar(), progressWidget->GetProgressLabel(), cutButton,
         tr("Cutting..."), tr("Cut Video"),
         tr("Success"), tr("Video cut successfully!"),
         tr("Error"), tr("Failed to cut video."),
