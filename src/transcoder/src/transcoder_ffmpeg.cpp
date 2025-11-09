@@ -393,7 +393,8 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     // Handle start time seeking if specified
     if (startTime > 0) {
         int64_t seek_target = static_cast<int64_t>(startTime * AV_TIME_BASE);
-        if ((ret = av_seek_frame(decoder->fmtCtx, -1, seek_target, AVSEEK_FLAG_BACKWARD)) < 0) {
+        start_time = seek_target;
+        if ((ret = avformat_seek_file(decoder->fmtCtx, -1, INT64_MIN, seek_target, seek_target, 0)) < 0) {
             av_log(NULL, AV_LOG_WARNING, "Could not seek to start time\n");
         }
         // Flush codec buffers after seeking
@@ -425,26 +426,31 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
                 continue;
             }
 
-            // Skip frames before start time
-            if (startTime > 0) {
-                double framePts = decoder->pkt->pts * av_q2d(decoder->videoStream->time_base);
-                if (framePts < startTime) {
-                    av_packet_unref(decoder->pkt);
-                    continue;
-                }
+            // Calculate frame PTS in seconds
+            double framePts = decoder->pkt->pts * av_q2d(decoder->videoStream->time_base);
+            bool shouldSkipFrame = (startTime > 0 && framePts < startTime);
+
+            // Update progress based on video stream (only for frames we're keeping)
+            if (!shouldSkipFrame) {
+                update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
             }
 
-            // Update progress based on video stream
-            update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
-
             if (!copyVideo) {
+                // For transcoding: decode all frames to maintain decoder state,
+                // but only encode frames >= startTime
                 av_packet_rescale_ts(decoder->pkt, decoder->videoStream->time_base,
                                      decoder->videoCodecCtx->time_base);
-                if ((ret = transcode_video()) < 0) {
+                if ((ret = transcode_video(shouldSkipFrame)) < 0) {
                     av_log(NULL, AV_LOG_ERROR, "Failed to transcode video frame\n");
                     goto end;
                 }
             } else {
+                // For copy mode: skip packets before start time
+                if (shouldSkipFrame) {
+                    av_packet_unref(decoder->pkt);
+                    continue;
+                }
+
                 ret = remux(decoder->pkt, encoder->fmtCtx, decoder->videoStream,
                             encoder->videoStream);
                 if (ret < 0) {
@@ -457,29 +463,32 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
                 continue;
             }
 
-            // Skip frames before start time
-            if (startTime > 0) {
-                double framePts = decoder->pkt->pts * av_q2d(decoder->audioStream->time_base);
-                if (framePts < startTime) {
-                    av_packet_unref(decoder->pkt);
-                    continue;
-                }
-            }
+            // Calculate frame PTS in seconds
+            double framePts = decoder->pkt->pts * av_q2d(decoder->audioStream->time_base);
+            bool shouldSkipFrame = (startTime > 0 && framePts < startTime);
 
-            // Update progress based on audio stream if no video stream
-            if (decoder->videoIdx < 0) {
+            // Update progress based on audio stream if no video stream (only for frames we're keeping)
+            if (decoder->videoIdx < 0 && !shouldSkipFrame) {
                 update_progress(decoder->pkt->pts,
                                 decoder->audioStream->time_base);
             }
 
             if (!copyAudio) {
+                // For transcoding: decode all frames to maintain decoder state,
+                // but only encode frames >= startTime
                 av_packet_rescale_ts(decoder->pkt, decoder->audioStream->time_base,
                                      decoder->audioCodecCtx->time_base);
-                if ((ret = transcode_audio()) < 0) {
+                if ((ret = transcode_audio(shouldSkipFrame)) < 0) {
                     av_log(NULL, AV_LOG_ERROR, "Failed to transcode audio frame\n");
                     goto end;
                 }
             } else {
+                // For copy mode: skip packets before start time
+                if (shouldSkipFrame) {
+                    av_packet_unref(decoder->pkt);
+                    continue;
+                }
+
                 ret = remux(decoder->pkt, encoder->fmtCtx, decoder->audioStream,
                             encoder->audioStream);
                 if (ret < 0) {
@@ -561,9 +570,21 @@ int TranscoderFFmpeg::open_media() {
     return 0;
 }
 
+void TranscoderFFmpeg::adjust_frame_pts_to_encoder_timebase(AVFrame *frame, int index, AVRational& tb) {
+    AVFilterContext *filter = filters_ctx[index].buffersink_ctx;
+    AVRational filter_tb = av_buffersink_get_time_base(filter);
+    AVRational av_tb = AV_TIME_BASE_Q;
+    frame->pts =
+        av_rescale_q(frame->pts, filter_tb, tb) -
+        av_rescale_q(start_time, av_tb, tb);
+    return;
+}
+
 int TranscoderFFmpeg::encode_video(AVStream *inStream, AVFrame *frame) {
     int ret = -1;
     FilteringContext *fc = &filters_ctx[inStream->index];
+
+    adjust_frame_pts_to_encoder_timebase(frame, inStream->index, encoder->videoCodecCtx->time_base);
 
     /* push the decoded frame into the filtergraph */
     if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
@@ -629,6 +650,8 @@ int TranscoderFFmpeg::encode_audio(AVStream *in_stream, AVFrame *frame) {
 
     FilteringContext *fc = &filters_ctx[in_stream->index];
 
+    adjust_frame_pts_to_encoder_timebase(frame, in_stream->index, encoder->audioCodecCtx->time_base);
+
     /* push the decoded frame into the filtergraph */
     if ((ret = av_buffersrc_add_frame_flags(fc->buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
@@ -678,7 +701,7 @@ end:
     return ret;
 }
 
-int TranscoderFFmpeg::transcode_video() {
+int TranscoderFFmpeg::transcode_video(bool skip_encode) {
     int ret = -1;
 
     // send packet to decoder
@@ -695,8 +718,11 @@ int TranscoderFFmpeg::transcode_video() {
             goto end;
         }
 
-        if ((ret = encode_video(decoder->videoStream, decoder->frame)) < 0) {
-            goto end;
+        // Only encode if we're not skipping this frame
+        if (!skip_encode) {
+            if ((ret = encode_video(decoder->videoStream, decoder->frame)) < 0) {
+                goto end;
+            }
         }
 
         if (decoder->pkt) {
@@ -710,7 +736,7 @@ end:
     return ret;
 }
 
-int TranscoderFFmpeg::transcode_audio() {
+int TranscoderFFmpeg::transcode_audio(bool skip_encode) {
     int ret;
     if ((ret = avcodec_send_packet(decoder->audioCodecCtx, decoder->pkt)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Failed to send packet to decoder!\n");
@@ -727,8 +753,11 @@ int TranscoderFFmpeg::transcode_audio() {
             return ret;
         }
 
-        if ((ret = encode_audio(decoder->audioStream, decoder->frame)) < 0) {
-            return ret;
+        // Only encode if we're not skipping this frame
+        if (!skip_encode) {
+            if ((ret = encode_audio(decoder->audioStream, decoder->frame)) < 0) {
+                return ret;
+            }
         }
 
         if (decoder->pkt) {

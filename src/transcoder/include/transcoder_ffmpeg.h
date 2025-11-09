@@ -49,17 +49,19 @@ public:
 
     int init_filters_wrapper();
 
+    void adjust_frame_pts_to_encoder_timebase(AVFrame *frame, int index, AVRational& tb);
+
     int encode_video(AVStream *inStream, AVFrame *frame);
 
     int encode_write_video(AVFrame *frame);
 
-    int transcode_video();
+    int transcode_video(bool skip_encode = false);
 
     int encode_audio(AVStream *inStream, AVFrame *frame);
 
     int encode_write_audio(AVFrame *frame);
 
-    int transcode_audio();
+    int transcode_audio(bool skip_encode = false);
 
     int prepare_decoder();
 
@@ -82,6 +84,8 @@ private:
     // Decoder and encoder contexts
     StreamContext *decoder;
     StreamContext *encoder;
+
+    int64_t start_time;
 
     FilteringContext *filters_ctx;
 
