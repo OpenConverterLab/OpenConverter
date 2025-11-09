@@ -38,7 +38,7 @@ ExtractAudioPage::~ExtractAudioPage() {
 
 void ExtractAudioPage::OnPageActivated() {
     BasePage::OnPageActivated();
-    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit,
+    HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
                            formatComboBox->currentText());
 }
 
@@ -55,21 +55,17 @@ void ExtractAudioPage::SetupUI() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Input File Section
-    inputGroupBox = new QGroupBox(tr("Input File"), this);
-    QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
-
-    inputFileLineEdit = new QLineEdit(inputGroupBox);
-    inputFileLineEdit->setPlaceholderText(tr("Select a video file..."));
-    inputFileLineEdit->setReadOnly(true);
-
-    browseInputButton = new QPushButton(tr("Browse..."), inputGroupBox);
-    connect(browseInputButton, &QPushButton::clicked, this, &ExtractAudioPage::OnBrowseInputClicked);
-
-    inputLayout->addWidget(inputFileLineEdit);
-    inputLayout->addWidget(browseInputButton);
-
-    mainLayout->addWidget(inputGroupBox);
+    // Input File Selector
+    inputFileSelector = new FileSelectorWidget(
+        tr("Input File"),
+        FileSelectorWidget::InputFile,
+        tr("Select a video file..."),
+        tr("Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)"),
+        tr("Select Video File"),
+        this
+    );
+    connect(inputFileSelector, &FileSelectorWidget::FileSelected, this, &ExtractAudioPage::OnInputFileSelected);
+    mainLayout->addWidget(inputFileSelector);
 
     // Settings Section
     settingsGroupBox = new QGroupBox(tr("Audio Settings"), this);
@@ -112,30 +108,24 @@ void ExtractAudioPage::SetupUI() {
     mainLayout->addWidget(progressBar);
     mainLayout->addWidget(progressLabel);
 
-    // Output File Section
-    outputGroupBox = new QGroupBox(tr("Output File"), this);
-    QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
+    // Output File Selector
+    outputFileSelector = new FileSelectorWidget(
+        tr("Output File"),
+        FileSelectorWidget::OutputFile,
+        tr("Output file path will be generated automatically..."),
+        tr("Audio Files (*.mp3 *.aac *.ac3 *.flac *.wav *.ogg);;All Files (*.*)"),
+        tr("Save Audio File"),
+        this
+    );
+    connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &ExtractAudioPage::OnOutputFileSelected);
+    mainLayout->addWidget(outputFileSelector);
 
-    QHBoxLayout *outputPathLayout = new QHBoxLayout();
-    outputFileLineEdit = new QLineEdit(outputGroupBox);
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    outputFileLineEdit->setReadOnly(true);
-
-    browseOutputButton = new QPushButton(tr("Browse..."), outputGroupBox);
-    connect(browseOutputButton, &QPushButton::clicked, this, &ExtractAudioPage::OnBrowseOutputClicked);
-
-    outputPathLayout->addWidget(outputFileLineEdit);
-    outputPathLayout->addWidget(browseOutputButton);
-
-    extractButton = new QPushButton(tr("Extract Audio"), outputGroupBox);
+    // Extract Button
+    extractButton = new QPushButton(tr("Extract Audio"), this);
     extractButton->setEnabled(false);
     extractButton->setMinimumHeight(40);
     connect(extractButton, &QPushButton::clicked, this, &ExtractAudioPage::OnExtractClicked);
-
-    outputLayout->addLayout(outputPathLayout);
-    outputLayout->addWidget(extractButton);
-
-    mainLayout->addWidget(outputGroupBox);
+    mainLayout->addWidget(extractButton);
 
     // Add stretch to push everything to the top
     mainLayout->addStretch();
@@ -143,49 +133,20 @@ void ExtractAudioPage::SetupUI() {
     setLayout(mainLayout);
 }
 
-void ExtractAudioPage::OnBrowseInputClicked() {
-    QString fileName = QFileDialog::getOpenFileName(
-        this,
-        tr("Select Video File"),
-        "",
-        tr("Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)")
-    );
-
-    if (!fileName.isEmpty()) {
-        inputFileLineEdit->setText(fileName);
-
-        // Update shared input file path
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetInputFilePath(fileName);
-        }
-        UpdateOutputPath();
+void ExtractAudioPage::OnInputFileSelected(const QString &filePath) {
+    // Update shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
+    UpdateOutputPath();
 }
 
-void ExtractAudioPage::OnBrowseOutputClicked() {
-    QString format = formatComboBox->currentText();
-    if (format == "auto") {
-        format = "mp3";  // Default to mp3 for file dialog
-    }
-
-    QString filter = QString(tr("Audio Files (*.%1);;All Files (*.*)")).arg(format);
-
-    QString fileName = QFileDialog::getSaveFileName(
-        this,
-        tr("Save Extracted Audio"),
-        outputFileLineEdit->text(),
-        filter
-    );
-
-    if (!fileName.isEmpty()) {
-        outputFileLineEdit->setText(fileName);
-
-        // Mark output path as manually set
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetOutputFilePath(fileName);
-        }
+void ExtractAudioPage::OnOutputFileSelected(const QString &filePath) {
+    // Mark output path as manually set
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetOutputFilePath(filePath);
     }
 }
 
@@ -195,8 +156,8 @@ void ExtractAudioPage::OnFormatChanged(int index) {
 }
 
 void ExtractAudioPage::OnExtractClicked() {
-    QString inputPath = inputFileLineEdit->text();
-    QString outputPath = outputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
+    QString outputPath = outputFileSelector->GetFilePath();
 
     if (inputPath.isEmpty() || outputPath.isEmpty()) {
         QMessageBox::warning(this, tr("Error"), tr("Please select input and output files."));
@@ -222,7 +183,7 @@ void ExtractAudioPage::OnExtractClicked() {
         QString baseName = inputInfo.completeBaseName();
         QString dirPath = inputInfo.absolutePath();
         outputPath = QString("%1/%2-oc-output.%3").arg(dirPath, baseName, format);
-        outputFileLineEdit->setText(outputPath);
+        outputFileSelector->SetFilePath(outputPath);
 
         // Default use copy mode (no re-encoding)
         encodeParam->set_audio_codec_name("");
@@ -315,7 +276,7 @@ void ExtractAudioPage::on_time_update(double timeRequired) {
 }
 
 void ExtractAudioPage::UpdateOutputPath() {
-    QString inputPath = inputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
@@ -326,7 +287,7 @@ void ExtractAudioPage::UpdateOutputPath() {
                 format = MapCodecToFormat(detectedCodec);
             }
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
-            outputFileLineEdit->setText(outputPath);
+            outputFileSelector->SetFilePath(outputPath);
             extractButton->setEnabled(true);
         }
     }
@@ -371,9 +332,9 @@ QString ExtractAudioPage::MapCodecToFormat(const QString &codec) {
 
 void ExtractAudioPage::RetranslateUi() {
     // Update all translatable strings
-    inputGroupBox->setTitle(tr("Input File"));
-    inputFileLineEdit->setPlaceholderText(tr("Select a video file..."));
-    browseInputButton->setText(tr("Browse..."));
+    inputFileSelector->setTitle(tr("Input File"));
+    inputFileSelector->SetPlaceholder(tr("Select a video file..."));
+    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
 
     settingsGroupBox->setTitle(tr("Audio Settings"));
     formatLabel->setText(tr("Output Format:"));
@@ -381,8 +342,8 @@ void ExtractAudioPage::RetranslateUi() {
     bitrateSpinBox->setSpecialValueText(tr("auto"));
     bitrateSpinBox->setSuffix(tr(" kbps"));
 
-    outputGroupBox->setTitle(tr("Output File"));
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    browseOutputButton->setText(tr("Browse..."));
+    outputFileSelector->setTitle(tr("Output File"));
+    outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
+    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
     extractButton->setText(tr("Extract Audio"));
 }

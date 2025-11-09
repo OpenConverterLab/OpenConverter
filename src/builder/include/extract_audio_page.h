@@ -19,11 +19,11 @@
 #define EXTRACT_AUDIO_PAGE_H
 
 #include "base_page.h"
+#include "file_selector_widget.h"
 #include "../../common/include/process_observer.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
-#include <QLineEdit>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
@@ -52,8 +52,8 @@ protected:
     void OnOutputPathUpdate() override;
 
 private slots:
-    void OnBrowseInputClicked();
-    void OnBrowseOutputClicked();
+    void OnInputFileSelected(const QString &filePath);
+    void OnOutputFileSelected(const QString &filePath);
     void OnFormatChanged(int index);
     void OnExtractClicked();
     void OnExtractFinished(bool success);
@@ -69,10 +69,9 @@ private:
     QString DetectAudioCodecFromFile(const QString &filePath);
     QString MapCodecToFormat(const QString &codec);
 
-    // Input section
-    QGroupBox *inputGroupBox;
-    QLineEdit *inputFileLineEdit;
-    QPushButton *browseInputButton;
+    // Input/Output section
+    FileSelectorWidget *inputFileSelector;
+    FileSelectorWidget *outputFileSelector;
 
     // Settings section
     QGroupBox *settingsGroupBox;
@@ -85,10 +84,7 @@ private:
     QProgressBar *progressBar;
     QLabel *progressLabel;
 
-    // Output section
-    QGroupBox *outputGroupBox;
-    QLineEdit *outputFileLineEdit;
-    QPushButton *browseOutputButton;
+    // Action section
     QPushButton *extractButton;
 };
 

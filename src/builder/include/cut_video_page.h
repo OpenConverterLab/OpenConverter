@@ -19,11 +19,11 @@
 #define CUT_VIDEO_PAGE_H
 
 #include "base_page.h"
+#include "file_selector_widget.h"
 #include "simple_video_player.h"
 #include "../../common/include/process_observer.h"
 #include <QGroupBox>
 #include <QLabel>
-#include <QLineEdit>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSlider>
@@ -54,8 +54,8 @@ protected:
     void OnOutputPathUpdate() override;
 
 private slots:
-    void OnBrowseInputClicked();
-    void OnBrowseOutputClicked();
+    void OnInputFileSelected(const QString &filePath);
+    void OnOutputFileSelected(const QString &filePath);
     void OnCutClicked();
     void OnPlayPauseClicked();
     void OnVideoPlayerPositionChanged(qint64 position);
@@ -82,10 +82,9 @@ private:
     void RunCutInThread(const QString &inputPath, const QString &outputPath,
                         EncodeParameter *encodeParam, ProcessParameter *processParam);
 
-    // Input section
-    QGroupBox *inputGroupBox;
-    QLineEdit *inputFileLineEdit;
-    QPushButton *browseInputButton;
+    // Input/Output section
+    FileSelectorWidget *inputFileSelector;
+    FileSelectorWidget *outputFileSelector;
 
     // Media Duration section
     QGroupBox *durationGroupBox;
@@ -116,10 +115,7 @@ private:
     QProgressBar *progressBar;
     QLabel *progressLabel;
 
-    // Output section
-    QGroupBox *outputGroupBox;
-    QLineEdit *outputFileLineEdit;
-    QPushButton *browseOutputButton;
+    // Action section
     QPushButton *cutButton;
 
     // State
