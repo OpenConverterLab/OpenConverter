@@ -27,9 +27,8 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 
-TranscodePage::TranscodePage(QWidget *parent) : BasePage(parent) {
+TranscodePage::TranscodePage(QWidget *parent) : BasePage(parent), converterRunner(nullptr) {
     SetupUI();
-    connect(this, &TranscodePage::TranscodeComplete, this, &TranscodePage::OnTranscodeFinished);
 }
 
 TranscodePage::~TranscodePage() {
@@ -220,6 +219,16 @@ void TranscodePage::SetupUI() {
     connect(transcodeButton, &QPushButton::clicked, this, &TranscodePage::OnTranscodeClicked);
     mainLayout->addWidget(transcodeButton);
 
+    // Create conversion runner
+    converterRunner = new ConverterRunner(
+        progressBar, progressLabel, transcodeButton,
+        tr("Transcoding..."), tr("Transcode"),
+        tr("Success"), tr("File transcoded successfully!"),
+        tr("Error"), tr("Failed to transcode file."),
+        this
+    );
+    connect(converterRunner, &ConverterRunner::ConversionFinished, this, &TranscodePage::OnTranscodeFinished);
+
     mainLayout->addStretch();
 
     setLayout(mainLayout);
@@ -265,17 +274,9 @@ void TranscodePage::OnTranscodeClicked() {
     QString inputPath = inputFileSelector->GetFilePath();
     QString outputPath = outputFileSelector->GetFilePath();
 
-    if (inputPath.isEmpty() || outputPath.isEmpty()) {
-        QMessageBox::warning(this, "Error", "Please select input and output files.");
-        return;
-    }
-
     // Create encode parameters
     EncodeParameter *encodeParam = new EncodeParameter();
     ProcessParameter *processParam = new ProcessParameter();
-
-    // Register this page as observer for progress updates
-    processParam->add_observer(this);
 
     // Video settings
     QString videoCodec = videoCodecComboBox->currentText();
@@ -320,79 +321,14 @@ void TranscodePage::OnTranscodeClicked() {
         encodeParam->set_preset(preset.toStdString());
     }
 
-    // Show progress bar
-    progressBar->setValue(0);
-    progressBar->setVisible(true);
-    progressLabel->setText("Starting transcoding...");
-    progressLabel->setVisible(true);
-
-    // Disable button
-    transcodeButton->setEnabled(false);
-    transcodeButton->setText(tr("Transcoding..."));
-
-    // Run transcoding in a separate thread
-    RunTranscodeInThread(inputPath, outputPath, encodeParam, processParam);
-}
-
-void TranscodePage::RunTranscodeInThread(const QString &inputPath, const QString &outputPath,
-                                         EncodeParameter *encodeParam, ProcessParameter *processParam) {
-    QThread *thread = QThread::create([this, inputPath, outputPath, encodeParam, processParam]() {
-        // Create converter
-        Converter *converter = new Converter(processParam, encodeParam);
-        converter->set_transcoder("FFMPEG");
-
-        // Perform transcoding
-        bool success = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
-
-        // Clean up converter
-        delete converter;
-
-        // Emit signal to notify completion
-        emit TranscodeComplete(success);
-    });
-
-    // Clean up thread when it finishes
-    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-    connect(thread, &QThread::finished, [processParam, encodeParam]() {
-        delete processParam;
-        delete encodeParam;
-    });
-
-    thread->start();
+    // Run conversion using ConverterRunner
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
 }
 
 void TranscodePage::OnTranscodeFinished(bool success) {
-    // Hide progress bar
-    progressBar->setVisible(false);
-    progressLabel->setVisible(false);
-
-    // Re-enable button
-    transcodeButton->setEnabled(true);
-    transcodeButton->setText(tr("Transcode"));
-
-    if (success) {
-        QMessageBox::information(this, "Success", "File transcoded successfully!");
-    } else {
-        QMessageBox::critical(this, "Error", "Failed to transcode file.");
-    }
-}
-
-void TranscodePage::on_process_update(double progress) {
-    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
-    QMetaObject::invokeMethod(this, [this, progress]() {
-        progressBar->setValue(static_cast<int>(progress));
-    }, Qt::QueuedConnection);
-}
-
-void TranscodePage::on_time_update(double timeRequired) {
-    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
-    QMetaObject::invokeMethod(this, [this, timeRequired]() {
-        int minutes = static_cast<int>(timeRequired) / 60;
-        int seconds = static_cast<int>(timeRequired) % 60;
-        progressLabel->setText(QString("Estimated time remaining: %1:%2")
-                               .arg(minutes)
-                               .arg(seconds, 2, 10, QChar('0')));
-    }, Qt::QueuedConnection);
+    Q_UNUSED(success);
+    // ConverterRunner handles all UI updates and message boxes
+    // This slot is kept for potential custom post-processing
 }
 
 void TranscodePage::UpdateOutputPath() {

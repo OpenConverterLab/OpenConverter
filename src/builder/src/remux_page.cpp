@@ -32,9 +32,8 @@ extern "C" {
 #include <libavutil/avutil.h>
 }
 
-RemuxPage::RemuxPage(QWidget *parent) : BasePage(parent) {
+RemuxPage::RemuxPage(QWidget *parent) : BasePage(parent), converterRunner(nullptr) {
     SetupUI();
-    connect(this, &RemuxPage::RemuxComplete, this, &RemuxPage::OnRemuxFinished);
 }
 
 RemuxPage::~RemuxPage() {
@@ -149,6 +148,32 @@ void RemuxPage::SetupUI() {
     connect(remuxButton, &QPushButton::clicked, this, &RemuxPage::OnRemuxClicked);
     mainLayout->addWidget(remuxButton);
 
+    // Create conversion runner
+    converterRunner = new ConverterRunner(
+        progressBar, progressLabel, remuxButton,
+        tr("Remuxing..."), tr("Remux"),
+        tr("Success"), tr("File remuxed successfully!"),
+        tr("Error"), tr("Failed to remux file."),
+        this
+    );
+    connect(converterRunner, &ConverterRunner::ConversionFinished, this, &RemuxPage::OnRemuxFinished);
+
+    // Set custom validator to check stream selection
+    converterRunner->SetValidator([this]() {
+        bool hasSelectedStream = false;
+        for (const StreamInfo &stream : streams) {
+            if (stream.checkbox && stream.checkbox->isChecked()) {
+                hasSelectedStream = true;
+                break;
+            }
+        }
+        if (!hasSelectedStream) {
+            QMessageBox::warning(this, tr("Error"), tr("Please select at least one stream to remux."));
+            return false;
+        }
+        return true;
+    });
+
     mainLayout->addStretch();
 
     setLayout(mainLayout);
@@ -182,108 +207,21 @@ void RemuxPage::OnRemuxClicked() {
     QString inputPath = inputFileSelector->GetFilePath();
     QString outputPath = outputFileSelector->GetFilePath();
 
-    if (inputPath.isEmpty() || outputPath.isEmpty()) {
-        QMessageBox::warning(this, "Error", "Please select input and output files.");
-        return;
-    }
-
-    // Check if at least one stream is selected
-    bool hasSelectedStream = false;
-    for (const StreamInfo &stream : streams) {
-        if (stream.checkbox && stream.checkbox->isChecked()) {
-            hasSelectedStream = true;
-            break;
-        }
-    }
-
-    if (!hasSelectedStream) {
-        QMessageBox::warning(this, "Error", "Please select at least one stream to remux.");
-        return;
-    }
-
     // For remuxing, we don't set any codec parameters (copy all streams)
     EncodeParameter *encodeParam = new EncodeParameter();
     ProcessParameter *processParam = new ProcessParameter();
 
-    // Register this page as observer for progress updates
-    processParam->add_observer(this);
-
     // Empty codec names mean copy streams without re-encoding
     // This is the standard way to perform remuxing
 
-    // Show progress bar
-    progressBar->setValue(0);
-    progressBar->setVisible(true);
-    progressLabel->setText("Starting remuxing...");
-    progressLabel->setVisible(true);
-
-    // Disable button
-    remuxButton->setEnabled(false);
-    remuxButton->setText(tr("Remuxing..."));
-
-    // Run remuxing in a separate thread
-    RunRemuxInThread(inputPath, outputPath, encodeParam, processParam);
-}
-
-void RemuxPage::RunRemuxInThread(const QString &inputPath, const QString &outputPath,
-                                 EncodeParameter *encodeParam, ProcessParameter *processParam) {
-    QThread *thread = QThread::create([this, inputPath, outputPath, encodeParam, processParam]() {
-        // Create converter
-        Converter *converter = new Converter(processParam, encodeParam);
-        converter->set_transcoder("FFMPEG");
-
-        // Perform remuxing
-        bool success = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
-
-        // Clean up converter
-        delete converter;
-
-        // Emit signal to notify completion
-        emit RemuxComplete(success);
-    });
-
-    // Clean up thread when it finishes
-    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-    connect(thread, &QThread::finished, [processParam, encodeParam]() {
-        delete processParam;
-        delete encodeParam;
-    });
-
-    thread->start();
+    // Run conversion using ConverterRunner (validator checks stream selection)
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
 }
 
 void RemuxPage::OnRemuxFinished(bool success) {
-    // Hide progress bar
-    progressBar->setVisible(false);
-    progressLabel->setVisible(false);
-
-    // Re-enable button
-    remuxButton->setEnabled(true);
-    remuxButton->setText(tr("Remux"));
-
-    if (success) {
-        QMessageBox::information(this, "Success", "File remuxed successfully!");
-    } else {
-        QMessageBox::critical(this, "Error", "Failed to remux file.");
-    }
-}
-
-void RemuxPage::on_process_update(double progress) {
-    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
-    QMetaObject::invokeMethod(this, [this, progress]() {
-        progressBar->setValue(static_cast<int>(progress));
-    }, Qt::QueuedConnection);
-}
-
-void RemuxPage::on_time_update(double timeRequired) {
-    // Use QMetaObject::invokeMethod to ensure UI updates happen on the main thread
-    QMetaObject::invokeMethod(this, [this, timeRequired]() {
-        int minutes = static_cast<int>(timeRequired) / 60;
-        int seconds = static_cast<int>(timeRequired) % 60;
-        progressLabel->setText(QString("Estimated time remaining: %1:%2")
-                               .arg(minutes)
-                               .arg(seconds, 2, 10, QChar('0')));
-    }, Qt::QueuedConnection);
+    Q_UNUSED(success);
+    // ConverterRunner handles all UI updates and message boxes
+    // This slot is kept for potential custom post-processing
 }
 
 void RemuxPage::UpdateOutputPath() {

@@ -19,20 +19,16 @@
 #define EXTRACT_AUDIO_PAGE_H
 
 #include "base_page.h"
+#include "converter_runner.h"
 #include "file_selector_widget.h"
-#include "../../common/include/process_observer.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QThread>
 
-class EncodeParameter;
-class ProcessParameter;
-
-class ExtractAudioPage : public BasePage, public ProcessObserver {
+class ExtractAudioPage : public BasePage {
     Q_OBJECT
 
 public:
@@ -43,10 +39,6 @@ public:
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Extract Audio"; }
     void RetranslateUi() override;
-
-    // ProcessObserver interface
-    void on_process_update(double progress) override;
-    void on_time_update(double timeRequired) override;
 
 protected:
     void OnOutputPathUpdate() override;
@@ -64,8 +56,6 @@ signals:
 private:
     void SetupUI();
     void UpdateOutputPath();
-    void RunExtractInThread(const QString &inputPath, const QString &outputPath,
-                            EncodeParameter *encodeParam, ProcessParameter *processParam);
     QString DetectAudioCodecFromFile(const QString &filePath);
     QString MapCodecToFormat(const QString &codec);
 
@@ -86,6 +76,9 @@ private:
 
     // Action section
     QPushButton *extractButton;
+
+    // Conversion runner
+    ConverterRunner *converterRunner;
 };
 
 #endif // EXTRACT_AUDIO_PAGE_H

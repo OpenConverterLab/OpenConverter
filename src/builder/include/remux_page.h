@@ -19,8 +19,8 @@
 #define REMUX_PAGE_H
 
 #include "base_page.h"
+#include "converter_runner.h"
 #include "file_selector_widget.h"
-#include "../../common/include/process_observer.h"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
@@ -28,7 +28,6 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QScrollArea>
-#include <QThread>
 #include <QVBoxLayout>
 #include <QVector>
 
@@ -47,7 +46,7 @@ struct StreamInfo {
     QCheckBox *checkbox;
 };
 
-class RemuxPage : public BasePage, public ProcessObserver {
+class RemuxPage : public BasePage {
     Q_OBJECT
 
 public:
@@ -58,10 +57,6 @@ public:
     void OnPageDeactivated() override;
     QString GetPageTitle() const override { return "Remux"; }
     void RetranslateUi() override;
-
-    // ProcessObserver interface
-    void on_process_update(double progress) override;
-    void on_time_update(double timeRequired) override;
 
 protected:
     void OnInputFileChanged(const QString &newPath) override;
@@ -84,8 +79,6 @@ private:
     void ClearStreams();
     QString GetStreamTypeName(int codecType);
     QString FormatBitrate(int64_t bitsPerSec);
-    void RunRemuxInThread(const QString &inputPath, const QString &outputPath,
-                          EncodeParameter *encodeParam, ProcessParameter *processParam);
 
     // Input/Output section
     FileSelectorWidget *inputFileSelector;
@@ -109,6 +102,9 @@ private:
 
     // Action section
     QPushButton *remuxButton;
+
+    // Conversion runner
+    ConverterRunner *converterRunner;
 };
 
 #endif // REMUX_PAGE_H
