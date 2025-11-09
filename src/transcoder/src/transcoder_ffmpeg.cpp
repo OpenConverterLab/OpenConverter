@@ -39,7 +39,7 @@ void TranscoderFFmpeg::print_error(const char *msg, int ret) {
 void TranscoderFFmpeg::update_progress(int64_t current_pts,
                                        AVRational time_base) {
     // Convert current PTS to microseconds
-    AVRational micros_base = {1, 1000000};
+    AVRational micros_base = {1, AV_TIME_BASE};
     current_duration = av_rescale_q(current_pts, time_base, micros_base);
 
     // Calculate progress percentage
@@ -288,7 +288,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         for (unsigned int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
             AVStream *stream = decoder->fmtCtx->streams[i];
             if (stream->duration != AV_NOPTS_VALUE) {
-                AVRational micros_base = {1, 1000000};
+                AVRational micros_base = {1, AV_TIME_BASE};
                 int64_t stream_duration = av_rescale_q(
                     stream->duration, stream->time_base, micros_base);
                 total_duration = std::max(total_duration, stream_duration);
@@ -301,7 +301,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         for (unsigned int i = 0; i < decoder->fmtCtx->nb_streams; i++) {
             AVStream *stream = decoder->fmtCtx->streams[i];
             if (stream->nb_frames > 0 && stream->avg_frame_rate.num > 0) {
-                AVRational micros_base = {1, 1000000};
+                AVRational micros_base = {1, AV_TIME_BASE};
                 int64_t estimated_duration =
                     av_rescale_q(stream->nb_frames * stream->avg_frame_rate.den,
                                  stream->avg_frame_rate, micros_base);
@@ -573,7 +573,7 @@ int TranscoderFFmpeg::open_media() {
 void TranscoderFFmpeg::adjust_frame_pts_to_encoder_timebase(AVFrame *frame, int index, AVRational& tb) {
     AVFilterContext *filter = filters_ctx[index].buffersink_ctx;
     AVRational filter_tb = av_buffersink_get_time_base(filter);
-    AVRational av_tb = AV_TIME_BASE_Q;
+    AVRational av_tb = {1, AV_TIME_BASE};
     frame->pts =
         av_rescale_q(frame->pts, filter_tb, tb) -
         av_rescale_q(start_time, av_tb, tb);
