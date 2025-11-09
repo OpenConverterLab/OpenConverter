@@ -21,6 +21,7 @@
 #include "base_page.h"
 #include "converter_runner.h"
 #include "file_selector_widget.h"
+#include "progress_widget.h"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
@@ -97,8 +98,7 @@ private:
     QComboBox *formatComboBox;
 
     // Progress section
-    QProgressBar *progressBar;
-    QLabel *progressLabel;
+    ProgressWidget *progressWidget;
 
     // Action section
     QPushButton *remuxButton;

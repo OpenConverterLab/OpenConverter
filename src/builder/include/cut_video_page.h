@@ -21,6 +21,7 @@
 #include "base_page.h"
 #include "converter_runner.h"
 #include "file_selector_widget.h"
+#include "progress_widget.h"
 #include "simple_video_player.h"
 #include <QGroupBox>
 #include <QLabel>
@@ -105,8 +106,7 @@ private:
     QLabel *cutDurationValueLabel;
 
     // Progress section
-    QProgressBar *progressBar;
-    QLabel *progressLabel;
+    ProgressWidget *progressWidget;
 
     // Action section
     QPushButton *cutButton;
