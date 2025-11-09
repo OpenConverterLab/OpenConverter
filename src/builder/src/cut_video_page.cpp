@@ -47,7 +47,7 @@ CutVideoPage::~CutVideoPage() {
 
 void CutVideoPage::OnPageActivated() {
     BasePage::OnPageActivated();
-    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit, "mp4");
+    HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(), "mp4");
 }
 
 void CutVideoPage::OnInputFileChanged(const QString &newPath) {
@@ -70,21 +70,17 @@ void CutVideoPage::SetupUI() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Input File Section
-    inputGroupBox = new QGroupBox(tr("Input File"), this);
-    QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
-
-    inputFileLineEdit = new QLineEdit(inputGroupBox);
-    inputFileLineEdit->setPlaceholderText(tr("Select a video file..."));
-    inputFileLineEdit->setReadOnly(true);
-
-    browseInputButton = new QPushButton(tr("Browse..."), inputGroupBox);
-    connect(browseInputButton, &QPushButton::clicked, this, &CutVideoPage::OnBrowseInputClicked);
-
-    inputLayout->addWidget(inputFileLineEdit);
-    inputLayout->addWidget(browseInputButton);
-
-    mainLayout->addWidget(inputGroupBox);
+    // Input File Selector
+    inputFileSelector = new FileSelectorWidget(
+        tr("Input File"),
+        FileSelectorWidget::InputFile,
+        tr("Select a video file..."),
+        tr("Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)"),
+        tr("Select Video File"),
+        this
+    );
+    connect(inputFileSelector, &FileSelectorWidget::FileSelected, this, &CutVideoPage::OnInputFileSelected);
+    mainLayout->addWidget(inputFileSelector);
 
     // Media Duration Section
     durationGroupBox = new QGroupBox(tr("Media Duration"), this);
@@ -198,29 +194,24 @@ void CutVideoPage::SetupUI() {
     mainLayout->addWidget(progressBar);
     mainLayout->addWidget(progressLabel);
 
-    // Output File Section
-    outputGroupBox = new QGroupBox(tr("Output File"), this);
-    QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
+    // Output File Selector
+    outputFileSelector = new FileSelectorWidget(
+        tr("Output File"),
+        FileSelectorWidget::OutputFile,
+        tr("Output file path..."),
+        tr("Video Files (*.mp4 *.avi *.mkv *.mov);;All Files (*.*)"),
+        tr("Save Cut Video As"),
+        this
+    );
+    connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &CutVideoPage::OnOutputFileSelected);
+    mainLayout->addWidget(outputFileSelector);
 
-    QHBoxLayout *outputPathLayout = new QHBoxLayout();
-    outputFileLineEdit = new QLineEdit(outputGroupBox);
-    outputFileLineEdit->setPlaceholderText(tr("Output file path..."));
-
-    browseOutputButton = new QPushButton(tr("Browse..."), outputGroupBox);
-    connect(browseOutputButton, &QPushButton::clicked, this, &CutVideoPage::OnBrowseOutputClicked);
-
-    outputPathLayout->addWidget(outputFileLineEdit);
-    outputPathLayout->addWidget(browseOutputButton);
-
-    cutButton = new QPushButton(tr("Cut Video"), outputGroupBox);
+    // Cut Button
+    cutButton = new QPushButton(tr("Cut Video"), this);
     cutButton->setEnabled(false);
     cutButton->setStyleSheet("QPushButton { padding: 8px; font-size: 14px; font-weight: bold; }");
     connect(cutButton, &QPushButton::clicked, this, &CutVideoPage::OnCutClicked);
-
-    outputLayout->addLayout(outputPathLayout);
-    outputLayout->addWidget(cutButton);
-
-    mainLayout->addWidget(outputGroupBox);
+    mainLayout->addWidget(cutButton);
 
     // Add stretch to push everything to the top
     mainLayout->addStretch();
@@ -228,54 +219,32 @@ void CutVideoPage::SetupUI() {
     setLayout(mainLayout);
 }
 
-void CutVideoPage::OnBrowseInputClicked() {
-    QString fileName = QFileDialog::getOpenFileName(
-        this,
-        tr("Select Video File"),
-        "",
-        tr("Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)")
-    );
-
-    if (!fileName.isEmpty()) {
-        inputFileLineEdit->setText(fileName);
-
-        // Update shared input file path
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetInputFilePath(fileName);
-        }
-
-        LoadVideo(fileName);
-        UpdateOutputPath();
+void CutVideoPage::OnInputFileSelected(const QString &filePath) {
+    // Update shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
+
+    LoadVideo(filePath);
+    UpdateOutputPath();
 }
 
-void CutVideoPage::OnBrowseOutputClicked() {
-    QString fileName = QFileDialog::getSaveFileName(
-        this,
-        tr("Save Cut Video As"),
-        "",
-        tr("Video Files (*.mp4 *.avi *.mkv *.mov);;All Files (*.*)")
-    );
-
-    if (!fileName.isEmpty()) {
-        outputFileLineEdit->setText(fileName);
-
-        // Mark output path as manually se
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetOutputFilePath(fileName);
-        }
+void CutVideoPage::OnOutputFileSelected(const QString &filePath) {
+    // Mark output path as manually set
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetOutputFilePath(filePath);
     }
 }
 
 void CutVideoPage::UpdateOutputPath() {
-    QString inputPath = inputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath("mp4");
-            outputFileLineEdit->setText(outputPath);
+            outputFileSelector->SetFilePath(outputPath);
             cutButton->setEnabled(videoDuration > 0);
         }
     }
@@ -423,8 +392,8 @@ QString CutVideoPage::FormatTime(qint64 milliseconds) {
 }
 
 void CutVideoPage::OnCutClicked() {
-    QString inputPath = inputFileLineEdit->text();
-    QString outputPath = outputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
+    QString outputPath = outputFileSelector->GetFilePath();
 
     if (inputPath.isEmpty() || outputPath.isEmpty()) {
         QMessageBox::warning(this, tr("Error"), tr("Please select input and output files."));
@@ -532,9 +501,9 @@ void CutVideoPage::on_time_update(double timeRequired) {
 
 void CutVideoPage::RetranslateUi() {
     // Update all translatable strings
-    inputGroupBox->setTitle(tr("Input File"));
-    inputFileLineEdit->setPlaceholderText(tr("Select a video file..."));
-    browseInputButton->setText(tr("Browse..."));
+    inputFileSelector->setTitle(tr("Input File"));
+    inputFileSelector->SetPlaceholder(tr("Select a video file..."));
+    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
 
     durationGroupBox->setTitle(tr("Media Duration"));
     totalDurationLabel->setText(tr("Total Duration:"));
@@ -556,8 +525,8 @@ void CutVideoPage::RetranslateUi() {
     // Update dynamic duration values
     UpdateDurationLabel();
 
-    outputGroupBox->setTitle(tr("Output File"));
-    outputFileLineEdit->setPlaceholderText(tr("Output file path..."));
-    browseOutputButton->setText(tr("Browse..."));
+    outputFileSelector->setTitle(tr("Output File"));
+    outputFileSelector->SetPlaceholder(tr("Output file path..."));
+    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
     cutButton->setText(tr("Cut Video"));
 }

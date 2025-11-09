@@ -239,6 +239,7 @@ if(ENABLE_GUI)
     # Add GUI-specific sources
     list(APPEND GUI_SOURCES
         ${CMAKE_SOURCE_DIR}/builder/src/base_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/file_selector_widget.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/placeholder_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/info_view_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/compress_picture_page.cpp
@@ -255,6 +256,7 @@ if(ENABLE_GUI)
     # Add GUI-specific headers
     list(APPEND GUI_HEADERS
         ${CMAKE_SOURCE_DIR}/builder/include/base_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/file_selector_widget.h
         ${CMAKE_SOURCE_DIR}/builder/include/placeholder_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/info_view_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/compress_picture_page.h

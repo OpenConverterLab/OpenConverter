@@ -47,7 +47,7 @@ QString CreateGifPage::GetPageTitle() const {
 
 void CreateGifPage::OnPageActivated() {
     BasePage::OnPageActivated();
-    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit, "gif");
+    HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(), "gif");
 }
 
 void CreateGifPage::OnOutputPathUpdate() {
@@ -59,20 +59,17 @@ void CreateGifPage::SetupUI() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Input Group
-    inputGroupBox = new QGroupBox(tr("Input File"), this);
-    QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
-
-    inputFileLineEdit = new QLineEdit(this);
-    inputFileLineEdit->setPlaceholderText(tr("Select a video or image sequence..."));
-    inputFileLineEdit->setReadOnly(true);
-
-    browseInputButton = new QPushButton(tr("Browse..."), this);
-
-    inputLayout->addWidget(inputFileLineEdit, 1);
-    inputLayout->addWidget(browseInputButton);
-
-    mainLayout->addWidget(inputGroupBox);
+    // Input File Selector
+    inputFileSelector = new FileSelectorWidget(
+        tr("Input File"),
+        FileSelectorWidget::InputFile,
+        tr("Select a video or image sequence..."),
+        tr("Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)"),
+        tr("Select Video File"),
+        this
+    );
+    connect(inputFileSelector, &FileSelectorWidget::FileSelected, this, &CreateGifPage::OnInputFileSelected);
+    mainLayout->addWidget(inputFileSelector);
 
     // Settings Group
     settingsGroupBox = new QGroupBox(tr("GIF Settings"), this);
@@ -108,86 +105,54 @@ void CreateGifPage::SetupUI() {
 
     mainLayout->addWidget(settingsGroupBox);
 
-    // Output Group
-    outputGroupBox = new QGroupBox(tr("Output"), this);
-    QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
+    // Output File Selector
+    outputFileSelector = new FileSelectorWidget(
+        tr("Output"),
+        FileSelectorWidget::OutputFile,
+        tr("Output file path will be generated automatically..."),
+        tr("GIF Files (*.gif);;All Files (*.*)"),
+        tr("Save GIF File"),
+        this
+    );
+    connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &CreateGifPage::OnOutputFileSelected);
+    mainLayout->addWidget(outputFileSelector);
 
-    QHBoxLayout *outputPathLayout = new QHBoxLayout();
-    outputFileLineEdit = new QLineEdit(this);
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-
-    browseOutputButton = new QPushButton(tr("Browse..."), this);
-
-    outputPathLayout->addWidget(outputFileLineEdit, 1);
-    outputPathLayout->addWidget(browseOutputButton);
-
+    // Convert Button
     convertButton = new QPushButton(tr("Create GIF"), this);
     convertButton->setEnabled(false);
     convertButton->setMinimumHeight(40);
-
-    outputLayout->addLayout(outputPathLayout);
-    outputLayout->addWidget(convertButton);
-
-    mainLayout->addWidget(outputGroupBox);
+    connect(convertButton, &QPushButton::clicked, this, &CreateGifPage::OnConvertClicked);
+    mainLayout->addWidget(convertButton);
 
     // Add stretch to push everything to the top
     mainLayout->addStretch();
 
-    // Connect signals
-    connect(browseInputButton, &QPushButton::clicked, this, &CreateGifPage::OnBrowseInputClicked);
-    connect(browseOutputButton, &QPushButton::clicked, this, &CreateGifPage::OnBrowseOutputClicked);
-    connect(convertButton, &QPushButton::clicked, this, &CreateGifPage::OnConvertClicked);
-    connect(inputFileLineEdit, &QLineEdit::textChanged, this, &CreateGifPage::OnInputFileChanged);
     // TODO: Connect FPS spin box value change signal
     // connect(fpsSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &CreateGifPage::OnFpsChanged);
 
     setLayout(mainLayout);
 }
 
-void CreateGifPage::OnBrowseInputClicked() {
-    QString fileName = QFileDialog::getOpenFileName(
-        this,
-        tr("Select Video File"),
-        "",
-        tr("Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)")
-    );
-
-    if (!fileName.isEmpty()) {
-        inputFileLineEdit->setText(fileName);
-
-        // Update shared input file path
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetInputFilePath(fileName);
-        }
-        UpdateOutputPath();
+void CreateGifPage::OnInputFileSelected(const QString &filePath) {
+    // Update shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
+    UpdateOutputPath();
 }
 
-void CreateGifPage::OnBrowseOutputClicked() {
-    QString filter = tr("GIF Files (*.gif);;All Files (*.*)");
-
-    QString fileName = QFileDialog::getSaveFileName(
-        this,
-        tr("Save GIF File"),
-        outputFileLineEdit->text(),
-        filter
-    );
-
-    if (!fileName.isEmpty()) {
-        outputFileLineEdit->setText(fileName);
-
-        // Mark output path as manually set
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetOutputFilePath(fileName);
-        }
+void CreateGifPage::OnOutputFileSelected(const QString &filePath) {
+    // Mark output path as manually set
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetOutputFilePath(filePath);
     }
 }
 
 void CreateGifPage::OnConvertClicked() {
-    QString inputPath = inputFileLineEdit->text();
-    QString outputPath = outputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
+    QString outputPath = outputFileSelector->GetFilePath();
 
     if (inputPath.isEmpty()) {
         QMessageBox::warning(this, tr("Warning"), tr("Please select an input file."));
@@ -235,22 +200,18 @@ void CreateGifPage::OnConvertClicked() {
     }
 }
 
-void CreateGifPage::OnInputFileChanged(const QString &text) {
-    convertButton->setEnabled(!text.isEmpty() && !outputFileLineEdit->text().isEmpty());
-}
-
 void CreateGifPage::OnFpsChanged(int value) {
     Q_UNUSED(value);
     // FPS change doesn't affect output path, but could be used for other purposes
 }
 
 void CreateGifPage::UpdateOutputPath() {
-    QString inputPath = inputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath("gif");
-            outputFileLineEdit->setText(outputPath);
+            outputFileSelector->SetFilePath(outputPath);
             convertButton->setEnabled(true);
         }
     }
@@ -258,9 +219,9 @@ void CreateGifPage::UpdateOutputPath() {
 
 void CreateGifPage::RetranslateUi() {
     // Update all translatable strings
-    inputGroupBox->setTitle(tr("Input File"));
-    inputFileLineEdit->setPlaceholderText(tr("Select a video or image sequence..."));
-    browseInputButton->setText(tr("Browse..."));
+    inputFileSelector->setTitle(tr("Input File"));
+    inputFileSelector->SetPlaceholder(tr("Select a video or image sequence..."));
+    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
 
     settingsGroupBox->setTitle(tr("GIF Settings"));
     widthLabel->setText(tr("Width (0 = auto):"));
@@ -271,8 +232,8 @@ void CreateGifPage::RetranslateUi() {
     // fpsLabel->setText(tr("Frame Rate (FPS):"));
     // fpsSpinBox->setSuffix(tr(" fps"));
 
-    outputGroupBox->setTitle(tr("Output"));
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    browseOutputButton->setText(tr("Browse..."));
+    outputFileSelector->setTitle(tr("Output"));
+    outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
+    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
     convertButton->setText(tr("Create GIF"));
 }

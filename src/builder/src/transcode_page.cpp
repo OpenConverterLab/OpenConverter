@@ -37,7 +37,7 @@ TranscodePage::~TranscodePage() {
 
 void TranscodePage::OnPageActivated() {
     BasePage::OnPageActivated();
-    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit,
+    HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
                            formatComboBox->currentText());
 }
 
@@ -65,21 +65,17 @@ void TranscodePage::SetupUI() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Input File Section
-    inputGroupBox = new QGroupBox(tr("Input File"), this);
-    QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
-
-    inputFileLineEdit = new QLineEdit(inputGroupBox);
-    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
-    inputFileLineEdit->setReadOnly(true);
-
-    browseInputButton = new QPushButton(tr("Browse..."), inputGroupBox);
-    connect(browseInputButton, &QPushButton::clicked, this, &TranscodePage::OnBrowseInputClicked);
-
-    inputLayout->addWidget(inputFileLineEdit);
-    inputLayout->addWidget(browseInputButton);
-
-    mainLayout->addWidget(inputGroupBox);
+    // Input File Selector
+    inputFileSelector = new FileSelectorWidget(
+        tr("Input File"),
+        FileSelectorWidget::InputFile,
+        tr("Select a media file..."),
+        tr("Media Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"),
+        tr("Select Media File"),
+        this
+    );
+    connect(inputFileSelector, &FileSelectorWidget::FileSelected, this, &TranscodePage::OnInputFileSelected);
+    mainLayout->addWidget(inputFileSelector);
 
     // Video Settings Section
     videoGroupBox = new QGroupBox(tr("Video Settings"), this);
@@ -205,85 +201,54 @@ void TranscodePage::SetupUI() {
     mainLayout->addWidget(progressBar);
     mainLayout->addWidget(progressLabel);
 
-    // Output File Section
-    outputGroupBox = new QGroupBox(tr("Output File"), this);
-    QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
+    // Output File Selector
+    outputFileSelector = new FileSelectorWidget(
+        tr("Output File"),
+        FileSelectorWidget::OutputFile,
+        tr("Output file path will be generated automatically..."),
+        tr("Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"),
+        tr("Save Transcoded File"),
+        this
+    );
+    connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &TranscodePage::OnOutputFileSelected);
+    mainLayout->addWidget(outputFileSelector);
 
-    QHBoxLayout *outputPathLayout = new QHBoxLayout();
-    outputFileLineEdit = new QLineEdit(outputGroupBox);
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    outputFileLineEdit->setReadOnly(true);
-
-    browseOutputButton = new QPushButton(tr("Browse..."), outputGroupBox);
-    connect(browseOutputButton, &QPushButton::clicked, this, &TranscodePage::OnBrowseOutputClicked);
-
-    outputPathLayout->addWidget(outputFileLineEdit);
-    outputPathLayout->addWidget(browseOutputButton);
-
-    transcodeButton = new QPushButton(tr("Transcode"), outputGroupBox);
+    // Transcode Button
+    transcodeButton = new QPushButton(tr("Transcode"), this);
     transcodeButton->setEnabled(false);
     transcodeButton->setMinimumHeight(40);
     connect(transcodeButton, &QPushButton::clicked, this, &TranscodePage::OnTranscodeClicked);
-
-    outputLayout->addLayout(outputPathLayout);
-    outputLayout->addWidget(transcodeButton);
-
-    mainLayout->addWidget(outputGroupBox);
+    mainLayout->addWidget(transcodeButton);
 
     mainLayout->addStretch();
 
     setLayout(mainLayout);
 }
 
-void TranscodePage::OnBrowseInputClicked() {
-    QString fileName = QFileDialog::getOpenFileName(
-        this,
-        "Select Media File",
-        "",
-        "Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"
-    );
-
-    if (!fileName.isEmpty()) {
-        inputFileLineEdit->setText(fileName);
-
-        // Update shared input file path
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetInputFilePath(fileName);
-        }
-
-        // Set default format to same as input file
-        QString ext = GetFileExtension(fileName);
-        if (!ext.isEmpty()) {
-            int index = formatComboBox->findText(ext);
-            if (index >= 0) {
-                formatComboBox->setCurrentIndex(index);
-            }
-        }
-
-        UpdateOutputPath();
+void TranscodePage::OnInputFileSelected(const QString &filePath) {
+    // Update shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
+
+    // Set default format to same as input file
+    QString ext = GetFileExtension(filePath);
+    if (!ext.isEmpty()) {
+        int index = formatComboBox->findText(ext);
+        if (index >= 0) {
+            formatComboBox->setCurrentIndex(index);
+        }
+    }
+
+    UpdateOutputPath();
 }
 
-void TranscodePage::OnBrowseOutputClicked() {
-    QString format = formatComboBox->currentText();
-    QString filter = QString("Media Files (*.%1);;All Files (*.*)").arg(format);
-
-    QString fileName = QFileDialog::getSaveFileName(
-        this,
-        "Save Transcoded File",
-        outputFileLineEdit->text(),
-        filter
-    );
-
-    if (!fileName.isEmpty()) {
-        outputFileLineEdit->setText(fileName);
-
-        // Mark output path as manually set
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetOutputFilePath(fileName);
-        }
+void TranscodePage::OnOutputFileSelected(const QString &filePath) {
+    // Mark output path as manually set
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetOutputFilePath(filePath);
     }
 }
 
@@ -297,8 +262,8 @@ void TranscodePage::OnVideoCodecChanged(int index) {
 }
 
 void TranscodePage::OnTranscodeClicked() {
-    QString inputPath = inputFileLineEdit->text();
-    QString outputPath = outputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
+    QString outputPath = outputFileSelector->GetFilePath();
 
     if (inputPath.isEmpty() || outputPath.isEmpty()) {
         QMessageBox::warning(this, "Error", "Please select input and output files.");
@@ -431,13 +396,13 @@ void TranscodePage::on_time_update(double timeRequired) {
 }
 
 void TranscodePage::UpdateOutputPath() {
-    QString inputPath = inputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
             QString format = formatComboBox->currentText();
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
-            outputFileLineEdit->setText(outputPath);
+            outputFileSelector->SetFilePath(outputPath);
             transcodeButton->setEnabled(true);
         }
     }
@@ -450,9 +415,9 @@ QString TranscodePage::GetFileExtension(const QString &filePath) {
 
 void TranscodePage::RetranslateUi() {
     // Update all translatable strings
-    inputGroupBox->setTitle(tr("Input File"));
-    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
-    browseInputButton->setText(tr("Browse..."));
+    inputFileSelector->setTitle(tr("Input File"));
+    inputFileSelector->SetPlaceholder(tr("Select a media file..."));
+    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
 
     videoGroupBox->setTitle(tr("Video Settings"));
     videoCodecLabel->setText(tr("Codec:"));
@@ -477,8 +442,8 @@ void TranscodePage::RetranslateUi() {
     formatGroupBox->setTitle(tr("File Format"));
     formatLabel->setText(tr("Format:"));
 
-    outputGroupBox->setTitle(tr("Output File"));
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    browseOutputButton->setText(tr("Browse..."));
+    outputFileSelector->setTitle(tr("Output File"));
+    outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
+    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
     transcodeButton->setText(tr("Transcode"));
 }

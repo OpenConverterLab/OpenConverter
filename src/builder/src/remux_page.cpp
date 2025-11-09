@@ -42,7 +42,7 @@ RemuxPage::~RemuxPage() {
 
 void RemuxPage::OnPageActivated() {
     BasePage::OnPageActivated();
-    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit,
+    HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
                            formatComboBox->currentText());
 }
 
@@ -63,21 +63,17 @@ void RemuxPage::SetupUI() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Input File Section
-    inputGroupBox = new QGroupBox(tr("Input File"), this);
-    QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
-
-    inputFileLineEdit = new QLineEdit(inputGroupBox);
-    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
-    inputFileLineEdit->setReadOnly(true);
-
-    browseInputButton = new QPushButton(tr("Browse..."), inputGroupBox);
-    connect(browseInputButton, &QPushButton::clicked, this, &RemuxPage::OnBrowseInputClicked);
-
-    inputLayout->addWidget(inputFileLineEdit);
-    inputLayout->addWidget(browseInputButton);
-
-    mainLayout->addWidget(inputGroupBox);
+    // Input File Selector
+    inputFileSelector = new FileSelectorWidget(
+        tr("Input File"),
+        FileSelectorWidget::InputFile,
+        tr("Select a media file..."),
+        tr("Media Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"),
+        tr("Select Media File"),
+        this
+    );
+    connect(inputFileSelector, &FileSelectorWidget::FileSelected, this, &RemuxPage::OnInputFileSelected);
+    mainLayout->addWidget(inputFileSelector);
 
     // Streams Section
     streamsGroupBox = new QGroupBox(tr("Streams (Select streams to include)"), this);
@@ -134,77 +130,46 @@ void RemuxPage::SetupUI() {
     mainLayout->addWidget(progressBar);
     mainLayout->addWidget(progressLabel);
 
-    // Output File Section
-    outputGroupBox = new QGroupBox(tr("Output File"), this);
-    QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
+    // Output File Selector
+    outputFileSelector = new FileSelectorWidget(
+        tr("Output File"),
+        FileSelectorWidget::OutputFile,
+        tr("Output file path will be generated automatically..."),
+        tr("Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"),
+        tr("Save Remuxed File"),
+        this
+    );
+    connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &RemuxPage::OnOutputFileSelected);
+    mainLayout->addWidget(outputFileSelector);
 
-    QHBoxLayout *outputPathLayout = new QHBoxLayout();
-    outputFileLineEdit = new QLineEdit(outputGroupBox);
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    outputFileLineEdit->setReadOnly(true);
-
-    browseOutputButton = new QPushButton(tr("Browse..."), outputGroupBox);
-    connect(browseOutputButton, &QPushButton::clicked, this, &RemuxPage::OnBrowseOutputClicked);
-
-    outputPathLayout->addWidget(outputFileLineEdit);
-    outputPathLayout->addWidget(browseOutputButton);
-
-    remuxButton = new QPushButton(tr("Remux"), outputGroupBox);
+    // Remux Button
+    remuxButton = new QPushButton(tr("Remux"), this);
     remuxButton->setEnabled(false);
     remuxButton->setMinimumHeight(40);
     connect(remuxButton, &QPushButton::clicked, this, &RemuxPage::OnRemuxClicked);
-
-    outputLayout->addLayout(outputPathLayout);
-    outputLayout->addWidget(remuxButton);
-
-    mainLayout->addWidget(outputGroupBox);
+    mainLayout->addWidget(remuxButton);
 
     mainLayout->addStretch();
 
     setLayout(mainLayout);
 }
 
-void RemuxPage::OnBrowseInputClicked() {
-    QString fileName = QFileDialog::getOpenFileName(
-        this,
-        "Select Media File",
-        "",
-        "Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"
-    );
-
-    if (!fileName.isEmpty()) {
-        inputFileLineEdit->setText(fileName);
-
-        // Update shared input file path
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetInputFilePath(fileName);
-        }
-
-        AnalyzeStreams(fileName);
-        UpdateOutputPath();
+void RemuxPage::OnInputFileSelected(const QString &filePath) {
+    // Update shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
+
+    AnalyzeStreams(filePath);
+    UpdateOutputPath();
 }
 
-void RemuxPage::OnBrowseOutputClicked() {
-    QString format = formatComboBox->currentText();
-    QString filter = QString("Media Files (*.%1);;All Files (*.*)").arg(format);
-
-    QString fileName = QFileDialog::getSaveFileName(
-        this,
-        "Save Remuxed File",
-        outputFileLineEdit->text(),
-        filter
-    );
-
-    if (!fileName.isEmpty()) {
-        outputFileLineEdit->setText(fileName);
-
-        // Mark output path as manually set
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetOutputFilePath(fileName);
-        }
+void RemuxPage::OnOutputFileSelected(const QString &filePath) {
+    // Mark output path as manually set
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetOutputFilePath(filePath);
     }
 }
 
@@ -214,8 +179,8 @@ void RemuxPage::OnFormatChanged(int index) {
 }
 
 void RemuxPage::OnRemuxClicked() {
-    QString inputPath = inputFileLineEdit->text();
-    QString outputPath = outputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
+    QString outputPath = outputFileSelector->GetFilePath();
 
     if (inputPath.isEmpty() || outputPath.isEmpty()) {
         QMessageBox::warning(this, "Error", "Please select input and output files.");
@@ -322,13 +287,13 @@ void RemuxPage::on_time_update(double timeRequired) {
 }
 
 void RemuxPage::UpdateOutputPath() {
-    QString inputPath = inputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
             QString format = formatComboBox->currentText();
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
-            outputFileLineEdit->setText(outputPath);
+            outputFileSelector->SetFilePath(outputPath);
             remuxButton->setEnabled(true);
         }
     }
@@ -465,17 +430,17 @@ QString RemuxPage::FormatBitrate(int64_t bitsPerSec) {
 
 void RemuxPage::RetranslateUi() {
     // Update all translatable strings
-    inputGroupBox->setTitle(tr("Input File"));
-    inputFileLineEdit->setPlaceholderText(tr("Select a media file..."));
-    browseInputButton->setText(tr("Browse..."));
+    inputFileSelector->setTitle(tr("Input File"));
+    inputFileSelector->SetPlaceholder(tr("Select a media file..."));
+    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
 
     streamsGroupBox->setTitle(tr("Streams (Select streams to include)"));
 
     settingsGroupBox->setTitle(tr("Output Settings"));
     formatLabel->setText(tr("Output Format:"));
 
-    outputGroupBox->setTitle(tr("Output File"));
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    browseOutputButton->setText(tr("Browse..."));
+    outputFileSelector->setTitle(tr("Output File"));
+    outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
+    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
     remuxButton->setText(tr("Remux"));
 }

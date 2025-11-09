@@ -47,7 +47,7 @@ QString CompressPicturePage::GetPageTitle() const {
 
 void CompressPicturePage::OnPageActivated() {
     BasePage::OnPageActivated();
-    HandleSharedDataUpdate(inputFileLineEdit, outputFileLineEdit,
+    HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
                            formatComboBox->currentText());
 }
 
@@ -60,20 +60,17 @@ void CompressPicturePage::SetupUI() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Input Group
-    inputGroupBox = new QGroupBox(tr("Input File"), this);
-    QHBoxLayout *inputLayout = new QHBoxLayout(inputGroupBox);
-
-    inputFileLineEdit = new QLineEdit(this);
-    inputFileLineEdit->setPlaceholderText(tr("Select an image file..."));
-    inputFileLineEdit->setReadOnly(true);
-
-    browseInputButton = new QPushButton(tr("Browse..."), this);
-
-    inputLayout->addWidget(inputFileLineEdit, 1);
-    inputLayout->addWidget(browseInputButton);
-
-    mainLayout->addWidget(inputGroupBox);
+    // Input File Selector
+    inputFileSelector = new FileSelectorWidget(
+        tr("Input File"),
+        FileSelectorWidget::InputFile,
+        tr("Select an image file..."),
+        tr("Image Files (*.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;All Files (*.*)"),
+        tr("Select Image File"),
+        this
+    );
+    connect(inputFileSelector, &FileSelectorWidget::FileSelected, this, &CompressPicturePage::OnInputFileSelected);
+    mainLayout->addWidget(inputFileSelector);
 
     // Settings Group
     settingsGroupBox = new QGroupBox(tr("Compression Settings"), this);
@@ -134,86 +131,54 @@ void CompressPicturePage::SetupUI() {
 
     mainLayout->addWidget(settingsGroupBox);
 
-    // Output Group
-    outputGroupBox = new QGroupBox(tr("Output"), this);
-    QVBoxLayout *outputLayout = new QVBoxLayout(outputGroupBox);
+    // Output File Selector
+    outputFileSelector = new FileSelectorWidget(
+        tr("Output"),
+        FileSelectorWidget::OutputFile,
+        tr("Output file path will be generated automatically..."),
+        tr("Image Files (*.jpg *.png *.webp *.bmp *.tiff);;All Files (*.*)"),
+        tr("Save Image File"),
+        this
+    );
+    connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &CompressPicturePage::OnOutputFileSelected);
+    mainLayout->addWidget(outputFileSelector);
 
-    QHBoxLayout *outputPathLayout = new QHBoxLayout();
-    outputFileLineEdit = new QLineEdit(this);
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-
-    browseOutputButton = new QPushButton(tr("Browse..."), this);
-
-    outputPathLayout->addWidget(outputFileLineEdit, 1);
-    outputPathLayout->addWidget(browseOutputButton);
-
+    // Convert Button
     convertButton = new QPushButton(tr("Convert"), this);
     convertButton->setEnabled(false);
     convertButton->setMinimumHeight(40);
-
-    outputLayout->addLayout(outputPathLayout);
-    outputLayout->addWidget(convertButton);
-
-    mainLayout->addWidget(outputGroupBox);
+    connect(convertButton, &QPushButton::clicked, this, &CompressPicturePage::OnConvertClicked);
+    mainLayout->addWidget(convertButton);
 
     // Add stretch to push everything to the top
     mainLayout->addStretch();
 
-    // Connect signals
-    connect(browseInputButton, &QPushButton::clicked, this, &CompressPicturePage::OnBrowseInputClicked);
-    connect(browseOutputButton, &QPushButton::clicked, this, &CompressPicturePage::OnBrowseOutputClicked);
-    connect(convertButton, &QPushButton::clicked, this, &CompressPicturePage::OnConvertClicked);
-    connect(inputFileLineEdit, &QLineEdit::textChanged, this, &CompressPicturePage::OnInputFileChanged);
+    // Connect format change signal
     connect(formatComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &CompressPicturePage::OnFormatChanged);
 
     setLayout(mainLayout);
 }
 
-void CompressPicturePage::OnBrowseInputClicked() {
-    QString fileName = QFileDialog::getOpenFileName(
-        this,
-        tr("Select Image File"),
-        "",
-        tr("Image Files (*.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;All Files (*.*)")
-    );
-
-    if (!fileName.isEmpty()) {
-        inputFileLineEdit->setText(fileName);
-
-        // Update shared input file path
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetInputFilePath(fileName);
-        }
-        UpdateOutputPath();
+void CompressPicturePage::OnInputFileSelected(const QString &filePath) {
+    // Update shared input file path
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
+    UpdateOutputPath();
 }
 
-void CompressPicturePage::OnBrowseOutputClicked() {
-    QString format = formatComboBox->currentText();
-    QString filter = QString(tr("Image Files (*.%1);;All Files (*.*)")).arg(format);
-
-    QString fileName = QFileDialog::getSaveFileName(
-        this,
-        tr("Save Compressed Image"),
-        outputFileLineEdit->text(),
-        filter
-    );
-
-    if (!fileName.isEmpty()) {
-        outputFileLineEdit->setText(fileName);
-
-        // Mark output path as manually set
-        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
-        if (mainWindow && mainWindow->GetSharedData()) {
-            mainWindow->GetSharedData()->SetOutputFilePath(fileName);
-        }
+void CompressPicturePage::OnOutputFileSelected(const QString &filePath) {
+    // Mark output path as manually set
+    OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+    if (mainWindow && mainWindow->GetSharedData()) {
+        mainWindow->GetSharedData()->SetOutputFilePath(filePath);
     }
 }
 
 void CompressPicturePage::OnConvertClicked() {
-    QString inputPath = inputFileLineEdit->text();
-    QString outputPath = outputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
+    QString outputPath = outputFileSelector->GetFilePath();
 
     if (inputPath.isEmpty()) {
         QMessageBox::warning(this, tr("Warning"), tr("Please select an input file."));
@@ -261,23 +226,19 @@ void CompressPicturePage::OnConvertClicked() {
     }
 }
 
-void CompressPicturePage::OnInputFileChanged(const QString &text) {
-    convertButton->setEnabled(!text.isEmpty() && !outputFileLineEdit->text().isEmpty());
-}
-
 void CompressPicturePage::OnFormatChanged(int index) {
     Q_UNUSED(index);
     UpdateOutputPath();
 }
 
 void CompressPicturePage::UpdateOutputPath() {
-    QString inputPath = inputFileLineEdit->text();
+    QString inputPath = inputFileSelector->GetFilePath();
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
             QString format = formatComboBox->currentText();
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
-            outputFileLineEdit->setText(outputPath);
+            outputFileSelector->SetFilePath(outputPath);
             convertButton->setEnabled(true);
         }
     }
@@ -285,9 +246,9 @@ void CompressPicturePage::UpdateOutputPath() {
 
 void CompressPicturePage::RetranslateUi() {
     // Update all translatable strings
-    inputGroupBox->setTitle(tr("Input File"));
-    inputFileLineEdit->setPlaceholderText(tr("Select an image file..."));
-    browseInputButton->setText(tr("Browse..."));
+    inputFileSelector->setTitle(tr("Input File"));
+    inputFileSelector->SetPlaceholder(tr("Select an image file..."));
+    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
 
     settingsGroupBox->setTitle(tr("Compression Settings"));
     formatLabel->setText(tr("Output Format:"));
@@ -298,8 +259,8 @@ void CompressPicturePage::RetranslateUi() {
     pixFmtLabel->setText(tr("Pixel Format:"));
     qualityLabel->setText(tr("Quality (2-31, lower=better):"));
 
-    outputGroupBox->setTitle(tr("Output"));
-    outputFileLineEdit->setPlaceholderText(tr("Output file path will be generated automatically..."));
-    browseOutputButton->setText(tr("Browse..."));
+    outputFileSelector->setTitle(tr("Output"));
+    outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
+    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
     convertButton->setText(tr("Convert"));
 }

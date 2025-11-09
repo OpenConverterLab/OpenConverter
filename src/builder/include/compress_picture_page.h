@@ -19,10 +19,10 @@
 #define COMPRESS_PICTURE_PAGE_H
 
 #include "base_page.h"
+#include "file_selector_widget.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
-#include <QLineEdit>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
@@ -46,21 +46,19 @@ protected:
     void OnOutputPathUpdate() override;
 
 private slots:
-    void OnBrowseInputClicked();
-    void OnBrowseOutputClicked();
+    void OnInputFileSelected(const QString &filePath);
+    void OnOutputFileSelected(const QString &filePath);
     void OnConvertClicked();
-    void OnInputFileChanged(const QString &text);
     void OnFormatChanged(int index);
 
 private:
     void SetupUI();
     void UpdateOutputPath();
 
-    // UI Components - Input Section
+    // UI Components - Input/Output Section
     QVBoxLayout *mainLayout;
-    QGroupBox *inputGroupBox;
-    QLineEdit *inputFileLineEdit;
-    QPushButton *browseInputButton;
+    FileSelectorWidget *inputFileSelector;
+    FileSelectorWidget *outputFileSelector;
 
     // UI Components - Settings Section
     QGroupBox *settingsGroupBox;
@@ -75,10 +73,7 @@ private:
     QLabel *qualityLabel;
     QSpinBox *qualitySpinBox;
 
-    // UI Components - Output Section
-    QGroupBox *outputGroupBox;
-    QLineEdit *outputFileLineEdit;
-    QPushButton *browseOutputButton;
+    // UI Components - Action Section
     QPushButton *convertButton;
 
     // Backend
