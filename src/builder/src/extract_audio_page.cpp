@@ -18,6 +18,7 @@
 #include "../include/extract_audio_page.h"
 #include "../include/open_converter.h"
 #include "../include/shared_data.h"
+#include "../include/transcoder_helper.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
 #include "../../common/include/process_parameter.h"
@@ -233,8 +234,11 @@ void ExtractAudioPage::OnExtractClicked() {
         outputFileSelector->SetFilePath(outputPath);
     }
 
+    // Get current transcoder from main window
+    QString transcoderName = TranscoderHelper::GetCurrentTranscoderName(this);
+
     // Run conversion using ConverterRunner
-    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam, transcoderName);
 }
 
 void ExtractAudioPage::OnExtractFinished(bool success) {
