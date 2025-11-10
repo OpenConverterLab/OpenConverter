@@ -67,6 +67,7 @@ class ExtractAudioPage;
 class RemuxPage;
 class TranscodePage;
 class SharedData;
+class BatchQueueDialog;
 
 class OpenConverter : public QMainWindow, public ProcessObserver {
     Q_OBJECT
@@ -88,6 +89,7 @@ private slots:
     void SlotLanguageChanged(QAction *action);
     void SlotTranscoderChanged(QAction *action);
     void OnNavigationButtonClicked(int pageIndex);
+    void OnQueueButtonClicked();
 
 private:
     Ui::OpenConverter *ui;
@@ -110,6 +112,7 @@ private:
     QButtonGroup *navButtonGroup;
     QList<BasePage *> pages;
     SharedData *sharedData;
+    BatchQueueDialog *batchQueueDialog;
 
     void LoadLanguage(const QString &rLanguage);
     void HandleConverterResult(bool flag);

@@ -47,6 +47,7 @@
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
 #include "../include/base_page.h"
+#include "../include/batch_queue_dialog.h"
 #include "../include/compress_picture_page.h"
 #include "../include/create_gif_page.h"
 #include "../include/cut_video_page.h"
@@ -83,6 +84,9 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // Initialize shared data
     sharedData = new SharedData();
+
+    // Initialize batch queue dialog
+    batchQueueDialog = nullptr;
 
 #ifdef ENABLE_FFMPEG
     QAction *act_ffmpeg = new QAction(tr("FFMPEG"), this);
@@ -165,6 +169,9 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     connect(ui->menuTranscoder, SIGNAL(triggered(QAction *)), this,
             SLOT(SlotTranscoderChanged(QAction *)));
+
+    // Connect Queue button
+    connect(ui->queueButton, &QPushButton::clicked, this, &OpenConverter::OnQueueButtonClicked);
 }
 
 void OpenConverter::dragEnterEvent(QDragEnterEvent *event) {
@@ -385,6 +392,23 @@ OpenConverter::~OpenConverter() {
     delete converter;
     delete displayResult;
     delete sharedData;
+
+    if (batchQueueDialog) {
+        delete batchQueueDialog;
+    }
+}
+
+void OpenConverter::OnQueueButtonClicked() {
+    // Create dialog if it doesn't exist
+    if (!batchQueueDialog) {
+        batchQueueDialog = new BatchQueueDialog(this);
+    }
+
+    // Refresh queue and show dialog
+    batchQueueDialog->RefreshQueue();
+    batchQueueDialog->show();
+    batchQueueDialog->raise();
+    batchQueueDialog->activateWindow();
 }
 
 #include "open_converter.moc"

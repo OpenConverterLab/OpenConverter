@@ -105,7 +105,7 @@ void CreateGifPage::SetupUI() {
 
     mainLayout->addWidget(settingsGroupBox);
 
-    // Output File Selector
+    // Output File Selector (for single file mode)
     outputFileSelector = new FileSelectorWidget(
         tr("Output"),
         FileSelectorWidget::OutputFile,
@@ -117,12 +117,27 @@ void CreateGifPage::SetupUI() {
     connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &CreateGifPage::OnOutputFileSelected);
     mainLayout->addWidget(outputFileSelector);
 
+    // Batch Output Widget (for batch mode, replaces output file selector)
+    batchOutputWidget = new BatchOutputWidget(this);
+    batchOutputWidget->setVisible(false);
+    mainLayout->addWidget(batchOutputWidget);
+
     // Convert Button
-    convertButton = new QPushButton(tr("Create GIF"), this);
+    convertButton = new QPushButton(tr("Create GIF / Add to Queue"), this);
     convertButton->setEnabled(false);
     convertButton->setMinimumHeight(40);
     connect(convertButton, &QPushButton::clicked, this, &CreateGifPage::OnConvertClicked);
     mainLayout->addWidget(convertButton);
+
+    // Create batch mode helper
+    batchModeHelper = new BatchModeHelper(
+        inputFileSelector, batchOutputWidget, convertButton,
+        tr("Create GIF / Add to Queue"), tr("Add to Queue"), this
+    );
+    batchModeHelper->SetSingleOutputWidget(outputFileSelector);  // Hide output selector in batch mode
+    batchModeHelper->SetEncodeParameterCreator([this]() {
+        return CreateEncodeParameter();
+    });
 
     // Add stretch to push everything to the top
     mainLayout->addStretch();
@@ -150,7 +165,35 @@ void CreateGifPage::OnOutputFileSelected(const QString &filePath) {
     }
 }
 
+EncodeParameter* CreateGifPage::CreateEncodeParameter() {
+    EncodeParameter *param = new EncodeParameter();
+
+    // Set encode parameters for GIF creation
+    // Note: Codec is auto-selected by backend based on output file extension (.gif)
+
+    // TODO: Set frame rate for GIF
+    // param->set_frame_rate(fpsSpinBox->value());
+
+    if (widthSpinBox->value() > 0) {
+        param->set_width(widthSpinBox->value());
+    }
+
+    if (heightSpinBox->value() > 0) {
+        param->set_height(heightSpinBox->value());
+    }
+
+    return param;
+}
+
 void CreateGifPage::OnConvertClicked() {
+    // Check if batch mode is active
+    if (batchModeHelper->IsBatchMode()) {
+        // Batch mode: Add to queue
+        batchModeHelper->AddToQueue("gif");
+        return;
+    }
+
+    // Single file mode: Convert immediately
     QString inputPath = inputFileSelector->GetFilePath();
     QString outputPath = outputFileSelector->GetFilePath();
 
@@ -164,19 +207,13 @@ void CreateGifPage::OnConvertClicked() {
         return;
     }
 
-    // Set encode parameters for GIF creation
-    // Note: Codec is auto-selected by backend based on output file extension (.gif)
-
-    // TODO: Set frame rate for GIF
-    // encodeParameter->set_frame_rate(fpsSpinBox->value());
-
-    if (widthSpinBox->value() > 0) {
-        encodeParameter->set_width(widthSpinBox->value());
-    }
-
-    if (heightSpinBox->value() > 0) {
-        encodeParameter->set_height(heightSpinBox->value());
-    }
+    // Get encode parameters
+    EncodeParameter *tempParam = CreateEncodeParameter();
+    if (tempParam->get_width() > 0)
+        encodeParameter->set_width(tempParam->get_width());
+    if (tempParam->get_height() > 0)
+        encodeParameter->set_height(tempParam->get_height());
+    delete tempParam;
 
     // Only support FFmpeg transcoder
     if (!converter->set_transcoder("FFMPEG")) {
@@ -221,7 +258,7 @@ void CreateGifPage::RetranslateUi() {
     // Update all translatable strings
     inputFileSelector->setTitle(tr("Input File"));
     inputFileSelector->SetPlaceholder(tr("Select a video or image sequence..."));
-    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
+    inputFileSelector->RetranslateUi();
 
     settingsGroupBox->setTitle(tr("GIF Settings"));
     widthLabel->setText(tr("Width (0 = auto):"));
@@ -234,6 +271,19 @@ void CreateGifPage::RetranslateUi() {
 
     outputFileSelector->setTitle(tr("Output"));
     outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
-    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
-    convertButton->setText(tr("Create GIF"));
+    outputFileSelector->RetranslateUi();
+
+    // Update batch widgets
+    batchOutputWidget->RetranslateUi();
+
+    // Update button text based on batch mode
+    if (batchModeHelper) {
+        if (inputFileSelector->IsBatchMode()) {
+            convertButton->setText(tr("Add to Queue"));
+        } else {
+            convertButton->setText(tr("Create GIF / Add to Queue"));
+        }
+    } else {
+        convertButton->setText(tr("Create GIF"));
+    }
 }

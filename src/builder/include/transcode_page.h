@@ -22,6 +22,8 @@
 #include "converter_runner.h"
 #include "file_selector_widget.h"
 #include "progress_widget.h"
+#include "batch_output_widget.h"
+#include "batch_mode_helper.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
@@ -63,10 +65,14 @@ private:
     void SetupUI();
     void UpdateOutputPath();
     QString GetFileExtension(const QString &filePath);
+    EncodeParameter* CreateEncodeParameter();
 
     // Input/Output section
     FileSelectorWidget *inputFileSelector;
     FileSelectorWidget *outputFileSelector;
+
+    // Batch output widget (shown when batch files selected)
+    BatchOutputWidget *batchOutputWidget;
 
     // Video settings section
     QGroupBox *videoGroupBox;
@@ -108,6 +114,9 @@ private:
 
     // Conversion runner
     ConverterRunner *converterRunner;
+
+    // Batch mode helper
+    BatchModeHelper *batchModeHelper;
 };
 
 #endif // TRANSCODE_PAGE_H

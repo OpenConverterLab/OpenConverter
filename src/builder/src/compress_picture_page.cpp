@@ -131,7 +131,7 @@ void CompressPicturePage::SetupUI() {
 
     mainLayout->addWidget(settingsGroupBox);
 
-    // Output File Selector
+    // Output File Selector (for single file mode)
     outputFileSelector = new FileSelectorWidget(
         tr("Output"),
         FileSelectorWidget::OutputFile,
@@ -143,12 +143,27 @@ void CompressPicturePage::SetupUI() {
     connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &CompressPicturePage::OnOutputFileSelected);
     mainLayout->addWidget(outputFileSelector);
 
+    // Batch Output Widget (for batch mode, replaces output file selector)
+    batchOutputWidget = new BatchOutputWidget(this);
+    batchOutputWidget->setVisible(false);
+    mainLayout->addWidget(batchOutputWidget);
+
     // Convert Button
-    convertButton = new QPushButton(tr("Convert"), this);
+    convertButton = new QPushButton(tr("Convert / Add to Queue"), this);
     convertButton->setEnabled(false);
     convertButton->setMinimumHeight(40);
     connect(convertButton, &QPushButton::clicked, this, &CompressPicturePage::OnConvertClicked);
     mainLayout->addWidget(convertButton);
+
+    // Create batch mode helper
+    batchModeHelper = new BatchModeHelper(
+        inputFileSelector, batchOutputWidget, convertButton,
+        tr("Convert / Add to Queue"), tr("Add to Queue"), this
+    );
+    batchModeHelper->SetSingleOutputWidget(outputFileSelector);  // Hide output selector in batch mode
+    batchModeHelper->SetEncodeParameterCreator([this]() {
+        return CreateEncodeParameter();
+    });
 
     // Add stretch to push everything to the top
     mainLayout->addStretch();
@@ -176,7 +191,36 @@ void CompressPicturePage::OnOutputFileSelected(const QString &filePath) {
     }
 }
 
+EncodeParameter* CompressPicturePage::CreateEncodeParameter() {
+    EncodeParameter *param = new EncodeParameter();
+
+    // Set encode parameters
+    // Note: Codec is auto-selected by backend based on output file extension
+    param->set_qscale(qualitySpinBox->value());
+    if (pixFmtComboBox->currentText() != "auto")
+        param->set_pixel_format(pixFmtComboBox->currentText().toStdString());
+
+    if (widthSpinBox->value() > 0) {
+        param->set_width(widthSpinBox->value());
+    }
+
+    if (heightSpinBox->value() > 0) {
+        param->set_height(heightSpinBox->value());
+    }
+
+    return param;
+}
+
 void CompressPicturePage::OnConvertClicked() {
+    // Check if batch mode is active
+    if (batchModeHelper->IsBatchMode()) {
+        // Batch mode: Add to queue
+        QString format = formatComboBox->currentText();
+        batchModeHelper->AddToQueue(format);
+        return;
+    }
+
+    // Single file mode: Convert immediately
     QString inputPath = inputFileSelector->GetFilePath();
     QString outputPath = outputFileSelector->GetFilePath();
 
@@ -190,19 +234,16 @@ void CompressPicturePage::OnConvertClicked() {
         return;
     }
 
-    // Set encode parameters
-    // Note: Codec is auto-selected by backend based on output file extension
-    encodeParameter->set_qscale(qualitySpinBox->value());
-    if (pixFmtComboBox->currentText() != "auto")
-        encodeParameter->set_pixel_format(pixFmtComboBox->currentText().toStdString());
-
-    if (widthSpinBox->value() > 0) {
-        encodeParameter->set_width(widthSpinBox->value());
-    }
-
-    if (heightSpinBox->value() > 0) {
-        encodeParameter->set_height(heightSpinBox->value());
-    }
+    // Get encode parameters
+    EncodeParameter *tempParam = CreateEncodeParameter();
+    encodeParameter->set_qscale(tempParam->get_qscale());
+    if (tempParam->get_pixel_format() != "")
+        encodeParameter->set_pixel_format(tempParam->get_pixel_format());
+    if (tempParam->get_width() > 0)
+        encodeParameter->set_width(tempParam->get_width());
+    if (tempParam->get_height() > 0)
+        encodeParameter->set_height(tempParam->get_height());
+    delete tempParam;
 
     // Only support FFmpeg transcoder
     if (!converter->set_transcoder("FFMPEG")) {
@@ -248,7 +289,7 @@ void CompressPicturePage::RetranslateUi() {
     // Update all translatable strings
     inputFileSelector->setTitle(tr("Input File"));
     inputFileSelector->SetPlaceholder(tr("Select an image file..."));
-    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
+    inputFileSelector->RetranslateUi();
 
     settingsGroupBox->setTitle(tr("Compression Settings"));
     formatLabel->setText(tr("Output Format:"));
@@ -261,6 +302,19 @@ void CompressPicturePage::RetranslateUi() {
 
     outputFileSelector->setTitle(tr("Output"));
     outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
-    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
-    convertButton->setText(tr("Convert"));
+    outputFileSelector->RetranslateUi();
+
+    // Update batch widgets
+    batchOutputWidget->RetranslateUi();
+
+    // Update button text based on batch mode
+    if (batchModeHelper) {
+        if (inputFileSelector->IsBatchMode()) {
+            convertButton->setText(tr("Add to Queue"));
+        } else {
+            convertButton->setText(tr("Convert / Add to Queue"));
+        }
+    } else {
+        convertButton->setText(tr("Convert"));
+    }
 }

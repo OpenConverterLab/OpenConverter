@@ -22,6 +22,8 @@
 #include "converter_runner.h"
 #include "file_selector_widget.h"
 #include "progress_widget.h"
+#include "batch_output_widget.h"
+#include "batch_mode_helper.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
@@ -59,10 +61,12 @@ private:
     void UpdateOutputPath();
     QString DetectAudioCodecFromFile(const QString &filePath);
     QString MapCodecToFormat(const QString &codec);
+    EncodeParameter* CreateEncodeParameter();
 
     // Input/Output section
     FileSelectorWidget *inputFileSelector;
     FileSelectorWidget *outputFileSelector;
+    BatchOutputWidget *batchOutputWidget;
 
     // Settings section
     QGroupBox *settingsGroupBox;
@@ -79,6 +83,9 @@ private:
 
     // Conversion runner
     ConverterRunner *converterRunner;
+
+    // Batch mode helper
+    BatchModeHelper *batchModeHelper;
 };
 
 #endif // EXTRACT_AUDIO_PAGE_H
