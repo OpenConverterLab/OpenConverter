@@ -30,9 +30,12 @@ OpenConverter/
 ├── src/
 │   ├── main.cpp                 # Entry point (CLI + GUI)
 │   ├── CMakeLists.txt           # Build configuration
-│   ├── builder/                 # GUI components (Qt-based)
-│   │   ├── include/             # Header files for GUI
-│   │   └── src/                 # Implementation files for GUI
+│   ├── builder/                 # GUI pages and page-specific logic
+│   │   ├── include/             # Header files for pages
+│   │   └── src/                 # Implementation files for pages
+│   ├── component/               # Reusable UI widgets (12 widgets)
+│   │   ├── include/             # Widget headers
+│   │   └── src/                 # Widget implementations
 │   ├── common/                  # Shared utilities and data structures
 │   │   ├── include/             # Common headers
 │   │   └── src/                 # Common implementations
@@ -53,7 +56,8 @@ OpenConverter/
 
 ### Directory Responsibilities
 
-- **`src/builder/`**: Qt-based GUI components (pages, widgets, UI logic)
+- **`src/builder/`**: Qt-based GUI pages and page-specific logic (BasePage, *Page classes, batch system)
+- **`src/component/`**: Reusable UI widgets (12 widgets: file selectors, progress bars, encoding parameter widgets)
 - **`src/common/`**: Shared data structures (EncodeParameter, ProcessParameter, Info, etc.)
 - **`src/engine/`**: Conversion orchestration (Converter class)
 - **`src/transcoder/`**: Backend implementations (FFmpeg, FFTool, BMF)
@@ -99,11 +103,24 @@ OpenConverter/
    - BatchItem: Represents a single file in the batch queue
    - BatchQueueDialog: UI for monitoring batch processing progress
    - BatchFileDialog: Dialog for selecting multiple files with visual filter tags
-   - BatchInputWidget: Widget for managing multiple input files
-   - BatchOutputWidget: Widget for configuring batch output directory and suffix
    - BatchModeHelper: Coordinates between single file and batch modes
-   - FileSelectorWidget: Unified widget supporting both single and batch file selection
-   - FilterTagWidget: Visual tag-based widget for user-editable file filters
+
+8. **Reusable UI Components** (`src/component/`)
+   - **Encoding Parameter Widgets** (6 widgets):
+     - ResolutionWidget: Width x Height selection with "auto" support
+     - PixelFormatWidget: Pixel format selection with "auto" option
+     - BitrateWidget: Bitrate selection with "auto" support
+     - QualityWidget: Quality/qscale selection for image and video encoding
+     - CodecSelectorWidget: Codec selection with "auto" and "copy" options
+     - FormatSelectorWidget: Output format selection for video, audio, and image
+   - **UI Infrastructure Widgets** (6 widgets):
+     - FileSelectorWidget: Unified file selection (input/output, single/batch)
+     - ProgressWidget: Progress bar + label for conversion tracking
+     - FilterTagWidget: Visual tag-based file filter management
+     - BatchInputWidget: Batch input file selection with directory support
+     - BatchOutputWidget: Batch output configuration (directory, suffix, naming)
+     - SimpleVideoPlayer: FFmpeg-based video player widget
+   - **See**: `doc/COMPONENT_DIRECTORY.md` for detailed API documentation
 
 ### Design Patterns
 
@@ -118,7 +135,7 @@ OpenConverter/
 
 **CRITICAL: Different naming conventions for different directories!**
 
-#### For `src/common/`, `src/engine/`, `src/builder/`:
+#### For `src/common/`, `src/engine/`, `src/builder/`, `src/component/`:
 - **Functions/Methods**: `PascalCase` (e.g., `SetTranscoder`, `GetVideoCodec`, `OnButtonClicked`)
 - **Classes**: `PascalCase` (e.g., `Converter`, `EncodeParameter`, `BasePage`)
 - **Member variables**: `camelCase` (e.g., `videoCodec`, `processParameter`, `inputFilePath`)
@@ -250,6 +267,43 @@ make -j4
 # Run
 ./OpenConverter              # GUI mode
 ./OpenConverter --help       # CLI mode
+```
+
+### Translation Workflow
+
+OpenConverter uses Qt Linguist tools for internationalization (i18n). Translation files are located in `src/resources/`.
+
+**Update translations after code changes:**
+```bash
+# 1. Extract translatable strings from source code (updates .ts file)
+cd src
+lupdate -recursive builder/ component/ -ts resources/lang_chinese.ts
+
+# 2. Manually edit translations in resources/lang_chinese.ts
+#    - Remove type="unfinished" attributes
+#    - Add Chinese translations for new strings
+
+# 3. Compile .ts to binary .qm file (required for runtime)
+lrelease resources/lang_chinese.ts -qm resources/lang_chinese.qm
+```
+
+**Important Notes:**
+- **Always run `lupdate`** after adding/modifying `tr()` calls in source code
+- **Always run `lrelease`** after editing `.ts` files to update the `.qm` binary
+- **Store inline QLabel pointers** as member variables so they can be retranslated in `RetranslateUi()`
+- **Never create inline labels** like `new QLabel(tr("Text"), this)` - always store them for runtime translation support
+
+**Translation Pattern:**
+```cpp
+// In header (.h):
+QLabel *myLabel;
+
+// In SetupUI():
+myLabel = new QLabel(tr("My Label:"), this);
+layout->addWidget(myLabel, 0, 0);
+
+// In RetranslateUi():
+myLabel->setText(tr("My Label:"));
 ```
 
 ### Adding a New GUI Page

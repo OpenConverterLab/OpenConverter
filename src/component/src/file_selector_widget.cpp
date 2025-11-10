@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include "../include/file_selector_widget.h"
-#include "../include/batch_file_dialog.h"
+#include "file_selector_widget.h"
+#include "batch_file_dialog.h"
 #include <QFileDialog>
 #include <QHBoxLayout>
 

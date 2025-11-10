@@ -22,6 +22,7 @@
 #include "file_selector_widget.h"
 #include "batch_output_widget.h"
 #include "batch_mode_helper.h"
+#include "resolution_widget.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
@@ -66,10 +67,8 @@ private:
 
     // UI Components - Settings Section
     QGroupBox *settingsGroupBox;
-    QLabel *widthLabel;
-    QSpinBox *widthSpinBox;
-    QLabel *heightLabel;
-    QSpinBox *heightSpinBox;
+    QLabel *resolutionLabel;
+    ResolutionWidget *resolutionWidget;
     QLabel *fpsLabel;
     QSpinBox *fpsSpinBox;
     QLabel *qualityLabel;

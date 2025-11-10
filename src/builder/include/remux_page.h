@@ -22,8 +22,8 @@
 #include "converter_runner.h"
 #include "file_selector_widget.h"
 #include "progress_widget.h"
+#include "format_selector_widget.h"
 #include <QCheckBox>
-#include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QProgressBar>
@@ -66,7 +66,7 @@ protected:
 private slots:
     void OnInputFileSelected(const QString &filePath);
     void OnOutputFileSelected(const QString &filePath);
-    void OnFormatChanged(int index);
+    void OnFormatChanged(const QString &format);
     void OnRemuxClicked();
     void OnRemuxFinished(bool success);
 
@@ -95,7 +95,7 @@ private:
     // Settings section
     QGroupBox *settingsGroupBox;
     QLabel *formatLabel;
-    QComboBox *formatComboBox;
+    FormatSelectorWidget *formatWidget;
 
     // Progress section
     ProgressWidget *progressWidget;

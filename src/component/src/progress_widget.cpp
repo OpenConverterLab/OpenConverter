@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "../include/progress_widget.h"
+#include "progress_widget.h"
 
 ProgressWidget::ProgressWidget(QWidget *parent) : QWidget(parent) {
     // Create layout

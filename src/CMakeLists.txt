@@ -239,16 +239,23 @@ if(ENABLE_GUI)
     # Add GUI-specific sources
     list(APPEND GUI_SOURCES
         ${CMAKE_SOURCE_DIR}/builder/src/base_page.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/file_selector_widget.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/filter_tag_widget.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/progress_widget.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/converter_runner.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/transcoder_helper.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/file_selector_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/filter_tag_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/progress_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/batch_input_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/batch_output_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/simple_video_player.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/resolution_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/pixel_format_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/bitrate_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/quality_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/codec_selector_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/format_selector_widget.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_item.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_queue.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_file_dialog.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/batch_input_widget.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/batch_output_widget.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_queue_dialog.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_mode_helper.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/placeholder_page.cpp
@@ -257,7 +264,6 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/create_gif_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/extract_audio_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/cut_video_page.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/simple_video_player.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/remux_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/transcode_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/shared_data.cpp
@@ -267,16 +273,23 @@ if(ENABLE_GUI)
     # Add GUI-specific headers
     list(APPEND GUI_HEADERS
         ${CMAKE_SOURCE_DIR}/builder/include/base_page.h
-        ${CMAKE_SOURCE_DIR}/builder/include/file_selector_widget.h
-        ${CMAKE_SOURCE_DIR}/builder/include/filter_tag_widget.h
-        ${CMAKE_SOURCE_DIR}/builder/include/progress_widget.h
         ${CMAKE_SOURCE_DIR}/builder/include/converter_runner.h
         ${CMAKE_SOURCE_DIR}/builder/include/transcoder_helper.h
+        ${CMAKE_SOURCE_DIR}/component/include/file_selector_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/filter_tag_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/progress_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/batch_input_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/batch_output_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/simple_video_player.h
+        ${CMAKE_SOURCE_DIR}/component/include/resolution_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/pixel_format_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/bitrate_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/quality_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/codec_selector_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/format_selector_widget.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_item.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_queue.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_file_dialog.h
-        ${CMAKE_SOURCE_DIR}/builder/include/batch_input_widget.h
-        ${CMAKE_SOURCE_DIR}/builder/include/batch_output_widget.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_queue_dialog.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_mode_helper.h
         ${CMAKE_SOURCE_DIR}/builder/include/placeholder_page.h
@@ -285,7 +298,6 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/create_gif_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/extract_audio_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/cut_video_page.h
-        ${CMAKE_SOURCE_DIR}/builder/include/simple_video_player.h
         ${CMAKE_SOURCE_DIR}/builder/include/remux_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/transcode_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/shared_data.h
@@ -305,6 +317,7 @@ if(ENABLE_GUI)
     # Add GUI-specific include directories
     include_directories(
         ${CMAKE_SOURCE_DIR}/builder/include
+        ${CMAKE_SOURCE_DIR}/component/include
         ${Qt${QT_VERSION_MAJOR}Widgets_INCLUDE_DIRS}
         ${Qt${QT_VERSION_MAJOR}Core_INCLUDE_DIRS}
         ${Qt${QT_VERSION_MAJOR}Gui_INCLUDE_DIRS}

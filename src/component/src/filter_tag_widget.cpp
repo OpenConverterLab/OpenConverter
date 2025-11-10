@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "../include/filter_tag_widget.h"
+#include "filter_tag_widget.h"
 #include <QInputDialog>
 #include <QMessageBox>
 
