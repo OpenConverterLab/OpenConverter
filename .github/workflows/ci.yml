@@ -64,17 +64,19 @@ jobs:
         brew install nasm yasm x264 x265
         git clone https://github.com/google/googletest.git 3rd_party/gtest
 
-    - name: Build FFmpeg
+    - name: Install FFmpeg via Homebrew
       run: |
-        if [ ! -d "ffmpeg" ]; then
-          wget https://ffmpeg.org/releases/ffmpeg-5.1.6.tar.bz2
-          tar xjvf ffmpeg-5.1.6.tar.bz2
-          (cd ffmpeg-5.1.6 && ./configure --pkg-config-flags=--static --enable-shared --disable-static \
-            --extra-libs=-lpthread --extra-libs=-lm --enable-gpl --enable-nonfree \
-            --enable-libx264 --enable-libx265 --prefix=../ffmpeg)
-          (cd ffmpeg-5.1.6 && make -j$(sysctl -n hw.ncpu) && make install)
-        fi
-        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg" >> $GITHUB_ENV
+        # Install FFmpeg 5 with x264, x265 support (pre-built from Homebrew)
+        brew install ffmpeg@5
+
+        # Set FFmpeg path
+        export FFMPEG_ROOT_PATH=$(brew --prefix ffmpeg@5)
+        echo "FFMPEG_ROOT_PATH=$FFMPEG_ROOT_PATH" >> $GITHUB_ENV
+
+        # Verify FFmpeg has x264 and x265
+        echo "FFmpeg configuration:"
+        $FFMPEG_ROOT_PATH/bin/ffmpeg -version | head -n 1
+        $FFMPEG_ROOT_PATH/bin/ffmpeg -encoders 2>/dev/null | grep -E "libx264|libx265" || echo "Warning: x264/x265 not found"
 
     - name: Build with CMake
       run: |
