@@ -18,6 +18,7 @@
 #include "../include/create_gif_page.h"
 #include "../include/open_converter.h"
 #include "../include/shared_data.h"
+#include "../include/transcoder_helper.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
@@ -215,8 +216,11 @@ void CreateGifPage::OnConvertClicked() {
         encodeParameter->set_height(tempParam->get_height());
     delete tempParam;
 
-    // Only support FFmpeg transcoder
-    if (!converter->set_transcoder("FFMPEG")) {
+    // Get current transcoder from main window
+    QString transcoderName = TranscoderHelper::GetCurrentTranscoderName(this);
+
+    // Set transcoder
+    if (!converter->set_transcoder(transcoderName.toStdString())) {
         QMessageBox::critical(this, "Error", "Failed to initialize transcoder.");
         return;
     }

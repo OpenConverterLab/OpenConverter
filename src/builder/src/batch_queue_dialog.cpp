@@ -374,13 +374,14 @@ void BatchQueueDialog::ProcessNextItem() {
     // Start conversion in separate thread
     QString inputPath = item->GetInputPath();
     QString outputPath = item->GetOutputPath();
+    QString transcoderName = item->GetTranscoderName();
 
-    QThread *thread = QThread::create([this, inputPath, outputPath, encodeParam, processParam]() {
+    QThread *thread = QThread::create([this, inputPath, outputPath, encodeParam, processParam, transcoderName]() {
         bool success = false;
 
         try {
             Converter converter(processParam, encodeParam);
-            converter.set_transcoder("FFMPEG");
+            converter.set_transcoder(transcoderName.toStdString());
             success = converter.convert_format(inputPath.toStdString(), outputPath.toStdString());
         } catch (...) {
             success = false;

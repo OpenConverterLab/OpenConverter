@@ -17,6 +17,7 @@
 
 #include "../include/batch_mode_helper.h"
 #include "../include/batch_queue.h"
+#include "../include/transcoder_helper.h"
 #include <QMessageBox>
 
 BatchModeHelper::BatchModeHelper(FileSelectorWidget *inputFileSelector,
@@ -69,6 +70,10 @@ bool BatchModeHelper::AddToQueue(const QString &outputFormat) {
         return false;
     }
 
+    // Get current transcoder name from main window
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    QString transcoderName = TranscoderHelper::GetCurrentTranscoderName(parentWidget);
+
     // Create batch items
     QList<BatchItem*> items;
     for (const QString &inputFile : inputFiles) {
@@ -81,6 +86,9 @@ bool BatchModeHelper::AddToQueue(const QString &outputFormat) {
         // Create encode parameter for this item
         EncodeParameter *encodeParam = encodeParameterCreator();
         item->SetEncodeParameter(encodeParam);
+
+        // Set transcoder name
+        item->SetTranscoderName(transcoderName);
 
         items.append(item);
     }

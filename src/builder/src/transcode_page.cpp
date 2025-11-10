@@ -20,6 +20,7 @@
 #include "../include/shared_data.h"
 #include "../include/batch_queue.h"
 #include "../include/batch_item.h"
+#include "../include/transcoder_helper.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
@@ -294,8 +295,11 @@ void TranscodePage::OnTranscodeClicked() {
     EncodeParameter *encodeParam = CreateEncodeParameter();
     ProcessParameter *processParam = new ProcessParameter();
 
+    // Get current transcoder from main window
+    QString transcoderName = TranscoderHelper::GetCurrentTranscoderName(this);
+
     // Run conversion using ConverterRunner
-    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam, transcoderName);
 }
 
 void TranscodePage::OnTranscodeFinished(bool success) {

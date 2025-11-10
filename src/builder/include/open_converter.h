@@ -127,6 +127,9 @@ private:
 public:
     // Shared data across pages
     SharedData* GetSharedData() const;
+
+    // Get current transcoder name
+    QString GetCurrentTranscoderName() const;
 };
 
 #endif // OPEN_CONVERTER_H

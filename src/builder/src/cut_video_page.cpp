@@ -18,6 +18,7 @@
 #include "../include/cut_video_page.h"
 #include "../include/open_converter.h"
 #include "../include/shared_data.h"
+#include "../include/transcoder_helper.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
@@ -421,8 +422,11 @@ void CutVideoPage::OnCutClicked() {
     // Use copy mode for fast cutting (no re-encoding)
     // Leave video and audio codec empty to copy streams
 
+    // Get current transcoder from main window
+    QString transcoderName = TranscoderHelper::GetCurrentTranscoderName(this);
+
     // Run conversion using ConverterRunner (validator checks time range)
-    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam, transcoderName);
 }
 
 void CutVideoPage::OnCutFinished(bool success) {

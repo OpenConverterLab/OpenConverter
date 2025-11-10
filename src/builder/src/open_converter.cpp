@@ -96,6 +96,7 @@ OpenConverter::OpenConverter(QWidget *parent)
 
 #ifdef ENABLE_BMF
     QAction *act_bmf = new QAction(tr("BMF"), this);
+    act_bmf->setObjectName("BMF");
     transcoderActions.append(act_bmf);
 #endif
 
@@ -409,6 +410,16 @@ void OpenConverter::OnQueueButtonClicked() {
     batchQueueDialog->show();
     batchQueueDialog->raise();
     batchQueueDialog->activateWindow();
+}
+
+QString OpenConverter::GetCurrentTranscoderName() const {
+    // Get the currently checked transcoder action
+    QAction *checkedAction = transcoderGroup->checkedAction();
+    if (checkedAction) {
+        return checkedAction->objectName();
+    }
+    // Default to FFMPEG if no transcoder is selected
+    return "FFMPEG";
 }
 
 #include "open_converter.moc"

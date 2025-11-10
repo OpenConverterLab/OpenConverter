@@ -18,6 +18,7 @@
 #include "../include/remux_page.h"
 #include "../include/open_converter.h"
 #include "../include/shared_data.h"
+#include "../include/transcoder_helper.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
@@ -206,8 +207,11 @@ void RemuxPage::OnRemuxClicked() {
     // Empty codec names mean copy streams without re-encoding
     // This is the standard way to perform remuxing
 
+    // Get current transcoder from main window
+    QString transcoderName = TranscoderHelper::GetCurrentTranscoderName(this);
+
     // Run conversion using ConverterRunner (validator checks stream selection)
-    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam, transcoderName);
 }
 
 void RemuxPage::OnRemuxFinished(bool success) {

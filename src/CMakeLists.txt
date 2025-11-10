@@ -243,6 +243,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/filter_tag_widget.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/progress_widget.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/converter_runner.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/transcoder_helper.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_item.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_queue.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_file_dialog.cpp
@@ -270,6 +271,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/filter_tag_widget.h
         ${CMAKE_SOURCE_DIR}/builder/include/progress_widget.h
         ${CMAKE_SOURCE_DIR}/builder/include/converter_runner.h
+        ${CMAKE_SOURCE_DIR}/builder/include/transcoder_helper.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_item.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_queue.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_file_dialog.h

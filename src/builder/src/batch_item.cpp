@@ -72,6 +72,10 @@ EncodeParameter* BatchItem::GetEncodeParameter() const {
     return encodeParameter;
 }
 
+QString BatchItem::GetTranscoderName() const {
+    return transcoderName.isEmpty() ? "FFMPEG" : transcoderName;
+}
+
 QDateTime BatchItem::GetCreatedTime() const {
     return createdTime;
 }
@@ -106,6 +110,10 @@ void BatchItem::SetErrorMessage(const QString &message) {
 
 void BatchItem::SetEncodeParameter(EncodeParameter *param) {
     encodeParameter = param;
+}
+
+void BatchItem::SetTranscoderName(const QString &name) {
+    transcoderName = name;
 }
 
 void BatchItem::SetProgress(double newProgress) {

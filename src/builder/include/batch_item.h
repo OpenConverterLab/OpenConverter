@@ -56,6 +56,7 @@ public:
     QString GetStatusString() const;
     QString GetErrorMessage() const;
     EncodeParameter* GetEncodeParameter() const;
+    QString GetTranscoderName() const;
     QDateTime GetCreatedTime() const;
     QDateTime GetStartedTime() const;
     QDateTime GetFinishedTime() const;
@@ -67,6 +68,7 @@ public:
     void SetStatus(BatchItemStatus status);
     void SetErrorMessage(const QString &message);
     void SetEncodeParameter(EncodeParameter *param);
+    void SetTranscoderName(const QString &name);
     void SetProgress(double progress);
 
     // Status management
@@ -80,6 +82,7 @@ private:
     BatchItemStatus status;
     QString errorMessage;
     EncodeParameter *encodeParameter;
+    QString transcoderName;  // Transcoder to use (e.g., "FFMPEG", "BMF", "FFTOOL")
     QDateTime createdTime;
     QDateTime startedTime;
     QDateTime finishedTime;
