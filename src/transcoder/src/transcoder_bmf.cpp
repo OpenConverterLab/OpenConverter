@@ -99,18 +99,45 @@ bool TranscoderBMF::prepare_info(std::string input_path,
     };
 
     // encoder init
-    nlohmann::json en_video_codec = {"codec",
-                                     encodeParameter->get_video_codec_name()};
-    nlohmann::json en_audio_codec = {"codec",
-                                     encodeParameter->get_audio_codec_name()};
-    nlohmann::json en_video_bitrate = {"bit_rate",
-                                       encodeParameter->get_video_bit_rate()};
-    nlohmann::json en_audio_bitrate = {"bit_rate",
-                                       encodeParameter->get_audio_bit_rate()};
+    // Build video_params object with only valid parameters
+    nlohmann::json video_params = nlohmann::json::object();
+
+    // Always add codec and bitrate
+    video_params["codec"] = encodeParameter->get_video_codec_name();
+    video_params["bit_rate"] = encodeParameter->get_video_bit_rate();
+
+    // Only add width if it's set (> 0)
+    width = encodeParameter->get_width();
+    if (width > 0) {
+        video_params["width"] = width;
+    }
+
+    // Only add height if it's set (> 0)
+    height = encodeParameter->get_height();
+    if (height > 0) {
+        video_params["height"] = height;
+    }
+
+    // Only add qscale if it's set (not -1)
+    int qscale = encodeParameter->get_qscale();
+    if (qscale >= 0) {
+        video_params["qscale"] = qscale;
+    }
+
+    // Only add pixel format if it's set (not empty)
+    std::string pixel_format = encodeParameter->get_pixel_format();
+    if (!pixel_format.empty()) {
+        video_params["pixel_format"] = pixel_format;
+    }
+
+    // Build audio_params object
+    nlohmann::json audio_params = nlohmann::json::object();
+    audio_params["codec"] = encodeParameter->get_audio_codec_name();
+    audio_params["bit_rate"] = encodeParameter->get_audio_bit_rate();
 
     encoder_para = {{"output_path", output_path},
-                    {"video_params", {en_video_codec, en_video_bitrate}},
-                    {"audio_params", {en_audio_codec, en_audio_bitrate}}};
+                    {"video_params", video_params},
+                    {"audio_params", audio_params}};
     return true;
 }
 
