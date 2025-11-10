@@ -41,6 +41,9 @@ private:
     bool copyVideo;
     bool copyAudio;
 
+    int width;
+    int height;
+
     nlohmann::json decoder_para;
     nlohmann::json encoder_para;
 };
