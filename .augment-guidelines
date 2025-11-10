@@ -18,9 +18,10 @@ OpenConverter is a multimedia conversion application built on **FFmpeg**, **Qt**
 4. Image compression with format/quality control
 5. Audio extraction from video files
 6. Video cutting with precise time selection
-7. Runtime switching of transcoding cores (FFmpeg API, FFTool, BMF)
-8. Smooth progress tracking with accurate time estimation
-9. Both GUI and CLI interfaces
+7. **Batch processing** with queue management for multiple files
+8. Runtime switching of transcoding cores (FFmpeg API, FFTool, BMF)
+9. Smooth progress tracking with accurate time estimation
+10. Both GUI and CLI interfaces
 
 ## Project Structure
 
@@ -92,6 +93,17 @@ OpenConverter/
    - CutVideoPage: Cut video with time selection
    - RemuxPage: Change container format without re-encoding
    - TranscodePage: Full transcoding with codec/quality control
+
+7. **Batch Processing System** (`src/builder/`)
+   - BatchQueue: Manages queue of batch items for processing
+   - BatchItem: Represents a single file in the batch queue
+   - BatchQueueDialog: UI for monitoring batch processing progress
+   - BatchFileDialog: Dialog for selecting multiple files with visual filter tags
+   - BatchInputWidget: Widget for managing multiple input files
+   - BatchOutputWidget: Widget for configuring batch output directory and suffix
+   - BatchModeHelper: Coordinates between single file and batch modes
+   - FileSelectorWidget: Unified widget supporting both single and batch file selection
+   - FilterTagWidget: Visual tag-based widget for user-editable file filters
 
 ### Design Patterns
 
@@ -259,6 +271,17 @@ make -j4
 5. Add to `Converter::set_transcoder()` switch statement
 6. Update CMakeLists.txt with conditional compilation flags
 
+### Code Quality Tools
+
+**Whitespace Cleanup:**
+```bash
+./tool/fix_whitespace.sh
+```
+- Removes trailing whitespace from all lines
+- Ensures exactly one newline at end of file
+- Processes all staged C++ files (.cpp, .h, .hpp, .cc, .cxx)
+- **Does NOT auto-stage** - you must manually review and add changes with `git add`
+
 ## Testing
 
 - Unit tests in `src/tests/`
@@ -366,6 +389,48 @@ SimpleVideoPlayer *player = new SimpleVideoPlayer(parent);
 player->LoadVideo("/path/to/video.mp4");
 player->Play();
 player->Seek(5000); // Seek to 5 seconds
+```
+
+#### FileSelectorWidget
+- **Purpose**: Unified file selection widget supporting both single and batch modes
+- **Key Features**:
+  - Browse button for single file selection
+  - Batch button for multiple file selection
+  - Automatic mode switching
+  - Drag-and-drop support
+  - File filter management
+
+**Usage Example**:
+```cpp
+FileSelectorWidget *selector = new FileSelectorWidget(
+    tr("Input File"),
+    FileSelectorWidget::InputFile,
+    tr("Select a media file..."),
+    tr("Media Files (*.mp4 *.avi);;All Files (*.*)"),
+    tr("Select Media File"),
+    parent
+);
+connect(selector, &FileSelectorWidget::FileSelected, this, &Page::OnFileSelected);
+connect(selector, &FileSelectorWidget::BatchFilesSelected, this, &Page::OnBatchFilesSelected);
+```
+
+#### FilterTagWidget
+- **Purpose**: Visual tag-based widget for managing file filters
+- **Key Features**:
+  - Visual tags for each file extension (e.g., `.mp4`, `.avi`)
+  - Individual delete button (×) for each tag
+  - Add button to add new extensions
+  - Auto-normalization of extensions (e.g., `mp4` → `*.mp4`)
+  - Duplicate prevention
+  - Horizontal scrolling for many tags
+
+**Usage Example**:
+```cpp
+FilterTagWidget *filterWidget = new FilterTagWidget(parent);
+filterWidget->SetFilter("*.mp4,*.avi,*.mkv");
+connect(filterWidget, &FilterTagWidget::FilterChanged, this, [](const QString &filter) {
+    qDebug() << "New filter:" << filter;
+});
 ```
 
 ## Implementation Best Practices
