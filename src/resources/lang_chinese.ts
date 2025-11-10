@@ -83,83 +83,83 @@
 <context>
     <name>BatchInputWidget</name>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="39"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="224"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="39"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="224"/>
         <source>Batch Input</source>
         <translation>批量输入</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="44"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="225"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="44"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="225"/>
         <source>Add Files...</source>
         <translation>添加文件...</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="45"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="226"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="45"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="226"/>
         <source>Add Directory...</source>
         <translation>添加目录...</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="46"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="227"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="46"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="227"/>
         <source>Remove Selected</source>
         <translation>移除选中</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="47"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="228"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="47"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="228"/>
         <source>Clear All</source>
         <translation>清空全部</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="59"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="229"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="59"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="229"/>
         <source>File Filter (e.g., .jpg,.png,.mp4):</source>
         <translation>文件过滤器（例如：.jpg,.png,.mp4）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="61"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="230"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="61"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="230"/>
         <source>Leave empty for all files</source>
         <translation>留空表示所有文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="75"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="107"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="235"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="75"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="107"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="235"/>
         <source>Files: 0</source>
         <translation>文件：0</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="114"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="114"/>
         <source>Select Files</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="116"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="116"/>
         <source>All Files (*.*)</source>
         <translation>所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="127"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="127"/>
         <source>Select Directory</source>
         <translation>选择目录</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="143"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="173"/>
-        <location filename="../builder/src/batch_input_widget.cpp" line="237"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="143"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="173"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="237"/>
         <source>Files: %1</source>
         <translation>文件：%1</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="188"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="188"/>
         <source>No Files</source>
         <translation>无文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_input_widget.cpp" line="189"/>
+        <location filename="../component/src/batch_input_widget.cpp" line="189"/>
         <source>No files found in the selected directory.</source>
         <translation>在所选目录中未找到文件。</translation>
     </message>
@@ -167,70 +167,70 @@
 <context>
     <name>BatchOutputWidget</name>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="40"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="216"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="40"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="216"/>
         <source>Batch Output</source>
         <translation>批量输出</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="45"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="217"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="45"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="217"/>
         <source>Use custom output directory</source>
         <translation>使用自定义输出目录</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="52"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="219"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="52"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="219"/>
         <source>Same as input directory</source>
         <translation>与输入目录相同</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="54"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="220"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="54"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="220"/>
         <source>Browse...</source>
         <translation>浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="50"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="218"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="50"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="218"/>
         <source>Output Directory:</source>
         <translation>输出目录：</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="65"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="221"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="65"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="221"/>
         <source>Output Suffix:</source>
         <translation>输出后缀：</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="68"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="222"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="68"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="222"/>
         <source>e.g., -oc-output</source>
         <translation>例如：-oc-output</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="77"/>
-        <location filename="../builder/src/batch_output_widget.cpp" line="223"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="77"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="223"/>
         <source>Keep original filename (no suffix)</source>
         <translation>保留原始文件名（无后缀）</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="153"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="153"/>
         <source>Select Output Directory</source>
         <translation>选择输出目录</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="204"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="204"/>
         <source>Example: %1/video.mp4</source>
         <translation>示例：%1/video.mp4</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="206"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="206"/>
         <source>Example: %1/video%2.mp4</source>
         <translation>示例：%1/video%2.mp4</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_output_widget.cpp" line="209"/>
+        <location filename="../component/src/batch_output_widget.cpp" line="209"/>
         <source>Example: /input/dir/video%1.mp4</source>
         <translation>示例：/input/dir/video%1.mp4</translation>
     </message>
@@ -355,16 +355,31 @@
     </message>
 </context>
 <context>
+    <name>BitrateWidget</name>
+    <message>
+        <location filename="../component/src/bitrate_widget.cpp" line="51"/>
+        <location filename="../component/src/bitrate_widget.cpp" line="90"/>
+        <source>auto</source>
+        <translation>自动</translation>
+    </message>
+    <message>
+        <location filename="../component/src/bitrate_widget.cpp" line="52"/>
+        <location filename="../component/src/bitrate_widget.cpp" line="91"/>
+        <source> kbps</source>
+        <translation> kbps</translation>
+    </message>
+</context>
+<context>
     <name>CompressPicturePage</name>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="65"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="290"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="66"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="269"/>
         <source>Input File</source>
         <translation>输入文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="67"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="291"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="68"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="270"/>
         <source>Select an image file...</source>
         <translation>选择图片文件...</translation>
     </message>
@@ -373,102 +388,100 @@
         <translation type="vanished">浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="76"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="294"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="77"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="273"/>
         <source>Compression Settings</source>
         <translation>压缩设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="81"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="295"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="83"/>
         <source>Output Format:</source>
         <translation>输出格式：</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="88"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="296"/>
         <source>Width (0 = auto):</source>
-        <translation>宽度（0=自动）：</translation>
+        <translation type="vanished">宽度（0=自动）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="92"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="101"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="297"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="299"/>
         <source> px</source>
-        <translation> 像素</translation>
+        <translation type="vanished"> 像素</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="97"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="298"/>
         <source>Height (0 = auto):</source>
-        <translation>高度（0=自动）：</translation>
+        <translation type="vanished">高度（0=自动）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="106"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="300"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="93"/>
         <source>Pixel Format:</source>
         <translation>像素格式：</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="125"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="301"/>
         <source>Quality (2-31, lower=better):</source>
-        <translation>质量（2-31，越小越好）：</translation>
+        <translation type="vanished">质量（2-31，越小越好）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="136"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="303"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="88"/>
+        <source>Resolution:</source>
+        <translation>分辨率：</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/compress_picture_page.cpp" line="98"/>
+        <source>Quality:</source>
+        <translation>质量：</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/compress_picture_page.cpp" line="105"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="279"/>
         <source>Output</source>
         <translation>输出</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="138"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="304"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="107"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="280"/>
         <source>Output file path will be generated automatically...</source>
         <translation>输出文件路径将自动生成...</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="139"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="108"/>
         <source>Image Files (*.jpg *.png *.webp *.bmp *.tiff);;All Files (*.*)</source>
         <translation>图像文件 (*.jpg *.png *.webp *.bmp *.tiff);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="140"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="109"/>
         <source>Save Image File</source>
         <translation>保存图像文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="152"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="161"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="315"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="121"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="130"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="291"/>
         <source>Convert / Add to Queue</source>
         <translation>转换 / 添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="161"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="313"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="130"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="289"/>
         <source>Add to Queue</source>
         <translation>添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="256"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="235"/>
         <source>Converting...</source>
         <translation>转换中...</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="261"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="318"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="240"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="294"/>
         <source>Convert</source>
         <translation>转换</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="69"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="70"/>
         <source>Select Image File</source>
         <translation>选择图片文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="68"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="69"/>
         <source>Image Files (*.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;All Files (*.*)</source>
         <translation>图片文件 (*.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;所有文件 (*.*)</translation>
     </message>
@@ -481,18 +494,18 @@
         <translation type="vanished">保存压缩图片</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="228"/>
-        <location filename="../builder/src/compress_picture_page.cpp" line="233"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="204"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="209"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="228"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="204"/>
         <source>Please select an input file.</source>
         <translation>请选择输入文件。</translation>
     </message>
     <message>
-        <location filename="../builder/src/compress_picture_page.cpp" line="233"/>
+        <location filename="../builder/src/compress_picture_page.cpp" line="209"/>
         <source>Please specify an output file.</source>
         <translation>请指定输出文件。</translation>
     </message>
@@ -518,14 +531,14 @@
 <context>
     <name>CreateGifPage</name>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="64"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="259"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="65"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="253"/>
         <source>Input File</source>
         <translation>输入文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="66"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="260"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="67"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="254"/>
         <source>Select a video or image sequence...</source>
         <translation>选择视频或图片序列...</translation>
     </message>
@@ -534,100 +547,97 @@
         <translation type="vanished">浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="75"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="263"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="76"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="257"/>
         <source>GIF Settings</source>
         <translation>GIF 设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="80"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="264"/>
         <source>Width (0 = auto):</source>
-        <translation>宽度（0=自动）：</translation>
+        <translation type="vanished">宽度（0=自动）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="84"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="93"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="265"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="267"/>
         <source> px</source>
-        <translation> 像素</translation>
+        <translation type="vanished"> 像素</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="89"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="266"/>
         <source>Height (0 = auto):</source>
-        <translation>高度（0=自动）：</translation>
+        <translation type="vanished">高度（0=自动）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="110"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="272"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="99"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="263"/>
         <source>Output</source>
         <translation>输出</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="112"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="273"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="101"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="264"/>
         <source>Output file path will be generated automatically...</source>
         <translation>输出文件路径将自动生成...</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="231"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="287"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="225"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="278"/>
         <source>Create GIF</source>
         <translation>创建 GIF</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="68"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="69"/>
         <source>Select Video File</source>
         <translation>选择视频文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="67"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="68"/>
         <source>Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)</source>
         <translation>视频文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="113"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="83"/>
+        <source>Resolution:</source>
+        <translation>分辨率：</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/create_gif_page.cpp" line="102"/>
         <source>GIF Files (*.gif);;All Files (*.*)</source>
         <translation>GIF 文件 (*.gif);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="114"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="103"/>
         <source>Save GIF File</source>
         <translation>保存 GIF 文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="126"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="135"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="284"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="115"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="124"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="275"/>
         <source>Create GIF / Add to Queue</source>
         <translation>创建 GIF / 添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="135"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="282"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="124"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="273"/>
         <source>Add to Queue</source>
         <translation>添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="201"/>
-        <location filename="../builder/src/create_gif_page.cpp" line="206"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="192"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="197"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="201"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="192"/>
         <source>Please select an input file.</source>
         <translation>请选择输入文件。</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="206"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="197"/>
         <source>Please specify an output file.</source>
         <translation>请指定输出文件。</translation>
     </message>
     <message>
-        <location filename="../builder/src/create_gif_page.cpp" line="226"/>
+        <location filename="../builder/src/create_gif_page.cpp" line="220"/>
         <source>Creating GIF...</source>
         <translation>正在创建 GIF...</translation>
     </message>
@@ -635,26 +645,26 @@
 <context>
     <name>CutVideoPage</name>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="74"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="436"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="75"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="440"/>
         <source>Input File</source>
         <translation>输入文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="76"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="437"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="77"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="441"/>
         <source>Select a video file...</source>
         <translation>选择视频文件...</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="438"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="462"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="442"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="466"/>
         <source>Browse...</source>
         <translation>浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="85"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="440"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="86"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="444"/>
         <source>Media Duration</source>
         <translation>媒体时长</translation>
     </message>
@@ -663,41 +673,41 @@
         <translation type="vanished">总时长：00:00:00</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="101"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="443"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="102"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="447"/>
         <source>Video Player</source>
         <translation>视频播放器</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="115"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="311"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="447"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="116"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="312"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="451"/>
         <source>Play</source>
         <translation>播放</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="142"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="450"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="143"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="454"/>
         <source>Time Selection</source>
         <translation>时间选择</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="147"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="451"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="148"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="455"/>
         <source>Start Time:</source>
         <translation>开始时间：</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="152"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="162"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="452"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="454"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="153"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="163"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="456"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="458"/>
         <source>Set from Player</source>
         <translation>从播放器设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="157"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="453"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="158"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="457"/>
         <source>End Time:</source>
         <translation>结束时间：</translation>
     </message>
@@ -706,38 +716,38 @@
         <translation type="vanished">剪切时长：00:00:00</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="88"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="441"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="89"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="445"/>
         <source>Total Duration:</source>
         <translation>总时长:</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="167"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="455"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="168"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="459"/>
         <source>Cut Duration:</source>
         <translation>剪切时长:</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="190"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="460"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="191"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="464"/>
         <source>Output File</source>
         <translation>输出文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="192"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="461"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="193"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="465"/>
         <source>Output file path...</source>
         <translation>输出文件路径...</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="201"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="210"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="463"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="202"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="211"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="467"/>
         <source>Cut Video</source>
         <translation>剪切视频</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="78"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="79"/>
         <source>Select Video File</source>
         <translation>选择视频文件</translation>
     </message>
@@ -746,45 +756,45 @@
         <translation type="vanished">视频文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="194"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="195"/>
         <source>Save Cut Video As</source>
         <translation>保存剪切视频为</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="193"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="194"/>
         <source>Video Files (*.mp4 *.avi *.mkv *.mov);;All Files (*.*)</source>
         <translation>视频文件 (*.mp4 *.avi *.mkv *.mov);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="77"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="78"/>
         <source>Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)</source>
         <translation>视频文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="210"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="211"/>
         <source>Cutting...</source>
         <translation>剪切中...</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="212"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="220"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="304"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="213"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="221"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="305"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="304"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="305"/>
         <source>Failed to load video file.</source>
         <translation>加载视频文件失败。</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="314"/>
-        <location filename="../builder/src/cut_video_page.cpp" line="445"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="315"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="449"/>
         <source>Pause</source>
         <translation>暂停</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="390"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="391"/>
         <source>Invalid (end time must be after start time)</source>
         <translation>无效（结束时间必须晚于开始时间）</translation>
     </message>
@@ -793,22 +803,22 @@
         <translation type="vanished">请选择输入和输出文件。</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="220"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="221"/>
         <source>End time must be after start time.</source>
         <translation>结束时间必须晚于开始时间。</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="211"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="212"/>
         <source>Success</source>
         <translation>成功</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="211"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="212"/>
         <source>Video cut successfully!</source>
         <translation>视频剪切成功！</translation>
     </message>
     <message>
-        <location filename="../builder/src/cut_video_page.cpp" line="212"/>
+        <location filename="../builder/src/cut_video_page.cpp" line="213"/>
         <source>Failed to cut video.</source>
         <translation>视频剪切失败。</translation>
     </message>
@@ -816,14 +826,14 @@
 <context>
     <name>ExtractAudioPage</name>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="59"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="303"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="60"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="296"/>
         <source>Input File</source>
         <translation>输入文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="61"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="304"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="62"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="297"/>
         <source>Select a video file...</source>
         <translation>选择视频文件...</translation>
     </message>
@@ -832,14 +842,13 @@
         <translation type="vanished">浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="70"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="307"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="71"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="300"/>
         <source>Audio Settings</source>
         <translation>音频设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="75"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="308"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="78"/>
         <source>Output Format:</source>
         <translation>输出格式：</translation>
     </message>
@@ -848,91 +857,90 @@
         <translation type="vanished">音频编码：</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="86"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="309"/>
         <source>Bitrate (kbps):</source>
-        <translation>比特率（kbps）：</translation>
+        <translation type="vanished">比特率（kbps）：</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="90"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="310"/>
         <source>auto</source>
-        <translation>自动</translation>
+        <translation type="vanished">自动</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="91"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="311"/>
         <source> kbps</source>
-        <translation> kbps</translation>
+        <translation type="vanished"> kbps</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="104"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="313"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="83"/>
+        <source>Bitrate:</source>
+        <translation>比特率：</translation>
+    </message>
+    <message>
+        <location filename="../builder/src/extract_audio_page.cpp" line="94"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="304"/>
         <source>Output File</source>
         <translation>输出文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="106"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="314"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="96"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="305"/>
         <source>Output file path will be generated automatically...</source>
         <translation>输出文件路径将自动生成...</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="107"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="97"/>
         <source>Audio Files (*.mp3 *.aac *.ac3 *.flac *.wav *.ogg);;All Files (*.*)</source>
         <translation>音频文件 (*.mp3 *.aac *.ac3 *.flac *.wav *.ogg);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="108"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="98"/>
         <source>Save Audio File</source>
         <translation>保存音频文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="120"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="110"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="119"/>
         <location filename="../builder/src/extract_audio_page.cpp" line="129"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="139"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="325"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="316"/>
         <source>Extract Audio / Add to Queue</source>
         <translation>提取音频 / 添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="129"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="119"/>
         <source>Extracting...</source>
         <translation>提取中...</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="130"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="120"/>
         <source>Success</source>
         <translation>成功</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="130"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="120"/>
         <source>Audio extracted successfully!</source>
         <translation>音频提取成功！</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="131"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="121"/>
         <source>Failed to extract audio.</source>
         <translation>音频提取失败。</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="139"/>
-        <location filename="../builder/src/extract_audio_page.cpp" line="323"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="129"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="314"/>
         <source>Add to Queue</source>
         <translation>添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="328"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="319"/>
         <source>Extract Audio</source>
         <translation>提取音频</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="63"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="64"/>
         <source>Select Video File</source>
         <translation>选择视频文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="62"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="63"/>
         <source>Video Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;All Files (*.*)</source>
         <translation>视频文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm);;所有文件 (*.*)</translation>
     </message>
@@ -945,7 +953,7 @@
         <translation type="vanished">保存提取的音频</translation>
     </message>
     <message>
-        <location filename="../builder/src/extract_audio_page.cpp" line="131"/>
+        <location filename="../builder/src/extract_audio_page.cpp" line="121"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
@@ -957,20 +965,20 @@
 <context>
     <name>FileSelectorWidget</name>
     <message>
-        <location filename="../builder/src/file_selector_widget.cpp" line="51"/>
-        <location filename="../builder/src/file_selector_widget.cpp" line="191"/>
+        <location filename="../component/src/file_selector_widget.cpp" line="51"/>
+        <location filename="../component/src/file_selector_widget.cpp" line="191"/>
         <source>Browse...</source>
         <translation>浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/file_selector_widget.cpp" line="55"/>
-        <location filename="../builder/src/file_selector_widget.cpp" line="192"/>
+        <location filename="../component/src/file_selector_widget.cpp" line="55"/>
+        <location filename="../component/src/file_selector_widget.cpp" line="192"/>
         <source>Batch</source>
         <translation>批量</translation>
     </message>
     <message>
-        <location filename="../builder/src/file_selector_widget.cpp" line="133"/>
-        <location filename="../builder/src/file_selector_widget.cpp" line="196"/>
+        <location filename="../component/src/file_selector_widget.cpp" line="133"/>
+        <location filename="../component/src/file_selector_widget.cpp" line="196"/>
         <source>%1 files selected</source>
         <translation>已选择 %1 个文件</translation>
     </message>
@@ -978,18 +986,18 @@
 <context>
     <name>FilterTagWidget</name>
     <message>
-        <location filename="../builder/src/filter_tag_widget.cpp" line="106"/>
-        <location filename="../builder/src/filter_tag_widget.cpp" line="241"/>
+        <location filename="../component/src/filter_tag_widget.cpp" line="106"/>
+        <location filename="../component/src/filter_tag_widget.cpp" line="241"/>
         <source>+ Add Filter</source>
         <translation>+ 添加过滤器</translation>
     </message>
     <message>
-        <location filename="../builder/src/filter_tag_widget.cpp" line="212"/>
+        <location filename="../component/src/filter_tag_widget.cpp" line="212"/>
         <source>Add File Extension</source>
         <translation>添加文件扩展名</translation>
     </message>
     <message>
-        <location filename="../builder/src/filter_tag_widget.cpp" line="213"/>
+        <location filename="../component/src/filter_tag_widget.cpp" line="213"/>
         <source>Enter file extension (e.g., mp4, avi, *.mkv):</source>
         <translation>输入文件扩展名（例如：mp4, avi, *.mkv）：</translation>
     </message>
@@ -1194,12 +1202,12 @@
         <translation>中文</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="228"/>
+        <location filename="../builder/src/open_converter.cpp" line="229"/>
         <source>Current Transcoder changed to %1</source>
         <translation>当前转码器已切换至 %1</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="273"/>
+        <location filename="../builder/src/open_converter.cpp" line="274"/>
         <source>Current Language changed to %1</source>
         <translation>当前语言已切换至 %1</translation>
     </message>
@@ -1214,7 +1222,7 @@
         <translation>BMF</translation>
     </message>
     <message>
-        <location filename="../builder/src/open_converter.cpp" line="103"/>
+        <location filename="../builder/src/open_converter.cpp" line="104"/>
         <source>FFTOOL</source>
         <translation>FFTOOL</translation>
     </message>
@@ -1222,32 +1230,32 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../builder/src/batch_mode_helper.cpp" line="61"/>
+        <location filename="../builder/src/batch_mode_helper.cpp" line="62"/>
         <source>No Files</source>
         <translation>无文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_mode_helper.cpp" line="62"/>
+        <location filename="../builder/src/batch_mode_helper.cpp" line="63"/>
         <source>Please select files to process.</source>
         <translation>请选择要处理的文件。</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_mode_helper.cpp" line="67"/>
+        <location filename="../builder/src/batch_mode_helper.cpp" line="68"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_mode_helper.cpp" line="68"/>
+        <location filename="../builder/src/batch_mode_helper.cpp" line="69"/>
         <source>Encode parameter creator not set.</source>
         <translation>编码参数创建器未设置。</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_mode_helper.cpp" line="92"/>
+        <location filename="../builder/src/batch_mode_helper.cpp" line="100"/>
         <source>Added to Queue</source>
         <translation>已添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/batch_mode_helper.cpp" line="93"/>
+        <location filename="../builder/src/batch_mode_helper.cpp" line="101"/>
         <source>Added %1 file(s) to the batch queue.</source>
         <translation>已将 %1 个文件添加到批量队列。</translation>
     </message>
@@ -1255,45 +1263,45 @@
 <context>
     <name>RemuxPage</name>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="67"/>
+        <location filename="../builder/src/remux_page.cpp" line="68"/>
         <location filename="../builder/src/remux_page.cpp" line="363"/>
         <source>Input File</source>
         <translation>输入文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="69"/>
+        <location filename="../builder/src/remux_page.cpp" line="70"/>
         <location filename="../builder/src/remux_page.cpp" line="364"/>
         <source>Select a media file...</source>
         <translation>选择媒体文件...</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="146"/>
+        <location filename="../builder/src/remux_page.cpp" line="143"/>
         <source>Remuxing...</source>
         <translation>重新封装中...</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="147"/>
+        <location filename="../builder/src/remux_page.cpp" line="144"/>
         <source>Success</source>
         <translation>成功</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="147"/>
+        <location filename="../builder/src/remux_page.cpp" line="144"/>
         <source>File remuxed successfully!</source>
         <translation>文件重新封装成功！</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="148"/>
-        <location filename="../builder/src/remux_page.cpp" line="163"/>
+        <location filename="../builder/src/remux_page.cpp" line="145"/>
+        <location filename="../builder/src/remux_page.cpp" line="160"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="148"/>
+        <location filename="../builder/src/remux_page.cpp" line="145"/>
         <source>Failed to remux file.</source>
         <translation>重新封装文件失败。</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="163"/>
+        <location filename="../builder/src/remux_page.cpp" line="160"/>
         <source>Please select at least one stream to remux.</source>
         <translation>请至少选择一个流进行重新封装。</translation>
     </message>
@@ -1304,78 +1312,102 @@
         <translation>浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="78"/>
+        <location filename="../builder/src/remux_page.cpp" line="79"/>
         <location filename="../builder/src/remux_page.cpp" line="367"/>
         <source>Streams (Select streams to include)</source>
         <translation>流（选择要包含的流）</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="70"/>
+        <location filename="../builder/src/remux_page.cpp" line="71"/>
         <source>Media Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)</source>
         <translation>媒体文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="71"/>
+        <location filename="../builder/src/remux_page.cpp" line="72"/>
         <source>Select Media File</source>
         <translation>选择媒体文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="91"/>
+        <location filename="../builder/src/remux_page.cpp" line="92"/>
         <source>No file selected</source>
         <translation>未选择文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="103"/>
+        <location filename="../builder/src/remux_page.cpp" line="104"/>
         <location filename="../builder/src/remux_page.cpp" line="369"/>
         <source>Output Settings</source>
         <translation>输出设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="108"/>
-        <location filename="../builder/src/remux_page.cpp" line="370"/>
+        <location filename="../builder/src/remux_page.cpp" line="112"/>
         <source>Output Format:</source>
         <translation>输出格式：</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="126"/>
+        <location filename="../builder/src/remux_page.cpp" line="123"/>
         <location filename="../builder/src/remux_page.cpp" line="372"/>
         <source>Output File</source>
         <translation>输出文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="128"/>
+        <location filename="../builder/src/remux_page.cpp" line="125"/>
         <location filename="../builder/src/remux_page.cpp" line="373"/>
         <source>Output file path will be generated automatically...</source>
         <translation>输出文件路径将自动生成...</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="129"/>
+        <location filename="../builder/src/remux_page.cpp" line="126"/>
         <source>Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)</source>
         <translation>媒体文件 (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="130"/>
+        <location filename="../builder/src/remux_page.cpp" line="127"/>
         <source>Save Remuxed File</source>
         <translation>保存重新封装的文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/remux_page.cpp" line="137"/>
-        <location filename="../builder/src/remux_page.cpp" line="146"/>
+        <location filename="../builder/src/remux_page.cpp" line="134"/>
+        <location filename="../builder/src/remux_page.cpp" line="143"/>
         <location filename="../builder/src/remux_page.cpp" line="375"/>
         <source>Remux</source>
         <translation>封装转换</translation>
     </message>
 </context>
 <context>
+    <name>ResolutionWidget</name>
+    <message>
+        <location filename="../component/src/resolution_widget.cpp" line="47"/>
+        <location filename="../component/src/resolution_widget.cpp" line="59"/>
+        <location filename="../component/src/resolution_widget.cpp" line="116"/>
+        <location filename="../component/src/resolution_widget.cpp" line="118"/>
+        <source>auto</source>
+        <translation>自动</translation>
+    </message>
+    <message>
+        <location filename="../component/src/resolution_widget.cpp" line="48"/>
+        <location filename="../component/src/resolution_widget.cpp" line="60"/>
+        <location filename="../component/src/resolution_widget.cpp" line="117"/>
+        <location filename="../component/src/resolution_widget.cpp" line="119"/>
+        <source> px</source>
+        <translation> 像素</translation>
+    </message>
+    <message>
+        <location filename="../component/src/resolution_widget.cpp" line="52"/>
+        <location filename="../component/src/resolution_widget.cpp" line="120"/>
+        <source>x</source>
+        <translation>x</translation>
+    </message>
+</context>
+<context>
     <name>TranscodePage</name>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="71"/>
-        <location filename="../builder/src/transcode_page.cpp" line="379"/>
+        <location filename="../builder/src/transcode_page.cpp" line="72"/>
+        <location filename="../builder/src/transcode_page.cpp" line="359"/>
         <source>Input File</source>
         <translation>输入文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="380"/>
+        <location filename="../builder/src/transcode_page.cpp" line="360"/>
         <source>Select a media file...</source>
         <translation>选择媒体文件...</translation>
     </message>
@@ -1384,173 +1416,155 @@
         <translation type="vanished">浏览...</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="82"/>
-        <location filename="../builder/src/transcode_page.cpp" line="383"/>
+        <location filename="../builder/src/transcode_page.cpp" line="83"/>
+        <location filename="../builder/src/transcode_page.cpp" line="363"/>
         <source>Video Settings</source>
         <translation>视频设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="73"/>
+        <location filename="../builder/src/transcode_page.cpp" line="74"/>
         <source>Select a media file or click Batch for multiple files...</source>
         <translation>选择媒体文件或点击批量处理多个文件...</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="74"/>
+        <location filename="../builder/src/transcode_page.cpp" line="75"/>
         <source>Media Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)</source>
         <translation>媒体文件 (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="75"/>
+        <location filename="../builder/src/transcode_page.cpp" line="76"/>
         <source>Select Media File</source>
         <translation>选择媒体文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="87"/>
-        <location filename="../builder/src/transcode_page.cpp" line="141"/>
-        <location filename="../builder/src/transcode_page.cpp" line="384"/>
-        <location filename="../builder/src/transcode_page.cpp" line="395"/>
+        <location filename="../builder/src/transcode_page.cpp" line="88"/>
+        <location filename="../builder/src/transcode_page.cpp" line="123"/>
+        <location filename="../builder/src/transcode_page.cpp" line="364"/>
+        <location filename="../builder/src/transcode_page.cpp" line="370"/>
         <source>Codec:</source>
         <translation>编解码器：</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="95"/>
-        <location filename="../builder/src/transcode_page.cpp" line="147"/>
-        <location filename="../builder/src/transcode_page.cpp" line="385"/>
-        <location filename="../builder/src/transcode_page.cpp" line="396"/>
+        <location filename="../builder/src/transcode_page.cpp" line="108"/>
+        <location filename="../builder/src/transcode_page.cpp" line="133"/>
         <source>Bitrate:</source>
         <translation>比特率：</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="99"/>
-        <location filename="../builder/src/transcode_page.cpp" line="151"/>
-        <location filename="../builder/src/transcode_page.cpp" line="386"/>
-        <location filename="../builder/src/transcode_page.cpp" line="397"/>
         <source> kbps</source>
-        <translation> kbps</translation>
+        <translation type="vanished"> kbps</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="100"/>
-        <location filename="../builder/src/transcode_page.cpp" line="107"/>
-        <location filename="../builder/src/transcode_page.cpp" line="114"/>
-        <location filename="../builder/src/transcode_page.cpp" line="152"/>
-        <location filename="../builder/src/transcode_page.cpp" line="387"/>
-        <location filename="../builder/src/transcode_page.cpp" line="389"/>
-        <location filename="../builder/src/transcode_page.cpp" line="391"/>
-        <location filename="../builder/src/transcode_page.cpp" line="398"/>
         <source>auto</source>
-        <translation>自动</translation>
+        <translation type="vanished">自动</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="103"/>
-        <location filename="../builder/src/transcode_page.cpp" line="388"/>
-        <source>Dimension:</source>
-        <translation>分辨率:</translation>
+        <location filename="../builder/src/transcode_page.cpp" line="110"/>
+        <source>Resolution:</source>
+        <translation>分辨率：</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="109"/>
-        <location filename="../builder/src/transcode_page.cpp" line="390"/>
         <source>x</source>
-        <translation>x</translation>
+        <translation type="vanished">x</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="117"/>
-        <location filename="../builder/src/transcode_page.cpp" line="392"/>
+        <location filename="../builder/src/transcode_page.cpp" line="112"/>
         <source>Pixel Format:</source>
         <translation>像素格式：</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="136"/>
-        <location filename="../builder/src/transcode_page.cpp" line="394"/>
+        <location filename="../builder/src/transcode_page.cpp" line="118"/>
+        <location filename="../builder/src/transcode_page.cpp" line="369"/>
         <source>Audio Settings</source>
         <translation>音频设置</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="162"/>
-        <location filename="../builder/src/transcode_page.cpp" line="400"/>
+        <location filename="../builder/src/transcode_page.cpp" line="139"/>
+        <location filename="../builder/src/transcode_page.cpp" line="373"/>
         <source>Preset</source>
         <translation>预设</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="165"/>
-        <location filename="../builder/src/transcode_page.cpp" line="401"/>
+        <location filename="../builder/src/transcode_page.cpp" line="142"/>
+        <location filename="../builder/src/transcode_page.cpp" line="374"/>
         <source>Preset:</source>
         <translation>预设：</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="177"/>
-        <location filename="../builder/src/transcode_page.cpp" line="403"/>
+        <location filename="../builder/src/transcode_page.cpp" line="154"/>
+        <location filename="../builder/src/transcode_page.cpp" line="376"/>
         <source>File Format</source>
         <translation>文件格式</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="180"/>
-        <location filename="../builder/src/transcode_page.cpp" line="404"/>
+        <location filename="../builder/src/transcode_page.cpp" line="157"/>
+        <location filename="../builder/src/transcode_page.cpp" line="377"/>
         <source>Format:</source>
         <translation>格式：</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="195"/>
-        <location filename="../builder/src/transcode_page.cpp" line="406"/>
+        <location filename="../builder/src/transcode_page.cpp" line="172"/>
+        <location filename="../builder/src/transcode_page.cpp" line="379"/>
         <source>Output File</source>
         <translation>输出文件</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="197"/>
-        <location filename="../builder/src/transcode_page.cpp" line="407"/>
+        <location filename="../builder/src/transcode_page.cpp" line="174"/>
+        <location filename="../builder/src/transcode_page.cpp" line="380"/>
         <source>Output file path will be generated automatically...</source>
         <translation>输出文件路径将自动生成...</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="198"/>
+        <location filename="../builder/src/transcode_page.cpp" line="175"/>
         <source>Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)</source>
         <translation>媒体文件 (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.webm *.ts *.m4v);;所有文件 (*.*)</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="199"/>
+        <location filename="../builder/src/transcode_page.cpp" line="176"/>
         <source>Save Transcoded File</source>
         <translation>保存转码文件</translation>
     </message>
     <message>
+        <location filename="../builder/src/transcode_page.cpp" line="188"/>
+        <location filename="../builder/src/transcode_page.cpp" line="201"/>
         <location filename="../builder/src/transcode_page.cpp" line="211"/>
-        <location filename="../builder/src/transcode_page.cpp" line="224"/>
-        <location filename="../builder/src/transcode_page.cpp" line="234"/>
-        <location filename="../builder/src/transcode_page.cpp" line="418"/>
+        <location filename="../builder/src/transcode_page.cpp" line="391"/>
         <source>Transcode / Add to Queue</source>
         <translation>转码 / 添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="224"/>
+        <location filename="../builder/src/transcode_page.cpp" line="201"/>
         <source>Transcoding...</source>
         <translation>转码中...</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="225"/>
+        <location filename="../builder/src/transcode_page.cpp" line="202"/>
         <source>Success</source>
         <translation>成功</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="225"/>
+        <location filename="../builder/src/transcode_page.cpp" line="202"/>
         <source>File transcoded successfully!</source>
         <translation>文件转码成功！</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="226"/>
+        <location filename="../builder/src/transcode_page.cpp" line="203"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="226"/>
+        <location filename="../builder/src/transcode_page.cpp" line="203"/>
         <source>Failed to transcode file.</source>
         <translation>文件转码失败。</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="234"/>
-        <location filename="../builder/src/transcode_page.cpp" line="416"/>
+        <location filename="../builder/src/transcode_page.cpp" line="211"/>
+        <location filename="../builder/src/transcode_page.cpp" line="389"/>
         <source>Add to Queue</source>
         <translation>添加到队列</translation>
     </message>
     <message>
-        <location filename="../builder/src/transcode_page.cpp" line="421"/>
+        <location filename="../builder/src/transcode_page.cpp" line="394"/>
         <source>Transcode</source>
         <translation>转码</translation>
     </message>

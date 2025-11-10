@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "../include/batch_input_widget.h"
+#include "batch_input_widget.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFileDialog>

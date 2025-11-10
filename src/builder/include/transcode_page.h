@@ -24,6 +24,9 @@
 #include "progress_widget.h"
 #include "batch_output_widget.h"
 #include "batch_mode_helper.h"
+#include "resolution_widget.h"
+#include "pixel_format_widget.h"
+#include "bitrate_widget.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
@@ -79,22 +82,17 @@ private:
     QLabel *videoCodecLabel;
     QComboBox *videoCodecComboBox;
     QLabel *videoBitrateLabel;
-    QSpinBox *videoBitrateSpinBox;
-    QLabel *videoBitrateUnitLabel;
-    QLabel *dimensionLabel;
-    QSpinBox *widthSpinBox;
-    QLabel *dimensionXLabel;
-    QSpinBox *heightSpinBox;
-    QLabel *pixFmtLabel;
-    QComboBox *pixFmtComboBox;
+    BitrateWidget *videoBitrateWidget;
+    QLabel *resolutionLabel;
+    ResolutionWidget *resolutionWidget;
+    QLabel *pixelFormatLabel;
+    PixelFormatWidget *pixelFormatWidget;
 
     // Audio settings section
     QGroupBox *audioGroupBox;
     QLabel *audioCodecLabel;
     QComboBox *audioCodecComboBox;
-    QLabel *audioBitrateLabel;
-    QSpinBox *audioBitrateSpinBox;
-    QLabel *audioBitrateUnitLabel;
+    BitrateWidget *audioBitrateWidget;
 
     // Preset section
     QGroupBox *presetGroupBox;

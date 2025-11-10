@@ -94,42 +94,26 @@ void TranscodePage::SetupUI() {
 
     // Video Bitrate
     videoBitrateLabel = new QLabel(tr("Bitrate:"), videoGroupBox);
-    videoBitrateSpinBox = new QSpinBox(videoGroupBox);
-    videoBitrateSpinBox->setRange(0, 50000);
-    videoBitrateSpinBox->setValue(0);
-    videoBitrateSpinBox->setSuffix(tr(" kbps"));
-    videoBitrateSpinBox->setSpecialValueText(tr("auto"));
+    videoBitrateWidget = new BitrateWidget(BitrateWidget::Video, videoGroupBox);
 
-    // Dimension
-    dimensionLabel = new QLabel(tr("Dimension:"), videoGroupBox);
-    widthSpinBox = new QSpinBox(videoGroupBox);
-    widthSpinBox->setRange(0, 7680);
-    widthSpinBox->setValue(0);
-    widthSpinBox->setSpecialValueText(tr("auto"));
-
-    dimensionXLabel = new QLabel(tr("x"), videoGroupBox);
-
-    heightSpinBox = new QSpinBox(videoGroupBox);
-    heightSpinBox->setRange(0, 4320);
-    heightSpinBox->setValue(0);
-    heightSpinBox->setSpecialValueText(tr("auto"));
+    // Resolution
+    resolutionLabel = new QLabel(tr("Resolution:"), videoGroupBox);
+    resolutionWidget = new ResolutionWidget(videoGroupBox);
+    resolutionWidget->SetWidthRange(0, 7680);
+    resolutionWidget->SetHeightRange(0, 4320);
 
     // Pixel Format
-    pixFmtLabel = new QLabel(tr("Pixel Format:"), videoGroupBox);
-    pixFmtComboBox = new QComboBox(videoGroupBox);
-    pixFmtComboBox->addItems({"auto", "yuv420p", "yuv422p", "yuv444p", "rgb24", "bgr24"});
-    pixFmtComboBox->setCurrentText("auto");
+    pixelFormatLabel = new QLabel(tr("Pixel Format:"), videoGroupBox);
+    pixelFormatWidget = new PixelFormatWidget(PixelFormatWidget::Video, videoGroupBox);
 
     videoLayout->addWidget(videoCodecLabel, 0, 0);
     videoLayout->addWidget(videoCodecComboBox, 0, 1, 1, 3);
     videoLayout->addWidget(videoBitrateLabel, 1, 0);
-    videoLayout->addWidget(videoBitrateSpinBox, 1, 1, 1, 3);
-    videoLayout->addWidget(dimensionLabel, 2, 0);
-    videoLayout->addWidget(widthSpinBox, 2, 1);
-    videoLayout->addWidget(dimensionXLabel, 2, 2);
-    videoLayout->addWidget(heightSpinBox, 2, 3);
-    videoLayout->addWidget(pixFmtLabel, 3, 0);
-    videoLayout->addWidget(pixFmtComboBox, 3, 1, 1, 3);
+    videoLayout->addWidget(videoBitrateWidget, 1, 1, 1, 3);
+    videoLayout->addWidget(resolutionLabel, 2, 0);
+    videoLayout->addWidget(resolutionWidget, 2, 1, 1, 3);
+    videoLayout->addWidget(pixelFormatLabel, 3, 0);
+    videoLayout->addWidget(pixelFormatWidget, 3, 1, 1, 3);
 
     mainLayout->addWidget(videoGroupBox);
 
@@ -145,17 +129,12 @@ void TranscodePage::SetupUI() {
     audioCodecComboBox->setCurrentText("auto");
 
     // Audio Bitrate
-    audioBitrateLabel = new QLabel(tr("Bitrate:"), audioGroupBox);
-    audioBitrateSpinBox = new QSpinBox(audioGroupBox);
-    audioBitrateSpinBox->setRange(0, 320);
-    audioBitrateSpinBox->setValue(0);
-    audioBitrateSpinBox->setSuffix(tr(" kbps"));
-    audioBitrateSpinBox->setSpecialValueText(tr("auto"));
+    audioBitrateWidget = new BitrateWidget(BitrateWidget::Audio, audioGroupBox);
 
     audioLayout->addWidget(audioCodecLabel, 0, 0);
     audioLayout->addWidget(audioCodecComboBox, 0, 1);
-    audioLayout->addWidget(audioBitrateLabel, 1, 0);
-    audioLayout->addWidget(audioBitrateSpinBox, 1, 1);
+    audioLayout->addWidget(new QLabel(tr("Bitrate:"), audioGroupBox), 1, 0);
+    audioLayout->addWidget(audioBitrateWidget, 1, 1);
 
     mainLayout->addWidget(audioGroupBox);
 
@@ -336,14 +315,14 @@ EncodeParameter* TranscodePage::CreateEncodeParameter() {
     }
 
     // Video bitrate
-    int videoBitrate = videoBitrateSpinBox->value();
+    int videoBitrate = videoBitrateWidget->GetBitrate();
     if (videoBitrate > 0) {
         encodeParam->set_video_bit_rate(videoBitrate * 1000);
     }
 
-    // Dimension
-    int width = widthSpinBox->value();
-    int height = heightSpinBox->value();
+    // Resolution
+    int width = resolutionWidget->GetWidth();
+    int height = resolutionWidget->GetHeight();
     if (width > 0) {
         encodeParam->set_width(width);
     }
@@ -352,8 +331,8 @@ EncodeParameter* TranscodePage::CreateEncodeParameter() {
     }
 
     // Pixel format
-    QString pixFmt = pixFmtComboBox->currentText();
-    if (pixFmt != "auto") {
+    QString pixFmt = pixelFormatWidget->GetPixelFormat();
+    if (!pixFmt.isEmpty()) {
         encodeParam->set_pixel_format(pixFmt.toStdString());
     }
 
@@ -364,7 +343,7 @@ EncodeParameter* TranscodePage::CreateEncodeParameter() {
     }
 
     // Audio bitrate
-    int audioBitrate = audioBitrateSpinBox->value();
+    int audioBitrate = audioBitrateWidget->GetBitrate();
     if (audioBitrate > 0) {
         encodeParam->set_audio_bit_rate(audioBitrate * 1000);
     }
@@ -387,19 +366,15 @@ void TranscodePage::RetranslateUi() {
     videoGroupBox->setTitle(tr("Video Settings"));
     videoCodecLabel->setText(tr("Codec:"));
     videoBitrateLabel->setText(tr("Bitrate:"));
-    videoBitrateSpinBox->setSuffix(tr(" kbps"));
-    videoBitrateSpinBox->setSpecialValueText(tr("auto"));
-    dimensionLabel->setText(tr("Dimension:"));
-    widthSpinBox->setSpecialValueText(tr("auto"));
-    dimensionXLabel->setText(tr("x"));
-    heightSpinBox->setSpecialValueText(tr("auto"));
-    pixFmtLabel->setText(tr("Pixel Format:"));
+    videoBitrateWidget->RetranslateUi();
+    resolutionLabel->setText(tr("Resolution:"));
+    resolutionWidget->RetranslateUi();
+    pixelFormatLabel->setText(tr("Pixel Format:"));
+    pixelFormatWidget->RetranslateUi();
 
     audioGroupBox->setTitle(tr("Audio Settings"));
     audioCodecLabel->setText(tr("Codec:"));
-    audioBitrateLabel->setText(tr("Bitrate:"));
-    audioBitrateSpinBox->setSuffix(tr(" kbps"));
-    audioBitrateSpinBox->setSpecialValueText(tr("auto"));
+    audioBitrateWidget->RetranslateUi();
 
     presetGroupBox->setTitle(tr("Preset"));
     presetLabel->setText(tr("Preset:"));

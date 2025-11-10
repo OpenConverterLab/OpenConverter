@@ -13,7 +13,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "../include/simple_video_player.h"
+#include "simple_video_player.h"
 #include <QDebug>
 
 SimpleVideoPlayer::SimpleVideoPlayer(QWidget *parent)

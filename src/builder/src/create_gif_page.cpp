@@ -77,23 +77,12 @@ void CreateGifPage::SetupUI() {
     QGridLayout *settingsLayout = new QGridLayout(settingsGroupBox);
     settingsLayout->setColumnStretch(1, 1);
 
-    // Width
-    widthLabel = new QLabel(tr("Width (0 = auto):"), this);
-    widthSpinBox = new QSpinBox(this);
-    widthSpinBox->setRange(0, 4096);
-    widthSpinBox->setValue(0);
-    widthSpinBox->setSuffix(tr(" px"));
-    settingsLayout->addWidget(widthLabel, 0, 0);
-    settingsLayout->addWidget(widthSpinBox, 0, 1);
-
-    // Height
-    heightLabel = new QLabel(tr("Height (0 = auto):"), this);
-    heightSpinBox = new QSpinBox(this);
-    heightSpinBox->setRange(0, 4096);
-    heightSpinBox->setValue(0);
-    heightSpinBox->setSuffix(tr(" px"));
-    settingsLayout->addWidget(heightLabel, 1, 0);
-    settingsLayout->addWidget(heightSpinBox, 1, 1);
+    // Resolution (Width x Height)
+    resolutionLabel = new QLabel(tr("Resolution:"), this);
+    resolutionWidget = new ResolutionWidget(this);
+    resolutionWidget->SetRange(0, 4096);
+    settingsLayout->addWidget(resolutionLabel, 0, 0);
+    settingsLayout->addWidget(resolutionWidget, 0, 1);
 
     // TODO: FPS (Frame Rate)
     // fpsLabel = new QLabel(tr("Frame Rate (FPS):"), this);
@@ -175,12 +164,14 @@ EncodeParameter* CreateGifPage::CreateEncodeParameter() {
     // TODO: Set frame rate for GIF
     // param->set_frame_rate(fpsSpinBox->value());
 
-    if (widthSpinBox->value() > 0) {
-        param->set_width(widthSpinBox->value());
+    // Resolution
+    int width = resolutionWidget->GetWidth();
+    int height = resolutionWidget->GetHeight();
+    if (width > 0) {
+        param->set_width(width);
     }
-
-    if (heightSpinBox->value() > 0) {
-        param->set_height(heightSpinBox->value());
+    if (height > 0) {
+        param->set_height(height);
     }
 
     return param;
@@ -265,10 +256,8 @@ void CreateGifPage::RetranslateUi() {
     inputFileSelector->RetranslateUi();
 
     settingsGroupBox->setTitle(tr("GIF Settings"));
-    widthLabel->setText(tr("Width (0 = auto):"));
-    widthSpinBox->setSuffix(tr(" px"));
-    heightLabel->setText(tr("Height (0 = auto):"));
-    heightSpinBox->setSuffix(tr(" px"));
+    resolutionLabel->setText(tr("Resolution:"));
+    resolutionWidget->RetranslateUi();
     // TODO: Frame Rate (FPS)
     // fpsLabel->setText(tr("Frame Rate (FPS):"));
     // fpsSpinBox->setSuffix(tr(" fps"));

@@ -43,7 +43,7 @@ RemuxPage::~RemuxPage() {
 void RemuxPage::OnPageActivated() {
     BasePage::OnPageActivated();
     HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
-                           formatComboBox->currentText());
+                           formatWidget->GetFormat());
 }
 
 void RemuxPage::OnInputFileChanged(const QString &newPath) {
@@ -106,15 +106,12 @@ void RemuxPage::SetupUI() {
     settingsLayout->setSpacing(10);
 
     // Output Format
-    formatLabel = new QLabel(tr("Output Format:"), settingsGroupBox);
-    formatComboBox = new QComboBox(settingsGroupBox);
-    formatComboBox->addItems({"mp4", "mkv", "avi", "mov", "flv", "webm", "ts"});
-    formatComboBox->setCurrentText("mp4");
-    connect(formatComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &RemuxPage::OnFormatChanged);
-
+    formatLabel = new QLabel(tr("Output Format:"), this);
+    formatWidget = new FormatSelectorWidget(FormatSelectorWidget::Video, false, this);
+    formatWidget->SetFormat("mp4");  // Default to mp4
+    connect(formatWidget, &FormatSelectorWidget::FormatChanged, this, &RemuxPage::OnFormatChanged);
     settingsLayout->addWidget(formatLabel, 0, 0);
-    settingsLayout->addWidget(formatComboBox, 0, 1);
+    settingsLayout->addWidget(formatWidget, 0, 1);
 
     mainLayout->addWidget(settingsGroupBox);
 
@@ -191,8 +188,8 @@ void RemuxPage::OnOutputFileSelected(const QString &filePath) {
     }
 }
 
-void RemuxPage::OnFormatChanged(int index) {
-    Q_UNUSED(index);
+void RemuxPage::OnFormatChanged(const QString &format) {
+    Q_UNUSED(format);
     UpdateOutputPath();
 }
 
@@ -225,7 +222,7 @@ void RemuxPage::UpdateOutputPath() {
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
-            QString format = formatComboBox->currentText();
+            QString format = formatWidget->GetFormat();
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
             outputFileSelector->SetFilePath(outputPath);
             remuxButton->setEnabled(true);
@@ -372,6 +369,7 @@ void RemuxPage::RetranslateUi() {
 
     settingsGroupBox->setTitle(tr("Output Settings"));
     formatLabel->setText(tr("Output Format:"));
+    formatWidget->RetranslateUi();
 
     outputFileSelector->setTitle(tr("Output File"));
     outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));

@@ -39,7 +39,7 @@ ExtractAudioPage::~ExtractAudioPage() {
 void ExtractAudioPage::OnPageActivated() {
     BasePage::OnPageActivated();
     HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
-                           formatComboBox->currentText());
+                           formatWidget->GetFormat());
 }
 
 void ExtractAudioPage::OnOutputPathUpdate() {
@@ -73,26 +73,17 @@ void ExtractAudioPage::SetupUI() {
     settingsLayout->setSpacing(10);
 
     // Output Format
-    formatLabel = new QLabel(tr("Output Format:"), settingsGroupBox);
-    formatComboBox = new QComboBox(settingsGroupBox);
-    formatComboBox->addItems({"auto", "aac", "mp3", "wav", "flac", "ogg", "m4a"});
-    formatComboBox->setCurrentIndex(0);  // Default to "auto"
-    connect(formatComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &ExtractAudioPage::OnFormatChanged);
-
+    formatLabel = new QLabel(tr("Output Format:"), this);
+    formatWidget = new FormatSelectorWidget(FormatSelectorWidget::Audio, true, this);
+    connect(formatWidget, &FormatSelectorWidget::FormatChanged, this, &ExtractAudioPage::OnFormatChanged);
     settingsLayout->addWidget(formatLabel, 0, 0);
-    settingsLayout->addWidget(formatComboBox, 0, 1);
+    settingsLayout->addWidget(formatWidget, 0, 1);
 
     // Bitrate
-    bitrateLabel = new QLabel(tr("Bitrate (kbps):"), settingsGroupBox);
-    bitrateSpinBox = new QSpinBox(settingsGroupBox);
-    bitrateSpinBox->setRange(0, 320);
-    bitrateSpinBox->setValue(0);
-    bitrateSpinBox->setSpecialValueText(tr("auto"));
-    bitrateSpinBox->setSuffix(tr(" kbps"));
-
+    bitrateLabel = new QLabel(tr("Bitrate:"), this);
+    bitrateWidget = new BitrateWidget(BitrateWidget::Audio, this);
     settingsLayout->addWidget(bitrateLabel, 1, 0);
-    settingsLayout->addWidget(bitrateSpinBox, 1, 1);
+    settingsLayout->addWidget(bitrateWidget, 1, 1);
 
     mainLayout->addWidget(settingsGroupBox);
 
@@ -167,8 +158,8 @@ void ExtractAudioPage::OnOutputFileSelected(const QString &filePath) {
     }
 }
 
-void ExtractAudioPage::OnFormatChanged(int index) {
-    Q_UNUSED(index);
+void ExtractAudioPage::OnFormatChanged(const QString &format) {
+    Q_UNUSED(format);
     UpdateOutputPath();
 }
 
@@ -176,12 +167,12 @@ EncodeParameter* ExtractAudioPage::CreateEncodeParameter() {
     EncodeParameter *encodeParam = new EncodeParameter();
 
     // Get settings
-    QString format = formatComboBox->currentText();
-    int bitrate = bitrateSpinBox->value();
+    QString format = formatWidget->GetFormat();
+    int bitrate = bitrateWidget->GetBitrate();
 
     // For batch mode, we don't handle "auto" format here
     // It will be handled per-file if needed
-    if (format == "auto") {
+    if (format.isEmpty() || format == "auto") {
         // Default use copy mode (no re-encoding)
         encodeParam->set_audio_codec_name("");
     }
@@ -201,8 +192,8 @@ void ExtractAudioPage::OnExtractClicked() {
     // Check if batch mode is active
     if (batchModeHelper->IsBatchMode()) {
         // Batch mode: Add to queue
-        QString format = formatComboBox->currentText();
-        if (format == "auto") {
+        QString format = formatWidget->GetFormat();
+        if (format.isEmpty() || format == "auto") {
             format = "aac";  // Default format for batch mode
         }
         batchModeHelper->AddToQueue(format);
@@ -218,10 +209,10 @@ void ExtractAudioPage::OnExtractClicked() {
     ProcessParameter *processParam = new ProcessParameter();
 
     // Get settings
-    QString format = formatComboBox->currentText();
+    QString format = formatWidget->GetFormat();
 
     // Determine actual format for "auto" mode
-    if (format == "auto") {
+    if (format.isEmpty() || format == "auto") {
         // Detect from input file
         QString detectedCodec = DetectAudioCodecFromFile(inputPath);
         format = MapCodecToFormat(detectedCodec);
@@ -252,8 +243,8 @@ void ExtractAudioPage::UpdateOutputPath() {
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
-            QString format = formatComboBox->currentText();
-            if (format == "auto") {
+            QString format = formatWidget->GetFormat();
+            if (format.isEmpty() || format == "auto") {
                 // Detect audio codec from input file and map to format
                 QString detectedCodec = DetectAudioCodecFromFile(inputPath);
                 format = MapCodecToFormat(detectedCodec);
@@ -310,9 +301,9 @@ void ExtractAudioPage::RetranslateUi() {
 
     settingsGroupBox->setTitle(tr("Audio Settings"));
     formatLabel->setText(tr("Output Format:"));
-    bitrateLabel->setText(tr("Bitrate (kbps):"));
-    bitrateSpinBox->setSpecialValueText(tr("auto"));
-    bitrateSpinBox->setSuffix(tr(" kbps"));
+    formatWidget->RetranslateUi();
+    bitrateLabel->setText(tr("Bitrate:"));
+    bitrateWidget->RetranslateUi();
 
     outputFileSelector->setTitle(tr("Output File"));
     outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));

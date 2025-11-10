@@ -24,7 +24,8 @@
 #include "progress_widget.h"
 #include "batch_output_widget.h"
 #include "batch_mode_helper.h"
-#include <QComboBox>
+#include "bitrate_widget.h"
+#include "format_selector_widget.h"
 #include <QGroupBox>
 #include <QLabel>
 #include <QProgressBar>
@@ -49,7 +50,7 @@ protected:
 private slots:
     void OnInputFileSelected(const QString &filePath);
     void OnOutputFileSelected(const QString &filePath);
-    void OnFormatChanged(int index);
+    void OnFormatChanged(const QString &format);
     void OnExtractClicked();
     void OnExtractFinished(bool success);
 
@@ -71,9 +72,9 @@ private:
     // Settings section
     QGroupBox *settingsGroupBox;
     QLabel *formatLabel;
-    QComboBox *formatComboBox;
+    FormatSelectorWidget *formatWidget;
     QLabel *bitrateLabel;
-    QSpinBox *bitrateSpinBox;
+    BitrateWidget *bitrateWidget;
 
     // Progress section
     ProgressWidget *progressWidget;

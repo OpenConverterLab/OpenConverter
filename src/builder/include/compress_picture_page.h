@@ -22,7 +22,10 @@
 #include "file_selector_widget.h"
 #include "batch_output_widget.h"
 #include "batch_mode_helper.h"
-#include <QComboBox>
+#include "resolution_widget.h"
+#include "pixel_format_widget.h"
+#include "quality_widget.h"
+#include "format_selector_widget.h"
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
@@ -51,7 +54,7 @@ private slots:
     void OnInputFileSelected(const QString &filePath);
     void OnOutputFileSelected(const QString &filePath);
     void OnConvertClicked();
-    void OnFormatChanged(int index);
+    void OnFormatChanged(const QString &format);
 
 private:
     void SetupUI();
@@ -67,15 +70,13 @@ private:
     // UI Components - Settings Section
     QGroupBox *settingsGroupBox;
     QLabel *formatLabel;
-    QComboBox *formatComboBox;
-    QLabel *widthLabel;
-    QSpinBox *widthSpinBox;
-    QLabel *heightLabel;
-    QSpinBox *heightSpinBox;
-    QLabel *pixFmtLabel;
-    QComboBox *pixFmtComboBox;
+    FormatSelectorWidget *formatWidget;
+    QLabel *resolutionLabel;
+    ResolutionWidget *resolutionWidget;
+    QLabel *pixelFormatLabel;
+    PixelFormatWidget *pixelFormatWidget;
     QLabel *qualityLabel;
-    QSpinBox *qualitySpinBox;
+    QualityWidget *qualityWidget;
 
     // UI Components - Action Section
     QPushButton *convertButton;
