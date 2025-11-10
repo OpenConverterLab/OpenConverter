@@ -18,6 +18,8 @@
 #include "../include/transcode_page.h"
 #include "../include/open_converter.h"
 #include "../include/shared_data.h"
+#include "../include/batch_queue.h"
+#include "../include/batch_item.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
@@ -64,11 +66,11 @@ void TranscodePage::SetupUI() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Input File Selector
+    // Input File Selector (with Batch button)
     inputFileSelector = new FileSelectorWidget(
         tr("Input File"),
         FileSelectorWidget::InputFile,
-        tr("Select a media file..."),
+        tr("Select a media file or click Batch for multiple files..."),
         tr("Media Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"),
         tr("Select Media File"),
         this
@@ -188,11 +190,7 @@ void TranscodePage::SetupUI() {
 
     mainLayout->addWidget(formatGroupBox);
 
-    // Progress Section
-    progressWidget = new ProgressWidget(this);
-    mainLayout->addWidget(progressWidget);
-
-    // Output File Selector
+    // Output File Selector (for single file mode)
     outputFileSelector = new FileSelectorWidget(
         tr("Output File"),
         FileSelectorWidget::OutputFile,
@@ -204,24 +202,41 @@ void TranscodePage::SetupUI() {
     connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &TranscodePage::OnOutputFileSelected);
     mainLayout->addWidget(outputFileSelector);
 
+    // Batch Output Widget (for batch mode, replaces output file selector)
+    batchOutputWidget = new BatchOutputWidget(this);
+    batchOutputWidget->setVisible(false);
+    mainLayout->addWidget(batchOutputWidget);
+
     // Transcode Button
-    transcodeButton = new QPushButton(tr("Transcode"), this);
+    transcodeButton = new QPushButton(tr("Transcode / Add to Queue"), this);
     transcodeButton->setEnabled(false);
     transcodeButton->setMinimumHeight(40);
     connect(transcodeButton, &QPushButton::clicked, this, &TranscodePage::OnTranscodeClicked);
     mainLayout->addWidget(transcodeButton);
 
+    // Progress Section (placed after button to avoid blank space)
+    progressWidget = new ProgressWidget(this);
+    mainLayout->addWidget(progressWidget);
+
     // Create conversion runner
     converterRunner = new ConverterRunner(
         progressWidget->GetProgressBar(), progressWidget->GetProgressLabel(), transcodeButton,
-        tr("Transcoding..."), tr("Transcode"),
+        tr("Transcoding..."), tr("Transcode / Add to Queue"),
         tr("Success"), tr("File transcoded successfully!"),
         tr("Error"), tr("Failed to transcode file."),
         this
     );
     connect(converterRunner, &ConverterRunner::ConversionFinished, this, &TranscodePage::OnTranscodeFinished);
 
-    mainLayout->addStretch();
+    // Create batch mode helper
+    batchModeHelper = new BatchModeHelper(
+        inputFileSelector, batchOutputWidget, transcodeButton,
+        tr("Transcode / Add to Queue"), tr("Add to Queue"), this
+    );
+    batchModeHelper->SetSingleOutputWidget(outputFileSelector);  // Hide output selector in batch mode
+    batchModeHelper->SetEncodeParameterCreator([this]() {
+        return CreateEncodeParameter();
+    });
 
     setLayout(mainLayout);
 }
@@ -263,55 +278,21 @@ void TranscodePage::OnVideoCodecChanged(int index) {
 }
 
 void TranscodePage::OnTranscodeClicked() {
+    // Check if batch mode is active
+    if (batchModeHelper->IsBatchMode()) {
+        // Batch mode: Add to queue
+        QString format = formatComboBox->currentText();
+        batchModeHelper->AddToQueue(format);
+        return;
+    }
+
+    // Single file mode: Transcode immediately
     QString inputPath = inputFileSelector->GetFilePath();
     QString outputPath = outputFileSelector->GetFilePath();
 
     // Create encode parameters
-    EncodeParameter *encodeParam = new EncodeParameter();
+    EncodeParameter *encodeParam = CreateEncodeParameter();
     ProcessParameter *processParam = new ProcessParameter();
-
-    // Video settings
-    QString videoCodec = videoCodecComboBox->currentText();
-    if (videoCodec != "auto") {
-        encodeParam->set_video_codec_name(videoCodec.toStdString());
-    }
-
-    int videoBitrate = videoBitrateSpinBox->value();
-    if (videoBitrate > 0) {
-        encodeParam->set_video_bit_rate(videoBitrate * 1000);
-    }
-
-    int width = widthSpinBox->value();
-    if (width > 0) {
-        encodeParam->set_width(width);
-    }
-
-    int height = heightSpinBox->value();
-    if (height > 0) {
-        encodeParam->set_height(height);
-    }
-
-    QString pixFmt = pixFmtComboBox->currentText();
-    if (pixFmt != "auto") {
-        encodeParam->set_pixel_format(pixFmt.toStdString());
-    }
-
-    // Audio settings
-    QString audioCodec = audioCodecComboBox->currentText();
-    if (audioCodec != "auto") {
-        encodeParam->set_audio_codec_name(audioCodec.toStdString());
-    }
-
-    int audioBitrate = audioBitrateSpinBox->value();
-    if (audioBitrate > 0) {
-        encodeParam->set_audio_bit_rate(audioBitrate * 1000);
-    }
-
-    // Preset
-    QString preset = presetComboBox->currentText();
-    if (!preset.isEmpty()) {
-        encodeParam->set_preset(preset.toStdString());
-    }
 
     // Run conversion using ConverterRunner
     converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam);
@@ -341,11 +322,63 @@ QString TranscodePage::GetFileExtension(const QString &filePath) {
     return fileInfo.suffix().toLower();
 }
 
+EncodeParameter* TranscodePage::CreateEncodeParameter() {
+    EncodeParameter *encodeParam = new EncodeParameter();
+
+    // Video codec
+    QString videoCodec = videoCodecComboBox->currentText();
+    if (videoCodec != "auto") {
+        encodeParam->set_video_codec_name(videoCodec.toStdString());
+    }
+
+    // Video bitrate
+    int videoBitrate = videoBitrateSpinBox->value();
+    if (videoBitrate > 0) {
+        encodeParam->set_video_bit_rate(videoBitrate * 1000);
+    }
+
+    // Dimension
+    int width = widthSpinBox->value();
+    int height = heightSpinBox->value();
+    if (width > 0) {
+        encodeParam->set_width(width);
+    }
+    if (height > 0) {
+        encodeParam->set_height(height);
+    }
+
+    // Pixel format
+    QString pixFmt = pixFmtComboBox->currentText();
+    if (pixFmt != "auto") {
+        encodeParam->set_pixel_format(pixFmt.toStdString());
+    }
+
+    // Audio codec
+    QString audioCodec = audioCodecComboBox->currentText();
+    if (audioCodec != "auto") {
+        encodeParam->set_audio_codec_name(audioCodec.toStdString());
+    }
+
+    // Audio bitrate
+    int audioBitrate = audioBitrateSpinBox->value();
+    if (audioBitrate > 0) {
+        encodeParam->set_audio_bit_rate(audioBitrate * 1000);
+    }
+
+    // Preset
+    QString preset = presetComboBox->currentText();
+    if (!preset.isEmpty()) {
+        encodeParam->set_preset(preset.toStdString());
+    }
+
+    return encodeParam;
+}
+
 void TranscodePage::RetranslateUi() {
     // Update all translatable strings
     inputFileSelector->setTitle(tr("Input File"));
     inputFileSelector->SetPlaceholder(tr("Select a media file..."));
-    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
+    inputFileSelector->RetranslateUi();
 
     videoGroupBox->setTitle(tr("Video Settings"));
     videoCodecLabel->setText(tr("Codec:"));
@@ -372,6 +405,19 @@ void TranscodePage::RetranslateUi() {
 
     outputFileSelector->setTitle(tr("Output File"));
     outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
-    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
-    transcodeButton->setText(tr("Transcode"));
+    outputFileSelector->RetranslateUi();
+
+    // Update batch widgets
+    batchOutputWidget->RetranslateUi();
+
+    // Update button text based on batch mode
+    if (batchModeHelper) {
+        if (inputFileSelector->IsBatchMode()) {
+            transcodeButton->setText(tr("Add to Queue"));
+        } else {
+            transcodeButton->setText(tr("Transcode / Add to Queue"));
+        }
+    } else {
+        transcodeButton->setText(tr("Transcode"));
+    }
 }

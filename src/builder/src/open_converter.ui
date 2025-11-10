@@ -188,6 +188,19 @@ QLabel {
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QPushButton" name="queueButton">
+         <property name="text">
+          <string>📋 Queue</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>View batch processing queue</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>

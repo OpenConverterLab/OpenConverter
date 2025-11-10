@@ -20,6 +20,8 @@
 
 #include "base_page.h"
 #include "file_selector_widget.h"
+#include "batch_output_widget.h"
+#include "batch_mode_helper.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
@@ -54,11 +56,13 @@ private slots:
 private:
     void SetupUI();
     void UpdateOutputPath();
+    EncodeParameter* CreateEncodeParameter();
 
     // UI Components - Input/Output Section
     QVBoxLayout *mainLayout;
     FileSelectorWidget *inputFileSelector;
     FileSelectorWidget *outputFileSelector;
+    BatchOutputWidget *batchOutputWidget;
 
     // UI Components - Settings Section
     QGroupBox *settingsGroupBox;
@@ -80,6 +84,9 @@ private:
     EncodeParameter *encodeParameter;
     ProcessParameter *processParameter;
     Converter *converter;
+
+    // Batch mode helper
+    BatchModeHelper *batchModeHelper;
 };
 
 #endif // COMPRESS_PICTURE_PAGE_H

@@ -82,7 +82,8 @@ public:
     void SetPlaceholder(const QString &text);
 
     /**
-     * @brief Set the file dialog filter (e.g., "Video Files (*.mp4 *.avi);;All Files (*.*)")
+     * @brief Set the file dialog filter
+     * @param filter Qt file dialog filter format (e.g., "Video Files (*.mp4 *.avi);;All Files (*.*)")
      */
     void SetFileFilter(const QString &filter);
 
@@ -106,6 +107,36 @@ public:
      */
     QPushButton* GetBrowseButton() const { return browseButton; }
 
+    /**
+     * @brief Get the batch button widget (for direct access if needed)
+     */
+    QPushButton* GetBatchButton() const { return batchButton; }
+
+    /**
+     * @brief Enable or disable batch mode button
+     */
+    void SetBatchEnabled(bool enabled);
+
+    /**
+     * @brief Get the list of batch files (if batch mode was used)
+     */
+    QStringList GetBatchFiles() const { return batchFiles; }
+
+    /**
+     * @brief Check if batch mode is active (multiple files selected)
+     */
+    bool IsBatchMode() const { return !batchFiles.isEmpty(); }
+
+    /**
+     * @brief Clear batch files and exit batch mode
+     */
+    void ClearBatchFiles();
+
+    /**
+     * @brief Retranslate UI when language changes
+     */
+    void RetranslateUi();
+
 signals:
     /**
      * @brief Emitted when user selects a file via the browse button
@@ -118,17 +149,27 @@ signals:
      */
     void FilePathChanged(const QString &filePath);
 
+    /**
+     * @brief Emitted when batch files are selected
+     * @param files List of selected files
+     */
+    void BatchFilesSelected(const QStringList &files);
+
 private slots:
     void OnBrowseClicked();
+    void OnBatchClicked();
 
 private:
     void SetupUI();
+    QString ConvertFilterToBatchFormat(const QString &qtFilter) const;
 
     SelectorType selectorType;
     QLineEdit *fileLineEdit;
     QPushButton *browseButton;
-    QString fileFilter;
+    QPushButton *batchButton;
+    QString fileFilter;          // Qt dialog filter format: "Video Files (*.mp4);;All Files (*.*)"
     QString dialogTitle;
+    QStringList batchFiles;
 };
 
 #endif // FILE_SELECTOR_WIDGET_H

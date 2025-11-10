@@ -16,6 +16,7 @@
  */
 
 #include "../include/file_selector_widget.h"
+#include "../include/batch_file_dialog.h"
 #include <QFileDialog>
 #include <QHBoxLayout>
 
@@ -50,8 +51,14 @@ void FileSelectorWidget::SetupUI() {
     browseButton = new QPushButton(tr("Browse..."), this);
     connect(browseButton, &QPushButton::clicked, this, &FileSelectorWidget::OnBrowseClicked);
 
+    // Add batch button (only for input files)
+    batchButton = new QPushButton(tr("Batch"), this);
+    connect(batchButton, &QPushButton::clicked, this, &FileSelectorWidget::OnBatchClicked);
+    batchButton->setVisible(selectorType == InputFile);  // Only show for input files
+
     layout->addWidget(fileLineEdit, 1);  // Stretch factor 1 for line edit
     layout->addWidget(browseButton);
+    layout->addWidget(batchButton);
 
     setLayout(layout);
 
@@ -62,23 +69,31 @@ void FileSelectorWidget::SetupUI() {
 void FileSelectorWidget::OnBrowseClicked() {
     QString selectedFile;
 
+    // Get starting directory (don't use batch mode text as path)
+    QString startPath;
+    if (!IsBatchMode() && !fileLineEdit->text().isEmpty()) {
+        startPath = fileLineEdit->text();
+    }
+
     if (selectorType == InputFile) {
         selectedFile = QFileDialog::getOpenFileName(
             this,
             dialogTitle,
-            fileLineEdit->text().isEmpty() ? QString() : fileLineEdit->text(),
+            startPath,
             fileFilter
         );
     } else {
         selectedFile = QFileDialog::getSaveFileName(
             this,
             dialogTitle,
-            fileLineEdit->text().isEmpty() ? QString() : fileLineEdit->text(),
+            startPath,
             fileFilter
         );
     }
 
     if (!selectedFile.isEmpty()) {
+        // Clear batch mode when selecting a single file
+        batchFiles.clear();
         fileLineEdit->setText(selectedFile);
         emit FileSelected(selectedFile);
     }
@@ -86,6 +101,11 @@ void FileSelectorWidget::OnBrowseClicked() {
 
 void FileSelectorWidget::SetFilePath(const QString &path) {
     fileLineEdit->setText(path);
+
+    // Clear batch files when setting a single file path
+    if (!path.isEmpty()) {
+        batchFiles.clear();
+    }
 }
 
 QString FileSelectorWidget::GetFilePath() const {
@@ -96,8 +116,67 @@ void FileSelectorWidget::SetPlaceholder(const QString &text) {
     fileLineEdit->setPlaceholderText(text);
 }
 
+void FileSelectorWidget::SetBatchEnabled(bool enabled) {
+    batchButton->setVisible(enabled && selectorType == InputFile);
+}
+
+void FileSelectorWidget::OnBatchClicked() {
+    BatchFileDialog *dialog = new BatchFileDialog(this);
+    dialog->SetFileFilter(ConvertFilterToBatchFormat(fileFilter));
+    dialog->SetFiles(batchFiles);
+
+    if (dialog->exec() == QDialog::Accepted) {
+        batchFiles = dialog->GetSelectedFiles();
+
+        if (!batchFiles.isEmpty()) {
+            // Update line edit to show count
+            fileLineEdit->setText(tr("%1 files selected").arg(batchFiles.count()));
+            emit BatchFilesSelected(batchFiles);
+        } else {
+            fileLineEdit->clear();
+        }
+    }
+
+    dialog->deleteLater();
+}
+
+void FileSelectorWidget::ClearBatchFiles() {
+    batchFiles.clear();
+    fileLineEdit->clear();
+}
+
 void FileSelectorWidget::SetFileFilter(const QString &filter) {
     fileFilter = filter;
+}
+
+QString FileSelectorWidget::ConvertFilterToBatchFormat(const QString &qtFilter) const {
+    // Convert Qt filter format to batch format
+    // Input: "Video Files (*.mp4 *.avi *.mkv);;All Files (*.*)"
+    // Output: "*.mp4,*.avi,*.mkv"
+
+    if (qtFilter.isEmpty()) {
+        return QString();
+    }
+
+    // Extract first filter group (before ";;")
+    QString firstGroup = qtFilter.split(";;").first();
+
+    // Extract extensions from parentheses
+    int start = firstGroup.indexOf('(');
+    int end = firstGroup.indexOf(')');
+    if (start == -1 || end == -1) {
+        return QString();
+    }
+
+    QString extensions = firstGroup.mid(start + 1, end - start - 1);
+
+    // Convert space-separated to comma-separated
+    QStringList extList = extensions.split(' ', Qt::SkipEmptyParts);
+
+    // Filter out "All Files (*.*)" pattern
+    extList.removeAll("*.*");
+
+    return extList.join(',');
 }
 
 void FileSelectorWidget::SetDialogTitle(const QString &title) {
@@ -106,4 +185,14 @@ void FileSelectorWidget::SetDialogTitle(const QString &title) {
 
 void FileSelectorWidget::SetBrowseEnabled(bool enabled) {
     browseButton->setEnabled(enabled);
+}
+
+void FileSelectorWidget::RetranslateUi() {
+    browseButton->setText(tr("Browse..."));
+    batchButton->setText(tr("Batch"));
+
+    // Update batch file count display if in batch mode
+    if (!batchFiles.isEmpty()) {
+        fileLineEdit->setText(tr("%1 files selected").arg(batchFiles.count()));
+    }
 }

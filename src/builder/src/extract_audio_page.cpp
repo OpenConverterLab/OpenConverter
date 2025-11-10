@@ -99,7 +99,7 @@ void ExtractAudioPage::SetupUI() {
     progressWidget = new ProgressWidget(this);
     mainLayout->addWidget(progressWidget);
 
-    // Output File Selector
+    // Output File Selector (for single file mode)
     outputFileSelector = new FileSelectorWidget(
         tr("Output File"),
         FileSelectorWidget::OutputFile,
@@ -111,8 +111,13 @@ void ExtractAudioPage::SetupUI() {
     connect(outputFileSelector, &FileSelectorWidget::FileSelected, this, &ExtractAudioPage::OnOutputFileSelected);
     mainLayout->addWidget(outputFileSelector);
 
+    // Batch Output Widget (for batch mode, replaces output file selector)
+    batchOutputWidget = new BatchOutputWidget(this);
+    batchOutputWidget->setVisible(false);
+    mainLayout->addWidget(batchOutputWidget);
+
     // Extract Button
-    extractButton = new QPushButton(tr("Extract Audio"), this);
+    extractButton = new QPushButton(tr("Extract Audio / Add to Queue"), this);
     extractButton->setEnabled(false);
     extractButton->setMinimumHeight(40);
     connect(extractButton, &QPushButton::clicked, this, &ExtractAudioPage::OnExtractClicked);
@@ -121,12 +126,22 @@ void ExtractAudioPage::SetupUI() {
     // Create conversion runner
     converterRunner = new ConverterRunner(
         progressWidget->GetProgressBar(), progressWidget->GetProgressLabel(), extractButton,
-        tr("Extracting..."), tr("Extract Audio"),
+        tr("Extracting..."), tr("Extract Audio / Add to Queue"),
         tr("Success"), tr("Audio extracted successfully!"),
         tr("Error"), tr("Failed to extract audio."),
         this
     );
     connect(converterRunner, &ConverterRunner::ConversionFinished, this, &ExtractAudioPage::OnExtractFinished);
+
+    // Create batch mode helper
+    batchModeHelper = new BatchModeHelper(
+        inputFileSelector, batchOutputWidget, extractButton,
+        tr("Extract Audio / Add to Queue"), tr("Add to Queue"), this
+    );
+    batchModeHelper->SetSingleOutputWidget(outputFileSelector);  // Hide output selector in batch mode
+    batchModeHelper->SetEncodeParameterCreator([this]() {
+        return CreateEncodeParameter();
+    });
 
     // Add stretch to push everything to the top
     mainLayout->addStretch();
@@ -156,19 +171,55 @@ void ExtractAudioPage::OnFormatChanged(int index) {
     UpdateOutputPath();
 }
 
-void ExtractAudioPage::OnExtractClicked() {
-    QString inputPath = inputFileSelector->GetFilePath();
-    QString outputPath = outputFileSelector->GetFilePath();
-
-    // Create parameters
+EncodeParameter* ExtractAudioPage::CreateEncodeParameter() {
     EncodeParameter *encodeParam = new EncodeParameter();
-    ProcessParameter *processParam = new ProcessParameter();
 
     // Get settings
     QString format = formatComboBox->currentText();
     int bitrate = bitrateSpinBox->value();
 
-    // Determine actual format
+    // For batch mode, we don't handle "auto" format here
+    // It will be handled per-file if needed
+    if (format == "auto") {
+        // Default use copy mode (no re-encoding)
+        encodeParam->set_audio_codec_name("");
+    }
+    // Note: For non-auto formats, codec is auto-selected by backend based on output file extension
+
+    // Disable video (extract audio only)
+    encodeParam->set_video_codec_name("");
+
+    if (bitrate > 0) {
+        encodeParam->set_audio_bit_rate(bitrate * 1000);  // Convert kbps to bps
+    }
+
+    return encodeParam;
+}
+
+void ExtractAudioPage::OnExtractClicked() {
+    // Check if batch mode is active
+    if (batchModeHelper->IsBatchMode()) {
+        // Batch mode: Add to queue
+        QString format = formatComboBox->currentText();
+        if (format == "auto") {
+            format = "aac";  // Default format for batch mode
+        }
+        batchModeHelper->AddToQueue(format);
+        return;
+    }
+
+    // Single file mode: Extract immediately
+    QString inputPath = inputFileSelector->GetFilePath();
+    QString outputPath = outputFileSelector->GetFilePath();
+
+    // Create parameters
+    EncodeParameter *encodeParam = CreateEncodeParameter();
+    ProcessParameter *processParam = new ProcessParameter();
+
+    // Get settings
+    QString format = formatComboBox->currentText();
+
+    // Determine actual format for "auto" mode
     if (format == "auto") {
         // Detect from input file
         QString detectedCodec = DetectAudioCodecFromFile(inputPath);
@@ -180,17 +231,6 @@ void ExtractAudioPage::OnExtractClicked() {
         QString dirPath = inputInfo.absolutePath();
         outputPath = QString("%1/%2-oc-output.%3").arg(dirPath, baseName, format);
         outputFileSelector->SetFilePath(outputPath);
-
-        // Default use copy mode (no re-encoding)
-        encodeParam->set_audio_codec_name("");
-    }
-    // Note: For non-auto formats, codec is auto-selected by backend based on output file extension
-
-    // Disable video (extract audio only)
-    encodeParam->set_video_codec_name("");
-
-    if (bitrate > 0) {
-        encodeParam->set_audio_bit_rate(bitrate * 1000);  // Convert kbps to bps
     }
 
     // Run conversion using ConverterRunner
@@ -262,7 +302,7 @@ void ExtractAudioPage::RetranslateUi() {
     // Update all translatable strings
     inputFileSelector->setTitle(tr("Input File"));
     inputFileSelector->SetPlaceholder(tr("Select a video file..."));
-    inputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
+    inputFileSelector->RetranslateUi();
 
     settingsGroupBox->setTitle(tr("Audio Settings"));
     formatLabel->setText(tr("Output Format:"));
@@ -272,6 +312,19 @@ void ExtractAudioPage::RetranslateUi() {
 
     outputFileSelector->setTitle(tr("Output File"));
     outputFileSelector->SetPlaceholder(tr("Output file path will be generated automatically..."));
-    outputFileSelector->GetBrowseButton()->setText(tr("Browse..."));
-    extractButton->setText(tr("Extract Audio"));
+    outputFileSelector->RetranslateUi();
+
+    // Update batch widgets
+    batchOutputWidget->RetranslateUi();
+
+    // Update button text based on batch mode
+    if (batchModeHelper) {
+        if (inputFileSelector->IsBatchMode()) {
+            extractButton->setText(tr("Add to Queue"));
+        } else {
+            extractButton->setText(tr("Extract Audio / Add to Queue"));
+        }
+    } else {
+        extractButton->setText(tr("Extract Audio"));
+    }
 }
