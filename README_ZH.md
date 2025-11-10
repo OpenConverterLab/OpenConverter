@@ -8,15 +8,16 @@ OpenConverter 是一个基于 **FFmpeg**源代码、**Qt**开源框架、**BMF�
 
 这款转换器具有以下主要功能：
 
-1. 支持更改视频编解码器以进行编码（例如libx264，libx265）
+1. 支持更改音视频编解码器以进行编码（例如libx264，libx265，aac，ac3），支持分辨率缩放和像素格式转换
 2. 支持无编码转换多媒体。
 3. 支持显示多媒体文件中视频和音频流的信息。
 4. 支持图片压缩，可调整格式和质量。
 5. 支持从视频中提取音频。
 6. 支持视频剪切，内置FFmpeg播放器，精确时间选择。
-7. 支持平滑的进度跟踪和准确的剩余时间显示。
-8. 运行时切换转码内核（FFmpeg、FFTool、BMF）
-9. 提供图形界面和命令行界面（CLI）双重支持。
+7. **支持批量处理，队列管理多个文件。**
+8. 支持平滑的进度跟踪和准确的剩余时间显示。
+9. 运行时切换转码内核（FFmpeg、FFTool、BMF）
+10. 提供图形界面和命令行界面（CLI）双重支持。
 
 本项目使用[Qt框架](./doc/Qt.md)、FFmpeg库、[BMF框架](https://github.com/BabitMF/bmf)完成开发。
 
@@ -39,6 +40,12 @@ FFmpeg 开发教程可参考 [Learn FFmpeg the Hard Way](https://github.com/TSGU
 ### 1. 支持更改音视频编解码器以进行编码（例如libx264，libx265，aac，ac3）
 
 这款转换器允许用户轻松地更改音视频编解码器。例如，您可以选择使用libx264或libx265编码器，以获得更高的压缩率和更好的视频质量。
+
+此外还支持：
+- **分辨率缩放**（例如：1920x1080 → 1280x720，4K → 1080p）
+- **像素格式转换**（例如：yuv420p、yuv444p、rgb24）
+- 视频和音频的比特率控制
+- 使用qscale参数进行质量控制
 
 ### 2. 支持无编码转换多媒体。
 
@@ -69,7 +76,17 @@ FFmpeg 开发教程可参考 [Learn FFmpeg the Hard Way](https://github.com/TSGU
 - 精确的开始/结束时间选择
 - 支持所有FFmpeg兼容格式
 
-### 7. 高级进度跟踪和时间估算
+### 7. 批量处理
+
+高效处理多个文件：
+- **可视化文件过滤器管理**，基于标签的界面
+- 单独添加文件或扫描整个目录
+- 队列管理，进度监控
+- 可配置输出目录和文件后缀
+- 支持转码、提取音频、压缩图片和创建GIF操作
+- 队列中每个文件的实时进度跟踪
+
+### 8. 高级进度跟踪和时间估算
 
 在转换文件时，该播放器提供：
 - 平滑的进度更新，具有UI友好的刷新率
@@ -77,7 +94,7 @@ FFmpeg 开发教程可参考 [Learn FFmpeg the Hard Way](https://github.com/TSGU
 - 实时进度百分比和持续时间跟踪
 - 详细的控制台输出，用于监控转换状态
 
-### 8. 运行时切换转码内核（FFmpeg、FFTool、BMF）
+### 9. 运行时切换转码内核（FFmpeg、FFTool、BMF）
 
 该软件提供三种不同的转码内核供选择：
 - 基于FFmpeg API的内核，用于直接库集成
@@ -85,22 +102,27 @@ FFmpeg 开发教程可参考 [Learn FFmpeg the Hard Way](https://github.com/TSGU
 - 基于BMF框架的内核，用于高级处理
 您还可以根据需求选择性编译这些内核。
 
-### 9. 命令行界面（CLI）支持
+### 10. 命令行界面（CLI）支持
 
 非图形界面模式使用方法：
 ```bash
-./OpenConverter [options] input_file output_file
-
+> ./OpenConverter
+Usage: ./OpenConverter [options] input_file output_file
 Options:
-  -t, --transcoder TYPE    Set transcoder type (FFMPEG, BMF, FFTOOL)
-  -v, --video-codec CODEC  Set video codec
+  --transcoder TYPE        Set transcoder type (FFMPEG, BMF, FFTOOL)
+  -v, --video-codec CODEC  Set video codec (could set copy)
   -q, --qscale QSCALE      Set qscale for video codec
-  -a, --audio-codec CODEC  Set audio codec
+  -a, --audio-codec CODEC  Set audio codec (could set copy)
   -b:v, --bitrate:video BITRATE    Set bitrate for video codec
   -b:a, --bitrate:audio BITRATE    Set bitrate for audio codec
   -pix_fmt PIX_FMT         Set pixel format for video
   -scale SCALE(w)x(h)      Set scale for video (width x height)
+  -ss START_TIME           Set start time for cutting (format: HH:MM:SS or seconds)
+  -to END_TIME             Set end time for cutting (format: HH:MM:SS or seconds)
+  -t DURATION              Set duration for cutting (format: HH:MM:SS or seconds)
   -h, --help               Show this help message
+
+Note: Use either -to or -t, not both. If both are specified, -to takes precedence.
 ```
 
 使用示例：
