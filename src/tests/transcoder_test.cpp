@@ -123,8 +123,8 @@ TEST_F(TranscoderTest, VideoCutCopyMode) {
     ProcessParameter processParams;
 
     // Set start and end time (cut first 1 second)
-    encodeParams.SetStartTime(0.0);
-    encodeParams.SetEndTime(1.0);
+    encodeParams.set_start_time(0.0);
+    encodeParams.set_end_time(1.0);
     // Leave codecs empty for copy mode
 
     auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
@@ -149,8 +149,8 @@ TEST_F(TranscoderTest, VideoCutWithTranscode) {
     ProcessParameter processParams;
 
     // Set start and end time (cut from 0.5s to 1.5s)
-    encodeParams.SetStartTime(0.5);
-    encodeParams.SetEndTime(1.5);
+    encodeParams.set_start_time(0.5);
+    encodeParams.set_end_time(1.5);
 
     // Set video codec for transcoding
     encodeParams.set_video_codec_name("libx264");
@@ -174,8 +174,8 @@ TEST_F(TranscoderTest, VideoCutInvalidTimeRange) {
     ProcessParameter processParams;
 
     // Set invalid time range (end time before start time)
-    encodeParams.SetStartTime(2.0);
-    encodeParams.SetEndTime(1.0);
+    encodeParams.set_start_time(2.0);
+    encodeParams.set_end_time(1.0);
 
     auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
     converter->set_transcoder("FFMPEG");
@@ -199,7 +199,7 @@ TEST_F(TranscoderTest, VideoCutStartTimeOnly) {
     ProcessParameter processParams;
 
     // Set only start time (should cut from start time to end of video)
-    encodeParams.SetStartTime(0.5);
+    encodeParams.set_start_time(0.5);
     // Don't set end time (defaults to -1.0)
 
     auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
@@ -227,8 +227,8 @@ TEST_F(TranscoderTest, VideoCutWithDuration) {
     // This simulates: -ss 0.5 -t 1.0 (cut from 0.5s for 1 second duration)
     double startTime = 0.5;
     double duration = 1.0;
-    encodeParams.SetStartTime(startTime);
-    encodeParams.SetEndTime(startTime + duration);  // endTime = 1.5s
+    encodeParams.set_start_time(startTime);
+    encodeParams.set_end_time(startTime + duration);  // endTime = 1.5s
 
     auto converter = std::make_unique<Converter>(&processParams, &encodeParams);
     converter->set_transcoder("FFMPEG");

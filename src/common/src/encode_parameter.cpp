@@ -117,18 +117,18 @@ void EncodeParameter::set_preset(std::string p) {
 
 std::string EncodeParameter::get_preset() { return preset; }
 
-void EncodeParameter::SetStartTime(double t) {
+void EncodeParameter::set_start_time(double t) {
     startTime = t;
     available = true;
 }
 
-void EncodeParameter::SetEndTime(double t) {
+void EncodeParameter::set_end_time(double t) {
     endTime = t;
     available = true;
 }
 
-double EncodeParameter::GetStartTime() { return startTime; }
+double EncodeParameter::get_start_time() { return startTime; }
 
-double EncodeParameter::GetEndTime() { return endTime; }
+double EncodeParameter::get_end_time() { return endTime; }
 
 EncodeParameter::~EncodeParameter() {}

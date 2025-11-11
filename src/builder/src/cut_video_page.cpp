@@ -416,8 +416,8 @@ void CutVideoPage::OnCutClicked() {
     ProcessParameter *processParam = new ProcessParameter();
 
     // Set start and end time (convert milliseconds to seconds)
-    encodeParam->SetStartTime(startTime / 1000.0);
-    encodeParam->SetEndTime(endTime / 1000.0);
+    encodeParam->set_start_time(startTime / 1000.0);
+    encodeParam->set_end_time(endTime / 1000.0);
 
     // Use copy mode for fast cutting (no re-encoding)
     // Leave video and audio codec empty to copy streams

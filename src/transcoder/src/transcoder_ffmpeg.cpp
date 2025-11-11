@@ -20,10 +20,10 @@ extern "C" {
 #include <chrono>
 
 /* Receive pointers from converter */
-TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
-                                   EncodeParameter *encodeParameter)
-    : Transcoder(processParameter, encodeParameter) {
-    frameTotalNumber = 0;
+TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *process_parameter,
+                                   EncodeParameter *encode_parameter)
+    : Transcoder(process_parameter, encode_parameter) {
+    frame_total_number = 0;
     total_duration = 0;
     current_duration = 0;
     decoder = nullptr;
@@ -32,8 +32,8 @@ TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *processParameter,
 }
 
 void TranscoderFFmpeg::print_error(const char *msg, int ret) {
-    av_strerror(ret, errorMsg, sizeof(errorMsg));
-    av_log(NULL, AV_LOG_ERROR, " %s: %s \n", msg, errorMsg);
+    av_strerror(ret, error_msg, sizeof(error_msg));
+    av_log(NULL, AV_LOG_ERROR, " %s: %s \n", msg, error_msg);
 }
 
 void TranscoderFFmpeg::update_progress(int64_t current_pts,
@@ -219,11 +219,11 @@ int TranscoderFFmpeg::init_filters_wrapper()
         std::string filter_str = "";
 
         if (decoder->fmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-            std::string pixelFormat = encodeParameter->get_pixel_format();
-            uint16_t width = encodeParameter->get_width();
-            uint16_t height = encodeParameter->get_height();
-            if (!pixelFormat.empty()) {
-                filter_str += "format=" + pixelFormat;
+            std::string pixel_format = encode_parameter->get_pixel_format();
+            uint16_t width = encode_parameter->get_width();
+            uint16_t height = encode_parameter->get_height();
+            if (!pixel_format.empty()) {
+                filter_str += "format=" + pixel_format;
             }
             if (width > 0 && height > 0) {
                 if (!filter_str.empty()) {
@@ -256,25 +256,25 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     encoder = new StreamContext;
 
     // Declare variables before any goto statements
-    double startTime = encodeParameter->GetStartTime();
-    double endTime = encodeParameter->GetEndTime();
-    int64_t endPts = -1;
+    double start_time_sec = encode_parameter->get_start_time();
+    double end_time_sec = encode_parameter->get_end_time();
+    int64_t end_pts = -1;
 
     av_log_set_level(AV_LOG_DEBUG);
 
     decoder->filename = input_path.c_str();
     encoder->filename = output_path.c_str();
 
-    if (encodeParameter->get_video_codec_name() == "copy") {
-        copyVideo = true;
+    if (encode_parameter->get_video_codec_name() == "copy") {
+        copy_video = true;
     } else {
-        copyVideo = false;
+        copy_video = false;
     }
 
-    if (encodeParameter->get_audio_codec_name() == "copy") {
-        copyAudio = true;
+    if (encode_parameter->get_audio_codec_name() == "copy") {
+        copy_audio = true;
     } else {
-        copyAudio = false;
+        copy_audio = false;
     }
 
     if ((ret = open_media()) < 0)
@@ -311,8 +311,8 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     }
 
     // Validate time range parameters
-    if (startTime >= 0.0 && endTime >= 0.0) {
-        if (endTime <= startTime) {
+    if (start_time_sec >= 0.0 && end_time_sec >= 0.0) {
+        if (end_time_sec <= start_time_sec) {
             print_error("End time must be greater than start time", 0);
             ret = AVERROR(EINVAL);
             goto end;
@@ -321,18 +321,18 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
 
     // Validate against media duration if available
     if (total_duration > 0) {
-        double mediaDurationSec = total_duration / 1000000.0;  // Convert from microseconds
+        double media_duration_sec = total_duration / 1000000.0;  // Convert from microseconds
 
-        if (startTime >= mediaDurationSec) {
+        if (start_time_sec >= media_duration_sec) {
             print_error("Start time exceeds media duration", 0);
             ret = AVERROR(EINVAL);
             goto end;
         }
 
-        if (endTime > mediaDurationSec) {
+        if (end_time_sec > media_duration_sec) {
             av_log(NULL, AV_LOG_WARNING,
                    "End time (%.2fs) exceeds media duration (%.2fs), will cut to end\n",
-                   endTime, mediaDurationSec);
+                   end_time_sec, media_duration_sec);
             // Don't fail, just warn - we'll stop at EOF naturally
         }
     }
@@ -347,7 +347,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             if (encoder->fmtCtx->oformat->video_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
-            if (!copyVideo) {
+            if (!copy_video) {
                 if ((ret = prepare_encoder_video()) < 0)
                     goto end;
             } else {
@@ -362,7 +362,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             if (encoder->fmtCtx->oformat->audio_codec == AV_CODEC_ID_NONE) {
                 continue;
             }
-            if (!copyAudio) {
+            if (!copy_audio) {
                 if ((ret = prepare_encoder_audio()) < 0)
                     goto end;
             } else {
@@ -391,8 +391,8 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     }
 
     // Handle start time seeking if specified
-    if (startTime > 0) {
-        int64_t seek_target = static_cast<int64_t>(startTime * AV_TIME_BASE);
+    if (start_time_sec > 0) {
+        int64_t seek_target = static_cast<int64_t>(start_time_sec * AV_TIME_BASE);
         start_time = seek_target;
         if ((ret = avformat_seek_file(decoder->fmtCtx, -1, INT64_MIN, seek_target, seek_target, 0)) < 0) {
             av_log(NULL, AV_LOG_WARNING, "Could not seek to start time\n");
@@ -407,15 +407,15 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     }
 
     // Calculate end time in stream time base for comparison
-    if (endTime > 0 && decoder->videoIdx >= 0) {
-        endPts = static_cast<int64_t>(endTime / av_q2d(decoder->videoStream->time_base));
+    if (end_time_sec > 0 && decoder->videoIdx >= 0) {
+        end_pts = static_cast<int64_t>(end_time_sec / av_q2d(decoder->videoStream->time_base));
     }
 
     // read video data from multimedia files to write into destination file
     while (av_read_frame(decoder->fmtCtx, decoder->pkt) >= 0) {
         // Check if we've reached the end time
-        if (endPts > 0 && decoder->pkt->stream_index == decoder->videoIdx) {
-            if (decoder->pkt->pts >= endPts) {
+        if (end_pts > 0 && decoder->pkt->stream_index == decoder->videoIdx) {
+            if (decoder->pkt->pts >= end_pts) {
                 av_packet_unref(decoder->pkt);
                 break;
             }
@@ -427,26 +427,26 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             }
 
             // Calculate frame PTS in seconds
-            double framePts = decoder->pkt->pts * av_q2d(decoder->videoStream->time_base);
-            bool shouldSkipFrame = (startTime > 0 && framePts < startTime);
+            double frame_pts = decoder->pkt->pts * av_q2d(decoder->videoStream->time_base);
+            bool should_skip_frame = (start_time_sec > 0 && frame_pts < start_time_sec);
 
             // Update progress based on video stream (only for frames we're keeping)
-            if (!shouldSkipFrame) {
+            if (!should_skip_frame) {
                 update_progress(decoder->pkt->pts, decoder->videoStream->time_base);
             }
 
-            if (!copyVideo) {
+            if (!copy_video) {
                 // For transcoding: decode all frames to maintain decoder state,
-                // but only encode frames >= startTime
+                // but only encode frames >= start_time_sec
                 av_packet_rescale_ts(decoder->pkt, decoder->videoStream->time_base,
                                      decoder->videoCodecCtx->time_base);
-                if ((ret = transcode_video(shouldSkipFrame)) < 0) {
+                if ((ret = transcode_video(should_skip_frame)) < 0) {
                     av_log(NULL, AV_LOG_ERROR, "Failed to transcode video frame\n");
                     goto end;
                 }
             } else {
                 // For copy mode: skip packets before start time
-                if (shouldSkipFrame) {
+                if (should_skip_frame) {
                     av_packet_unref(decoder->pkt);
                     continue;
                 }
@@ -464,27 +464,27 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             }
 
             // Calculate frame PTS in seconds
-            double framePts = decoder->pkt->pts * av_q2d(decoder->audioStream->time_base);
-            bool shouldSkipFrame = (startTime > 0 && framePts < startTime);
+            double frame_pts = decoder->pkt->pts * av_q2d(decoder->audioStream->time_base);
+            bool should_skip_frame = (start_time_sec > 0 && frame_pts < start_time_sec);
 
             // Update progress based on audio stream if no video stream (only for frames we're keeping)
-            if (decoder->videoIdx < 0 && !shouldSkipFrame) {
+            if (decoder->videoIdx < 0 && !should_skip_frame) {
                 update_progress(decoder->pkt->pts,
                                 decoder->audioStream->time_base);
             }
 
-            if (!copyAudio) {
+            if (!copy_audio) {
                 // For transcoding: decode all frames to maintain decoder state,
-                // but only encode frames >= startTime
+                // but only encode frames >= start_time_sec
                 av_packet_rescale_ts(decoder->pkt, decoder->audioStream->time_base,
                                      decoder->audioCodecCtx->time_base);
-                if ((ret = transcode_audio(shouldSkipFrame)) < 0) {
+                if ((ret = transcode_audio(should_skip_frame)) < 0) {
                     av_log(NULL, AV_LOG_ERROR, "Failed to transcode audio frame\n");
                     goto end;
                 }
             } else {
                 // For copy mode: skip packets before start time
-                if (shouldSkipFrame) {
+                if (should_skip_frame) {
                     av_packet_unref(decoder->pkt);
                     continue;
                 }
@@ -498,7 +498,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             }
         }
     }
-    if (!copyVideo && encoder->videoStream) {
+    if (!copy_video && encoder->videoStream) {
         encoder->frame = NULL;
         // write the buffered frame
         if ((ret = encode_write_video(NULL)) < 0) {
@@ -506,7 +506,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
             goto end;
         }
     }
-    if (!copyAudio && encoder->audioStream) {
+    if (!copy_audio && encoder->audioStream) {
         encoder->frame = NULL;
         if ((ret = encode_write_audio(NULL)) < 0) {
             av_log(NULL, AV_LOG_ERROR, "Failed to flush audio encoder\n");
@@ -514,7 +514,7 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
         }
     }
 
-    processParameter->set_process_number(1, 1);
+    process_parameter->set_process_number(1, 1);
 
     if ((ret = av_write_trailer(encoder->fmtCtx)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Failed to write trailer");
@@ -546,8 +546,8 @@ end:
 
 int TranscoderFFmpeg::open_media() {
     int ret = -1;
-    /* set the frameNumber to zero to avoid some bugs */
-    frameNumber = 0;
+    /* set the frame_number to zero to avoid some bugs */
+    frame_number = 0;
     // open the multimedia file
     if ((ret = avformat_open_input(&decoder->fmtCtx, decoder->filename, NULL,
                                    NULL)) < 0) {
@@ -611,7 +611,7 @@ int TranscoderFFmpeg::encode_write_video(AVFrame *frame) {
     int ret = -1;
     AVPacket *output_packet = av_packet_alloc();
 
-    if (encodeParameter->get_qscale() != -1 && frame) {
+    if (encode_parameter->get_qscale() != -1 && frame) {
         frame->quality = encoder->videoCodecCtx->global_quality;
         frame->pict_type = AV_PICTURE_TYPE_NONE;
     }
@@ -854,11 +854,11 @@ int TranscoderFFmpeg::prepare_encoder_video() {
     int ret = -1;
 
     /* set the total numbers of frame */
-    frameTotalNumber = decoder->videoStream->nb_frames;
+    frame_total_number = decoder->videoStream->nb_frames;
     /**
      * set the output file parameters
      */
-    std::string codec = encodeParameter->get_video_codec_name();
+    std::string codec = encode_parameter->get_video_codec_name();
     if (codec.empty()) {
         AVCodecID videoCodecID = av_guess_codec(encoder->fmtCtx->oformat, NULL, encoder->filename,
                                                 NULL, AVMEDIA_TYPE_VIDEO);
@@ -879,14 +879,14 @@ int TranscoderFFmpeg::prepare_encoder_video() {
         return AVERROR(ENOMEM);
     }
 
-    std::string preset = encodeParameter->get_preset();
+    std::string preset = encode_parameter->get_preset();
     if (!preset.empty())
         av_opt_set(encoder->videoCodecCtx->priv_data, "preset", preset.c_str(), 0);
 
     if (decoder->videoCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
-        uint16_t width = encodeParameter->get_width();
-        uint16_t height = encodeParameter->get_height();
-        std::string pixelFormat = encodeParameter->get_pixel_format();
+        uint16_t width = encode_parameter->get_width();
+        uint16_t height = encode_parameter->get_height();
+        std::string pixel_format = encode_parameter->get_pixel_format();
         AVRational tpf = {decoder->videoCodecCtx->ticks_per_frame, 1};
         if (width > 0)
             encoder->videoCodecCtx->width = width;
@@ -897,16 +897,16 @@ int TranscoderFFmpeg::prepare_encoder_video() {
         else
             encoder->videoCodecCtx->height = decoder->videoCodecCtx->height;
 
-        if (encodeParameter->get_video_bit_rate())
-            encoder->videoCodecCtx->bit_rate = encodeParameter->get_video_bit_rate();
+        if (encode_parameter->get_video_bit_rate())
+            encoder->videoCodecCtx->bit_rate = encode_parameter->get_video_bit_rate();
         else
             encoder->videoCodecCtx->bit_rate = 0; // use default rate control(crf)
         encoder->videoCodecCtx->sample_aspect_ratio =
             decoder->videoCodecCtx->sample_aspect_ratio;
         // the AVCodecContext don't have framerate
         // outCodecCtx->time_base = av_inv_q(inCodecCtx->framerate);
-        if (!pixelFormat.empty())
-            encoder->videoCodecCtx->pix_fmt = av_get_pix_fmt(pixelFormat.c_str());
+        if (!pixel_format.empty())
+            encoder->videoCodecCtx->pix_fmt = av_get_pix_fmt(pixel_format.c_str());
         else if (encoder->videoCodec->pix_fmts)
             encoder->videoCodecCtx->pix_fmt = encoder->videoCodec->pix_fmts[0];
         else if (decoder->videoCodecCtx->pix_fmt != AV_PIX_FMT_NONE)
@@ -916,7 +916,7 @@ int TranscoderFFmpeg::prepare_encoder_video() {
 
         // encoder->videoCodecCtx->max_b_frames = 0;
         encoder->videoCodecCtx->time_base = av_inv_q(av_mul_q(decoder->videoCodecCtx->framerate, tpf));
-        int qscale = encodeParameter->get_qscale();
+        int qscale = encode_parameter->get_qscale();
         if (qscale != -1) {
             encoder->videoCodecCtx->flags |= AV_CODEC_FLAG_QSCALE;
             encoder->videoCodecCtx->global_quality = qscale * FF_QP2LAMBDA;
@@ -962,7 +962,7 @@ int TranscoderFFmpeg::prepare_encoder_audio() {
      * set the output file parameters
      */
     // find the encodec by name
-    std::string codec = encodeParameter->get_audio_codec_name();
+    std::string codec = encode_parameter->get_audio_codec_name();
     if (codec.empty()) {
         AVCodecID audioCodecID = av_guess_codec(encoder->fmtCtx->oformat, NULL, encoder->filename,
                                                 NULL, AVMEDIA_TYPE_AUDIO);
@@ -989,8 +989,8 @@ int TranscoderFFmpeg::prepare_encoder_audio() {
             decoder->audioCodecCtx->sample_rate;
         encoder->audioCodecCtx->sample_fmt =
             encoder->audioCodec->sample_fmts[0];
-        if (encodeParameter->get_audio_bit_rate())
-            encoder->audioCodecCtx->bit_rate = encodeParameter->get_audio_bit_rate();
+        if (encode_parameter->get_audio_bit_rate())
+            encoder->audioCodecCtx->bit_rate = encode_parameter->get_audio_bit_rate();
         else
             encoder->audioCodecCtx->bit_rate = decoder->audioCodecCtx->bit_rate;
         encoder->audioCodecCtx->time_base =

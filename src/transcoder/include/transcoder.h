@@ -26,9 +26,9 @@
 
 class Transcoder {
 public:
-    Transcoder(ProcessParameter *processParameter,
-               EncodeParameter *encodeParameter)
-        : processParameter(processParameter), encodeParameter(encodeParameter) {
+    Transcoder(ProcessParameter *process_parameter,
+               EncodeParameter *encode_parameter)
+        : process_parameter(process_parameter), encode_parameter(encode_parameter) {
         last_ui_update = std::chrono::system_clock::now();
     }
 
@@ -50,8 +50,8 @@ public:
                          duration_history.size();
     }
 
-    void send_process_parameter(int64_t frameNumber, int64_t frameTotalNumber) {
-        processNumber = frameNumber * 100 / frameTotalNumber;
+    void send_process_parameter(int64_t frame_number, int64_t frame_total_number) {
+        process_number = frame_number * 100 / frame_total_number;
 
         static auto last_encoder_call_time = std::chrono::system_clock::now();
         auto now = std::chrono::system_clock::now();
@@ -62,8 +62,8 @@ public:
         last_encoder_call_time = now;
 
         double smooth_duration = compute_smooth_duration(duration);
-        if (frameNumber > 0 && frameTotalNumber > 0) {
-            remainTime = smooth_duration * (100 - processNumber) / 1000;
+        if (frame_number > 0 && frame_total_number > 0) {
+            remain_time = smooth_duration * (100 - process_number) / 1000;
         }
 
         // Only update UI if enough time has passed (100ms)
@@ -72,27 +72,27 @@ public:
                 now - last_ui_update)
                 .count();
         if (time_since_last_ui_update >= 100) {
-            processParameter->set_process_number(processNumber);
-            if (frameNumber > 0 && frameTotalNumber > 0) {
-                processParameter->set_time_required(remainTime);
+            process_parameter->set_process_number(process_number);
+            if (frame_number > 0 && frame_total_number > 0) {
+                process_parameter->set_time_required(remain_time);
             }
             last_ui_update = now;
         }
 
-        std::cout << "Process Number (percentage): " << processNumber << "%\t"
+        std::cout << "Process Number (percentage): " << process_number << "%\t"
                   << "Current duration (milliseconds): " << duration << "\t"
                   << "Smoothed Duration: " << smooth_duration << " ms\t"
-                  << "Estimated Rest Time (seconds): " << remainTime
+                  << "Estimated Rest Time (seconds): " << remain_time
                   << std::endl;
     }
 
-    ProcessParameter *processParameter = NULL;
-    EncodeParameter *encodeParameter = NULL;
+    ProcessParameter *process_parameter = NULL;
+    EncodeParameter *encode_parameter = NULL;
 
-    int64_t frameNumber = 0;
-    int64_t frameTotalNumber = 0;
-    int processNumber = 0;
-    double remainTime = 0;
+    int64_t frame_number = 0;
+    int64_t frame_total_number = 0;
+    int process_number = 0;
+    double remain_time = 0;
 
     std::chrono::system_clock::time_point
         last_ui_update; // Track last UI update time

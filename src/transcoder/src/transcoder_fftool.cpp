@@ -31,10 +31,10 @@
 
 #include "../include/transcoder_fftool.h"
 
-TranscoderFFTool::TranscoderFFTool(ProcessParameter *processParameter,
-                                   EncodeParameter *encodeParameter)
-    : Transcoder(processParameter, encodeParameter), copyVideo(false),
-      copyAudio(false), frameTotalNumber(0) {}
+TranscoderFFTool::TranscoderFFTool(ProcessParameter *process_parameter,
+                                   EncodeParameter *encode_parameter)
+    : Transcoder(process_parameter, encode_parameter), copy_video(false),
+      copy_audio(false), frame_total_number(0) {}
 
 TranscoderFFTool::~TranscoderFFTool() {
     // Destructor implementation
@@ -53,23 +53,33 @@ std::string escape_windows_path(const std::string &path) {
 
 bool TranscoderFFTool::prepared_opt() {
 
-    if (encodeParameter->get_video_codec_name() == "") {
-        copyVideo = true;
+    if (encode_parameter->get_video_codec_name() == "") {
+        copy_video = true;
     } else {
-        copyVideo = false;
+        copy_video = false;
     }
 
-    if (encodeParameter->get_audio_codec_name() == "") {
-        copyAudio = true;
+    if (encode_parameter->get_audio_codec_name() == "") {
+        copy_audio = true;
     } else {
-        copyAudio = false;
+        copy_audio = false;
     }
 
-    if (encodeParameter) {
-        videoCodec = encodeParameter->get_video_codec_name();
-        videoBitRate = encodeParameter->get_video_bit_rate();
-        audioCodec = encodeParameter->get_audio_codec_name();
-        audioBitRate = encodeParameter->get_audio_bit_rate();
+    if (encode_parameter) {
+        video_codec = encode_parameter->get_video_codec_name();
+        video_bit_rate = encode_parameter->get_video_bit_rate();
+        audio_codec = encode_parameter->get_audio_codec_name();
+        audio_bit_rate = encode_parameter->get_audio_bit_rate();
+
+        // Get additional video parameters
+        width = encode_parameter->get_width();
+        height = encode_parameter->get_height();
+        qscale = encode_parameter->get_qscale();
+        pixel_format = encode_parameter->get_pixel_format();
+
+        // Get time range parameters
+        start_time = encode_parameter->get_start_time();
+        end_time = encode_parameter->get_end_time();
     }
 
     return true;
@@ -93,7 +103,14 @@ bool TranscoderFFTool::transcode(std::string input_path,
 
 // Check if FFMPEG_PATH is defined (ensure it's set by CMake)
 #ifdef FFTOOL_PATH
-    cmd << "\"" << FFTOOL_PATH << "\" -i \"" << input_path << "\"";
+    cmd << "\"" << FFTOOL_PATH << "\"";
+
+    // Add start time seeking if specified (before -i for faster seeking)
+    if (start_time > 0) {
+        cmd << " -ss " << start_time;
+    }
+
+    cmd << " -i \"" << input_path << "\"";
 #else
     std::cerr << "FFmpeg path is not defined! Ensure CMake sets FFMPEG_PATH."
               << std::endl;
@@ -103,33 +120,72 @@ bool TranscoderFFTool::transcode(std::string input_path,
     // Add the -y flag to overwrite output file without prompting
     cmd << " -y";
 
+    // Add end time or duration if specified
+    if (end_time > 0) {
+        if (start_time > 0) {
+            // If both start and end are specified, use duration
+            double cut_duration = end_time - start_time;
+            cmd << " -t " << cut_duration;
+        } else {
+            // If only end time is specified, use -to
+            cmd << " -to " << end_time;
+        }
+    }
+
     // Video codec options
-    if (copyVideo) {
+    if (copy_video) {
         cmd << " -c:v copy"; // Copy video stream without re-encoding
     } else {
-        if (!videoCodec.empty()) {
-            cmd << " -c:v " << videoCodec; // Use specified video codec
+        if (!video_codec.empty()) {
+            cmd << " -c:v " << video_codec; // Use specified video codec
         } else {
             std::cerr << "Video codec is not specified!" << std::endl;
             return false;
         }
-        if (videoBitRate > 0) {
-            cmd << " -b:v " << videoBitRate; // Set video bitrate if specified
+        if (video_bit_rate > 0) {
+            cmd << " -b:v " << video_bit_rate; // Set video bitrate if specified
+        }
+
+        // Add qscale (quality) if specified (qscale >= 0)
+        if (qscale >= 0) {
+            cmd << " -qscale:v " << qscale;
+        }
+
+        // Add pixel format if specified
+        if (!pixel_format.empty()) {
+            cmd << " -pix_fmt " << pixel_format;
+        }
+
+        // Add scale filter if width or height is specified
+        if (width > 0 || height > 0) {
+            std::string scale_filter = "scale=";
+            if (width > 0) {
+                scale_filter += std::to_string(width);
+            } else {
+                scale_filter += "-1";  // Keep aspect ratio
+            }
+            scale_filter += ":";
+            if (height > 0) {
+                scale_filter += std::to_string(height);
+            } else {
+                scale_filter += "-1";  // Keep aspect ratio
+            }
+            cmd << " -vf " << scale_filter;
         }
     }
 
     // Audio codec options
-    if (copyAudio) {
+    if (copy_audio) {
         cmd << " -c:a copy"; // Copy audio stream without re-encoding
     } else {
-        if (!audioCodec.empty()) {
-            cmd << " -c:a " << audioCodec; // Use specified audio codec
+        if (!audio_codec.empty()) {
+            cmd << " -c:a " << audio_codec; // Use specified audio codec
         } else {
             std::cerr << "Audio codec is not specified!" << std::endl;
             return false;
         }
-        if (audioBitRate > 0) {
-            cmd << " -b:a " << audioBitRate; // Set audio bitrate if specified
+        if (audio_bit_rate > 0) {
+            cmd << " -b:a " << audio_bit_rate; // Set audio bitrate if specified
         }
     }
 
@@ -146,8 +202,8 @@ bool TranscoderFFTool::transcode(std::string input_path,
 
 #ifdef _WIN32
     // Windows-specific command execution (use cmd /c for shell commands)
-    std::string fullCmd = "cmd /c " + final_cmd;
-    ret = system(fullCmd.c_str());
+    std::string full_cmd = "cmd /c " + final_cmd;
+    ret = system(full_cmd.c_str());
 #else
     // Unix-like systems (Linux/macOS) can directly use system()
     ret = system(cmd.str().c_str());

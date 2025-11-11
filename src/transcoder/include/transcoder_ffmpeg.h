@@ -37,8 +37,8 @@ typedef struct FilteringContext {
 
 class TranscoderFFmpeg : public Transcoder {
 public:
-    TranscoderFFmpeg(ProcessParameter *processParameter,
-                     EncodeParameter *encodeParameter);
+    TranscoderFFmpeg(ProcessParameter *process_parameter,
+                     EncodeParameter *encode_parameter);
     ~TranscoderFFmpeg();
 
     bool transcode(std::string input_path, std::string output_path);
@@ -76,10 +76,10 @@ public:
               AVStream *outStream);
 
 private:
-    char errorMsg[128];
+    char error_msg[128];
     // encoder's parameters
-    bool copyVideo;
-    bool copyAudio;
+    bool copy_video;
+    bool copy_audio;
 
     // Decoder and encoder contexts
     StreamContext *decoder;

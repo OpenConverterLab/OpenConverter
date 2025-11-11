@@ -16,23 +16,23 @@
 #include "../include/transcoder_bmf.h"
 
 /* Receive pointers from converter */
-TranscoderBMF::TranscoderBMF(ProcessParameter *processParameter,
-                             EncodeParameter *encodeParameter)
-    : Transcoder(processParameter, encodeParameter) {
-    frameTotalNumber = 0;
+TranscoderBMF::TranscoderBMF(ProcessParameter *process_parameter,
+                             EncodeParameter *encode_parameter)
+    : Transcoder(process_parameter, encode_parameter) {
+    frame_total_number = 0;
 }
 
 bmf_sdk::CBytes TranscoderBMF::decoder_callback(bmf_sdk::CBytes input) {
-    std::string strInfo;
-    strInfo.assign(reinterpret_cast<const char *>(input.buffer), input.size);
-    // BMFLOG(BMF_INFO) << "====Callback==== " << strInfo;
+    std::string str_info;
+    str_info.assign(reinterpret_cast<const char *>(input.buffer), input.size);
+    // BMFLOG(BMF_INFO) << "====Callback==== " << str_info;
 
     std::regex frame_regex(R"(\btotal frame number:\s*(\d+))");
     std::smatch match;
 
-    if (std::regex_search(strInfo, match, frame_regex) && match.size() > 1) {
-        std::istringstream(match[1]) >> frameTotalNumber; // Convert to int
-        BMFLOG(BMF_DEBUG) << "Extracted Frame Number: " << frameTotalNumber;
+    if (std::regex_search(str_info, match, frame_regex) && match.size() > 1) {
+        std::istringstream(match[1]) >> frame_total_number; // Convert to int
+        BMFLOG(BMF_DEBUG) << "Extracted Frame Number: " << frame_total_number;
     } else {
         BMFLOG(BMF_WARNING) << "Failed to extract frame number";
     }
@@ -42,20 +42,20 @@ bmf_sdk::CBytes TranscoderBMF::decoder_callback(bmf_sdk::CBytes input) {
 }
 
 bmf_sdk::CBytes TranscoderBMF::encoder_callback(bmf_sdk::CBytes input) {
-    std::string strInfo;
-    strInfo.assign(reinterpret_cast<const char *>(input.buffer), input.size);
-    // BMFLOG(BMF_INFO) << "====Callback==== " << strInfo;
+    std::string str_info;
+    str_info.assign(reinterpret_cast<const char *>(input.buffer), input.size);
+    // BMFLOG(BMF_INFO) << "====Callback==== " << str_info;
 
     std::regex frame_regex(R"(\bframe number:\s*(\d+))");
     std::smatch match;
 
-    if (std::regex_search(strInfo, match, frame_regex) && match.size() > 1) {
-        std::istringstream(match[1]) >> frameNumber; // Convert to int
-        BMFLOG(BMF_DEBUG) << "Extracted Total Frame Number: " << frameNumber;
+    if (std::regex_search(str_info, match, frame_regex) && match.size() > 1) {
+        std::istringstream(match[1]) >> frame_number; // Convert to int
+        BMFLOG(BMF_DEBUG) << "Extracted Total Frame Number: " << frame_number;
 
-        send_process_parameter(frameNumber, frameTotalNumber);
+        send_process_parameter(frame_number, frame_total_number);
 
-        if (frameNumber == frameTotalNumber) {
+        if (frame_number == frame_total_number) {
             BMFLOG(BMF_INFO) << "====Callback==== Finish";
         }
 
@@ -70,25 +70,25 @@ bmf_sdk::CBytes TranscoderBMF::encoder_callback(bmf_sdk::CBytes input) {
 bool TranscoderBMF::prepare_info(std::string input_path,
                                  std::string output_path) {
     // decoder init
-    if (encodeParameter->get_video_codec_name() == "") {
-        copyVideo = true;
+    if (encode_parameter->get_video_codec_name() == "") {
+        copy_video = true;
     } else {
-        copyVideo = false;
+        copy_video = false;
     }
 
-    if (encodeParameter->get_audio_codec_name() == "") {
-        copyAudio = true;
+    if (encode_parameter->get_audio_codec_name() == "") {
+        copy_audio = true;
     } else {
-        copyAudio = false;
+        copy_audio = false;
     }
 
     nlohmann::json de_video_codec = {"video_codec", ""};
     nlohmann::json de_audio_codec = {"audio_codec", ""};
 
-    if (copyVideo) {
+    if (copy_video) {
         de_video_codec = {"video_codec", "copy"};
     }
-    if (copyAudio) {
+    if (copy_audio) {
         de_audio_codec = {"audio_codec", "copy"};
     }
 
@@ -103,37 +103,37 @@ bool TranscoderBMF::prepare_info(std::string input_path,
     nlohmann::json video_params = nlohmann::json::object();
 
     // Always add codec and bitrate
-    video_params["codec"] = encodeParameter->get_video_codec_name();
-    video_params["bit_rate"] = encodeParameter->get_video_bit_rate();
+    video_params["codec"] = encode_parameter->get_video_codec_name();
+    video_params["bit_rate"] = encode_parameter->get_video_bit_rate();
 
     // Only add width if it's set (> 0)
-    width = encodeParameter->get_width();
+    width = encode_parameter->get_width();
     if (width > 0) {
         video_params["width"] = width;
     }
 
     // Only add height if it's set (> 0)
-    height = encodeParameter->get_height();
+    height = encode_parameter->get_height();
     if (height > 0) {
         video_params["height"] = height;
     }
 
     // Only add qscale if it's set (not -1)
-    int qscale = encodeParameter->get_qscale();
+    int qscale = encode_parameter->get_qscale();
     if (qscale >= 0) {
         video_params["qscale"] = qscale;
     }
 
     // Only add pixel format if it's set (not empty)
-    std::string pixel_format = encodeParameter->get_pixel_format();
+    std::string pixel_format = encode_parameter->get_pixel_format();
     if (!pixel_format.empty()) {
         video_params["pixel_format"] = pixel_format;
     }
 
     // Build audio_params object
     nlohmann::json audio_params = nlohmann::json::object();
-    audio_params["codec"] = encodeParameter->get_audio_codec_name();
-    audio_params["bit_rate"] = encodeParameter->get_audio_bit_rate();
+    audio_params["codec"] = encode_parameter->get_audio_codec_name();
+    audio_params["bit_rate"] = encode_parameter->get_audio_bit_rate();
 
     encoder_para = {{"output_path", output_path},
                     {"video_params", video_params},
