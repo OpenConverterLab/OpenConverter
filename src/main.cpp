@@ -302,25 +302,25 @@ bool handleCLI(int argc, char *argv[]) {
 
     // Handle time parameters with validation
     if (startTime >= 0.0) {
-        encodeParam->SetStartTime(startTime);
+        encodeParam->set_start_time(startTime);
     }
 
     // Calculate endTime from duration if -t is specified
     // Note: -to takes precedence over -t if both are specified
     if (endTime >= 0.0) {
-        encodeParam->SetEndTime(endTime);
+        encodeParam->set_end_time(endTime);
     } else if (duration >= 0.0) {
         // Calculate endTime = startTime + duration
         double calculatedEndTime = (startTime >= 0.0 ? startTime : 0.0) + duration;
-        encodeParam->SetEndTime(calculatedEndTime);
+        encodeParam->set_end_time(calculatedEndTime);
         std::cout << "Duration: " << duration << "s, calculated end time: "
                   << calculatedEndTime << "s\n";
     }
 
     // Validate time range (will be checked in transcoder as well)
-    if (startTime >= 0.0 && encodeParam->GetEndTime() >= 0.0) {
-        if (encodeParam->GetEndTime() <= startTime) {
-            std::cerr << "Error: End time (" << encodeParam->GetEndTime()
+    if (startTime >= 0.0 && encodeParam->get_end_time() >= 0.0) {
+        if (encodeParam->get_end_time() <= startTime) {
+            std::cerr << "Error: End time (" << encodeParam->get_end_time()
                       << "s) must be greater than start time (" << startTime << "s)\n";
             result = false;
             goto end;

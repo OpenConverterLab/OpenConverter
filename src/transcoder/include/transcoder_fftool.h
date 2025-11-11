@@ -20,8 +20,8 @@
 
 class TranscoderFFTool : public Transcoder {
 public:
-    TranscoderFFTool(ProcessParameter *processParameter,
-                     EncodeParameter *encodeParameter);
+    TranscoderFFTool(ProcessParameter *process_parameter,
+                     EncodeParameter *encode_parameter);
     ~TranscoderFFTool();
 
     bool prepared_opt();
@@ -30,17 +30,27 @@ public:
 
 private:
     // encoder's parameters
-    bool copyVideo;
-    bool copyAudio;
+    bool copy_video;
+    bool copy_audio;
 
-    std::string videoCodec;
-    int64_t videoBitRate;
-    std::string audioCodec;
-    int64_t audioBitRate;
+    std::string video_codec;
+    int64_t video_bit_rate;
+    std::string audio_codec;
+    int64_t audio_bit_rate;
 
-    static int frameNumber;
+    // Additional video parameters
+    uint16_t width;
+    uint16_t height;
+    int qscale;
+    std::string pixel_format;
 
-    int64_t frameTotalNumber;
+    // Time range parameters
+    double start_time;  // in seconds
+    double end_time;    // in seconds
+
+    static int frame_number;
+
+    int64_t frame_total_number;
 };
 
 #endif // TRANSCODERFFTOOL_H

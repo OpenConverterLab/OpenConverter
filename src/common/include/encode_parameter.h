@@ -66,9 +66,9 @@ public:
 
     void set_preset(std::string p);
 
-    void SetStartTime(double t);
+    void set_start_time(double t);
 
-    void SetEndTime(double t);
+    void set_end_time(double t);
 
     std::string get_video_codec_name();
 
@@ -88,9 +88,9 @@ public:
 
     std::string get_preset();
 
-    double GetStartTime();
+    double get_start_time();
 
-    double GetEndTime();
+    double get_end_time();
 };
 
 #endif // ENCODEPARAMETER_H

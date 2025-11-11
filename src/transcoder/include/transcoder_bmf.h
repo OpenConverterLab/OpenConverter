@@ -25,8 +25,8 @@
 
 class TranscoderBMF : public Transcoder {
 public:
-    TranscoderBMF(ProcessParameter *processParameter,
-                  EncodeParameter *encodeParamter);
+    TranscoderBMF(ProcessParameter *process_parameter,
+                  EncodeParameter *encode_parameter);
 
     bool prepare_info(std::string input_path, std::string output_path);
 
@@ -38,8 +38,8 @@ public:
 
 private:
     // encoder's parameters
-    bool copyVideo;
-    bool copyAudio;
+    bool copy_video;
+    bool copy_audio;
 
     int width;
     int height;
