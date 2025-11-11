@@ -89,18 +89,6 @@ bool Converter::set_transcoder(std::string transcoderName) {
 }
 
 bool Converter::convert_format(const std::string &src, const std::string &dst) {
-    if (encodeParameter->get_video_codec_name() == "") {
-        copyVideo = true;
-    } else {
-        copyVideo = false;
-    }
-
-    if (encodeParameter->get_audio_codec_name() == "") {
-        copyAudio = true;
-    } else {
-        copyAudio = false;
-    }
-
     return transcoder->transcode(src, dst);
 }
 

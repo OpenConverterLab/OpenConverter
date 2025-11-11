@@ -53,13 +53,13 @@ std::string escape_windows_path(const std::string &path) {
 
 bool TranscoderFFTool::prepared_opt() {
 
-    if (encode_parameter->get_video_codec_name() == "") {
+    if (encode_parameter->get_video_codec_name() == "copy") {
         copy_video = true;
     } else {
         copy_video = false;
     }
 
-    if (encode_parameter->get_audio_codec_name() == "") {
+    if (encode_parameter->get_audio_codec_name() == "copy") {
         copy_audio = true;
     } else {
         copy_audio = false;
