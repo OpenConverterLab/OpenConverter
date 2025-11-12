@@ -113,6 +113,12 @@ bool ConverterRunner::RunConversion(const QString &inputPath,
         delete processParam;
     });
 
+    // Set larger stack size for BMF operations (Python/numpy needs more stack)
+    // Default is 512KB on macOS, increase to 8MB for AI processing
+    if (transcoderName == "BMF") {
+        thread->setStackSize(8 * 1024 * 1024);  // 8 MB
+    }
+
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
 

@@ -226,6 +226,16 @@ target_include_directories(OpenConverterCore PUBLIC
     ${FFMPEG_INCLUDE_DIRS}
 )
 
+# Copy Python modules to build directory (if BMF is enabled)
+if(BMF_TRANSCODER)
+    add_custom_command(
+        TARGET OpenConverterCore POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/modules
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/modules ${CMAKE_BINARY_DIR}/modules
+        COMMENT "Copying Python modules to build directory"
+    )
+endif()
+
 # Handle GUI mode
 if(ENABLE_GUI)
     add_definitions(-DENABLE_GUI)
@@ -266,6 +276,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/cut_video_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/remux_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/transcode_page.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/ai_processing_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/shared_data.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.cpp
     )
@@ -300,6 +311,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/cut_video_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/remux_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/transcode_page.h
+        ${CMAKE_SOURCE_DIR}/builder/include/ai_processing_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/shared_data.h
         ${CMAKE_SOURCE_DIR}/builder/include/open_converter.h
     )
@@ -358,6 +370,15 @@ if(ENABLE_GUI)
     set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(OpenConverter PRIVATE ${APP_ICON_MACOSX})
 
+    # Bundle Python modules into app (if BMF is enabled)
+    if(BMF_TRANSCODER)
+        file(GLOB PYTHON_MODULES "${CMAKE_SOURCE_DIR}/modules/*.py")
+        foreach(MODULE_FILE ${PYTHON_MODULES})
+            set_source_files_properties(${MODULE_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/modules")
+            target_sources(OpenConverter PRIVATE ${MODULE_FILE})
+        endforeach()
+    endif()
+
     set_target_properties(OpenConverter PROPERTIES
         MACOSX_BUNDLE_GUI_IDENTIFIER com.openconverter.app
         MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -383,6 +404,14 @@ else()
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
+
+    # Install Python modules for CLI mode (if BMF is enabled)
+    if(BMF_TRANSCODER)
+        install(DIRECTORY ${CMAKE_BINARY_DIR}/modules
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            FILES_MATCHING PATTERN "*.py"
+        )
+    endif()
 endif()
 
 # Test dependencies

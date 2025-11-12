@@ -46,6 +46,9 @@ private:
 
     nlohmann::json decoder_para;
     nlohmann::json encoder_para;
+
+    // Helper function to get the Python module path
+    std::string get_python_module_path();
 };
 
 #endif // TRANSCODER_BMF_H
