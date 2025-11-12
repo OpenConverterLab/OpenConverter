@@ -58,6 +58,7 @@
 #include "../include/remux_page.h"
 #include "../include/shared_data.h"
 #include "../include/transcode_page.h"
+#include "../include/ai_processing_page.h"
 #include "ui_open_converter.h"
 
 #include <iostream>
@@ -151,6 +152,7 @@ OpenConverter::OpenConverter(QWidget *parent)
     navButtonGroup->addButton(ui->btnCreateGif, 4);
     navButtonGroup->addButton(ui->btnRemux, 5);
     navButtonGroup->addButton(ui->btnTranscode, 6);
+    navButtonGroup->addButton(ui->btnAIProcessing, 7);
 
     // Connect navigation button group
     connect(navButtonGroup, QOverload<int>::of(&QButtonGroup::idClicked),
@@ -342,6 +344,7 @@ void OpenConverter::InitializePages() {
     // Advanced section
     pages.append(new RemuxPage(this));
     pages.append(new TranscodePage(this));
+    pages.append(new AIProcessingPage(this));
 
     // Add all pages to the stacked widget
     for (BasePage *page : pages) {

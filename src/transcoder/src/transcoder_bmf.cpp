@@ -14,12 +14,76 @@
  */
 
 #include "../include/transcoder_bmf.h"
+#include <filesystem>
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include <libgen.h>
+#endif
 
 /* Receive pointers from converter */
 TranscoderBMF::TranscoderBMF(ProcessParameter *process_parameter,
                              EncodeParameter *encode_parameter)
     : Transcoder(process_parameter, encode_parameter) {
     frame_total_number = 0;
+}
+
+std::string TranscoderBMF::get_python_module_path() {
+    std::string module_path;
+
+#ifdef __APPLE__
+    // For macOS app bundle
+    char exe_path[1024];
+    uint32_t size = sizeof(exe_path);
+    if (_NSGetExecutablePath(exe_path, &size) == 0) {
+        char *real_path = realpath(exe_path, nullptr);
+        if (real_path) {
+            std::filesystem::path exe_dir = std::filesystem::path(real_path).parent_path();
+            free(real_path);
+
+            // Check if running from app bundle
+            // Path structure: OpenConverter.app/Contents/MacOS/OpenConverter
+            if (exe_dir.filename() == "MacOS") {
+                std::filesystem::path resources_dir = exe_dir.parent_path() / "Resources" / "modules";
+                if (std::filesystem::exists(resources_dir)) {
+                    module_path = resources_dir.string();
+                    BMFLOG(BMF_INFO) << "Using app bundle module path: " << module_path;
+                    return module_path;
+                }
+            }
+
+            // Check build directory (for development)
+            std::filesystem::path build_modules = exe_dir / "modules";
+            if (std::filesystem::exists(build_modules)) {
+                module_path = build_modules.string();
+                BMFLOG(BMF_INFO) << "Using build directory module path: " << module_path;
+                return module_path;
+            }
+
+            // Check parent directory (for CLI build)
+            std::filesystem::path parent_modules = exe_dir.parent_path() / "modules";
+            if (std::filesystem::exists(parent_modules)) {
+                module_path = parent_modules.string();
+                BMFLOG(BMF_INFO) << "Using parent directory module path: " << module_path;
+                return module_path;
+            }
+        }
+    }
+#else
+    // For Linux/Windows
+    // Try current directory first
+    std::filesystem::path current_modules = std::filesystem::current_path() / "modules";
+    if (std::filesystem::exists(current_modules)) {
+        module_path = current_modules.string();
+        BMFLOG(BMF_INFO) << "Using current directory module path: " << module_path;
+        return module_path;
+    }
+#endif
+
+    // Fallback: use current directory
+    module_path = std::filesystem::current_path().string();
+    BMFLOG(BMF_WARNING) << "Module path not found, using current directory: " << module_path;
+    return module_path;
 }
 
 bmf_sdk::CBytes TranscoderBMF::decoder_callback(bmf_sdk::CBytes input) {
@@ -145,14 +209,37 @@ bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
 
     prepare_info(input_path, output_path);
     int scheduler_cnt = 0;
+    AlgoMode algo_mode = encode_parameter->get_algo_mode();
+    bmf::builder::Node *algo_node = nullptr;
 
     auto graph = bmf::builder::Graph(bmf::builder::NormalMode);
 
     auto decoder =
         graph.Decode(bmf_sdk::JsonParam(decoder_para), "", scheduler_cnt++);
 
+    if (algo_mode == AlgoMode::Upscale) {
+        int upscale_factor = encode_parameter->get_upscale_factor();
+        std::string module_path = get_python_module_path();
+
+        nlohmann::json enhance_option = {
+            {"fp32", true},
+            {"output_scale", upscale_factor},
+        };
+
+        BMFLOG(BMF_INFO) << "Loading enhance module from: " << module_path;
+
+        algo_node = new bmf::builder::Node(
+            graph.Module({decoder["video"]}, "", bmf::builder::Python,
+                         bmf_sdk::JsonParam(enhance_option), "",
+                         module_path,
+                         "enhance_module.EnhanceModule",
+                         bmf::builder::Immediate,
+                         scheduler_cnt++));
+    }
+
     auto encoder =
-        graph.Encode(decoder["video"], decoder["audio"],
+        graph.Encode(algo_mode == AlgoMode::Upscale ? *algo_node : decoder["video"],
+                     decoder["audio"],
                      bmf_sdk::JsonParam(encoder_para), "", scheduler_cnt++);
 
     auto de_callback = std::bind(&TranscoderBMF::decoder_callback, this,
@@ -168,9 +255,12 @@ bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
     nlohmann::json graph_para = {{"dump_graph", 1}};
     graph.SetOption(bmf_sdk::JsonParam(graph_para));
 
-    if (graph.Run() == 0) {
-        return true;
-    } else {
-        return false;
+    int result = graph.Run();
+
+    // Clean up allocated memory
+    if (algo_node != nullptr) {
+        delete algo_node;
     }
+
+    return (result == 0);
 }

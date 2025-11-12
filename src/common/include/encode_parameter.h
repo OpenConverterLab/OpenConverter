@@ -21,6 +21,11 @@
 #include <cstdint>
 #include <string>
 
+enum class AlgoMode {
+    None,
+    Upscale,
+};
+
 class EncodeParameter {
 private:
     bool available;
@@ -41,6 +46,10 @@ private:
 
     double startTime;  // in seconds
     double endTime;    // in seconds
+
+    AlgoMode algoMode;
+
+    int upscaleFactor;
 
 public:
     EncodeParameter();
@@ -91,6 +100,14 @@ public:
     double get_start_time();
 
     double get_end_time();
+
+    AlgoMode get_algo_mode();
+
+    void set_algo_mode(AlgoMode am);
+
+    int get_upscale_factor();
+
+    void set_upscale_factor(int uf);
 };
 
 #endif // ENCODEPARAMETER_H

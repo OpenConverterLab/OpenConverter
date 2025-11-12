@@ -38,6 +38,7 @@ void printUsage(const char *programName) {
               << "  -b:a, --bitrate:audio BITRATE    Set bitrate for audio codec\n"
               << "  -pix_fmt PIX_FMT         Set pixel format for video\n"
               << "  -scale SCALE(w)x(h)      Set scale for video (width x height)\n"
+              << "  -upscale FACTOR          Enable AI upscaling with factor (e.g., 2, 4) [requires BMF]\n"
               << "  -ss START_TIME           Set start time for cutting (format: HH:MM:SS or seconds)\n"
               << "  -to END_TIME             Set end time for cutting (format: HH:MM:SS or seconds)\n"
               << "  -t DURATION              Set duration for cutting (format: HH:MM:SS or seconds)\n"
@@ -164,6 +165,7 @@ bool handleCLI(int argc, char *argv[]) {
     double startTime = -1.0;
     double endTime = -1.0;
     double duration = -1.0;
+    int upscaleFactor = -1;
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -242,6 +244,14 @@ bool handleCLI(int argc, char *argv[]) {
                     return false;
                 }
             }
+        } else if (strcmp(argv[i], "-upscale") == 0) {
+            if (i + 1 < argc) {
+                upscaleFactor = std::stoi(argv[++i]);
+                if (upscaleFactor <= 0) {
+                    std::cerr << "Error: Upscale factor must be positive\n";
+                    return false;
+                }
+            }
         } else {
             // positional argument: validate as input (existing) or output (candidate)
             fs::path p(argv[i]);
@@ -298,6 +308,19 @@ bool handleCLI(int argc, char *argv[]) {
     }
     if (audioBitRate != -1) {
         encodeParam->set_audio_bit_rate(audioBitRate);
+    }
+
+    // Handle upscale parameters
+    if (upscaleFactor > 0) {
+        encodeParam->set_algo_mode(AlgoMode::Upscale);
+        encodeParam->set_upscale_factor(upscaleFactor);
+        std::cout << "AI upscaling enabled with factor: " << upscaleFactor << "\n";
+
+        // Upscaling requires BMF transcoder
+        if (transcoderType != "BMF") {
+            std::cout << "Note: Upscaling requires BMF transcoder. Switching to BMF.\n";
+            transcoderType = "BMF";
+        }
     }
 
     // Handle time parameters with validation

@@ -34,6 +34,9 @@ EncodeParameter::EncodeParameter() {
     startTime = -1.0;
     endTime = -1.0;
 
+    algoMode = AlgoMode::None;
+    upscaleFactor = 2;
+
     available = false;
 }
 
@@ -130,5 +133,19 @@ void EncodeParameter::set_end_time(double t) {
 double EncodeParameter::get_start_time() { return startTime; }
 
 double EncodeParameter::get_end_time() { return endTime; }
+
+void EncodeParameter::set_algo_mode(AlgoMode am) {
+    algoMode = am;
+    available = true;
+}
+
+AlgoMode EncodeParameter::get_algo_mode() { return algoMode; }
+
+void EncodeParameter::set_upscale_factor(int uf) {
+    upscaleFactor = uf;
+    available = true;
+}
+
+int EncodeParameter::get_upscale_factor() { return upscaleFactor; }
 
 EncodeParameter::~EncodeParameter() {}
