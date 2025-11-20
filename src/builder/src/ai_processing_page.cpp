@@ -21,9 +21,11 @@
 #include "../include/batch_queue.h"
 #include "../include/batch_item.h"
 #include "../include/transcoder_helper.h"
+#include "../include/python_manager.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
+#include "../../component/include/python_install_dialog.h"
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
@@ -41,6 +43,44 @@ void AIProcessingPage::OnPageActivated() {
     BasePage::OnPageActivated();
     HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
                            GetFileExtension(inputFileSelector->GetFilePath()));
+
+    // Check if Python is installed for AI Processing
+    // In Debug mode, skip installation dialog (assume developer has configured environment)
+#ifdef NDEBUG
+    // Release mode: check Python and offer installation
+    PythonManager pythonManager;
+
+    // Check status: embedded Python, system Python, or not installed
+    if (pythonManager.GetStatus() != PythonManager::Status::Installed) {
+        // Python not available (neither embedded nor system)
+        // Show installation dialog
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this,
+            tr("Python Required"),
+            tr("AI Processing requires Python 3.9 and additional packages.\n\n"
+               "Would you like to download and install them now?\n"
+               "(Download size: ~550 MB, completely isolated from system Python)"),
+            QMessageBox::Yes | QMessageBox::No
+        );
+
+        if (reply == QMessageBox::Yes) {
+            PythonInstallDialog dialog(this);
+            if (dialog.exec() != QDialog::Accepted) {
+                // User cancelled installation
+                QMessageBox::information(
+                    this,
+                    tr("AI Processing Unavailable"),
+                    tr("AI Processing features require Python to be installed.\n\n"
+                       "You can install it later by returning to this page.")
+                );
+            }
+        }
+    }
+#else
+    // Debug mode: assume developer has configured Python environment
+    // Skip installation dialog
+    qDebug() << "Debug mode: Skipping Python installation check (assuming developer environment)";
+#endif
 }
 
 void AIProcessingPage::OnInputFileChanged(const QString &newPath) {
@@ -350,4 +390,3 @@ void AIProcessingPage::RetranslateUi() {
         }
     }
 }
-

@@ -15,6 +15,7 @@
 
 #include "../include/transcoder_bmf.h"
 #include <filesystem>
+#include <fstream>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -26,6 +27,171 @@ TranscoderBMF::TranscoderBMF(ProcessParameter *process_parameter,
                              EncodeParameter *encode_parameter)
     : Transcoder(process_parameter, encode_parameter) {
     frame_total_number = 0;
+}
+
+void TranscoderBMF::setup_python_environment() {
+    // In Debug mode, use system PYTHONPATH from environment (set by developer/CMake)
+    // In Release mode, set up PYTHONPATH for bundled BMF and Python
+#ifndef NDEBUG
+    // Debug mode: Set PYTHONPATH based on BMF_ROOT_PATH from environment or CMake
+    BMFLOG(BMF_INFO) << "Debug mode: Setting PYTHONPATH from BMF_ROOT_PATH";
+
+    // Get BMF_ROOT_PATH from environment or CMake
+    const char* bmf_root_env = std::getenv("BMF_ROOT_PATH");
+    std::string bmf_root;
+
+    if (bmf_root_env) {
+        bmf_root = std::string(bmf_root_env);
+        BMFLOG(BMF_INFO) << "Using BMF_ROOT_PATH from environment: " << bmf_root;
+    }
+#ifdef BMF_ROOT_PATH_STR
+    else {
+        bmf_root = BMF_ROOT_PATH_STR;
+        BMFLOG(BMF_INFO) << "Using BMF_ROOT_PATH from CMake: " << bmf_root;
+    }
+#endif
+
+    if (!bmf_root.empty()) {
+        // Normalize BMF_ROOT_PATH to include /output/bmf if needed
+        if (bmf_root.find("output/bmf") == std::string::npos) {
+            bmf_root += "/output/bmf";
+        }
+
+        // Set PYTHONPATH: BMF_ROOT_PATH/lib:BMF_ROOT_PATH (parent of /output/bmf)
+        std::string bmf_lib_path = bmf_root + "/lib";
+        size_t output_pos = bmf_root.find("/output/bmf");
+        std::string bmf_output_path;
+        if (output_pos != std::string::npos) {
+            bmf_output_path = bmf_root.substr(0, output_pos) + "/output";
+        } else {
+            bmf_output_path = bmf_root;
+        }
+
+        // Get existing PYTHONPATH
+        std::string current_pythonpath;
+        const char* existing_pythonpath = std::getenv("PYTHONPATH");
+        if (existing_pythonpath) {
+            current_pythonpath = existing_pythonpath;
+        }
+
+        // Set PYTHONPATH: bmf/lib:bmf/output:existing
+        std::string new_pythonpath = bmf_lib_path + ":" + bmf_output_path;
+        if (!current_pythonpath.empty()) {
+            new_pythonpath += ":" + current_pythonpath;
+        }
+
+        setenv("PYTHONPATH", new_pythonpath.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set PYTHONPATH: " << new_pythonpath;
+
+        // Set BMF_MODULE_CONFIG_PATH
+        setenv("BMF_MODULE_CONFIG_PATH", bmf_root.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set BMF_MODULE_CONFIG_PATH: " << bmf_root;
+    } else {
+        BMFLOG(BMF_WARNING) << "BMF_ROOT_PATH not set. Please set it in environment or CMake.";
+        BMFLOG(BMF_WARNING) << "Example: export BMF_ROOT_PATH=/path/to/bmf";
+    }
+
+    return;  // Skip bundled BMF setup in Debug mode
+#endif
+
+    // Release mode: Set up PYTHONPATH for bundled BMF and Python
+    std::string bmf_lib_path;
+    std::string bmf_output_path;
+    std::string bmf_config_path;
+    std::string python_home;
+    bool is_bundled = false;
+
+#ifdef __APPLE__
+    // Check if running from app bundle
+    char exe_path[1024];
+    uint32_t size = sizeof(exe_path);
+    if (_NSGetExecutablePath(exe_path, &size) == 0) {
+        std::string exe_dir = std::string(exe_path);
+        size_t last_slash = exe_dir.find_last_of('/');
+        if (last_slash != std::string::npos) {
+            exe_dir = exe_dir.substr(0, last_slash);
+
+            // Check if we're in an app bundle (path contains .app/Contents/MacOS)
+            if (exe_dir.find(".app/Contents/MacOS") != std::string::npos) {
+                size_t app_pos = exe_dir.find(".app/Contents/MacOS");
+                std::string app_bundle = exe_dir.substr(0, app_pos + 4);  // Include .app
+
+                // Check if BMF libraries are actually bundled (Release build)
+                std::string bundled_bmf_lib = app_bundle + "/Contents/Frameworks/lib";
+                std::string bundled_config = app_bundle + "/Contents/Frameworks/BUILTIN_CONFIG.json";
+                std::ifstream bmf_check(bundled_config);
+
+                if (bmf_check.good()) {
+                    // BMF libraries are bundled (Release build)
+                    bmf_lib_path = bundled_bmf_lib;
+                    bmf_output_path = app_bundle + "/Contents/Frameworks";
+                    bmf_config_path = app_bundle + "/Contents/Frameworks";
+                    BMFLOG(BMF_INFO) << "Using bundled BMF libraries from: " << bmf_lib_path;
+                } else {
+                    // App bundle exists but BMF not bundled (should not happen in Release)
+                    BMFLOG(BMF_WARNING) << "App bundle detected but BMF not bundled";
+                }
+                bmf_check.close();
+
+                // Check if Python.framework is bundled (Release build)
+                std::string python_framework = app_bundle + "/Contents/Frameworks/Python.framework";
+                std::ifstream python_check(python_framework + "/Versions/Current/bin/python3");
+                if (python_check.good()) {
+                    python_home = python_framework + "/Versions/Current";
+                    is_bundled = true;
+                    BMFLOG(BMF_INFO) << "Using bundled Python from: " << python_home;
+                }
+                python_check.close();
+
+                // Check for bundled BMF Python package in Resources/bmf_python/
+                std::string bundled_bmf_python = app_bundle + "/Contents/Resources/bmf_python";
+                std::ifstream bmf_python_check(bundled_bmf_python + "/__init__.py");
+                if (bmf_python_check.good()) {
+                    // Add bundled BMF Python package to bmf_output_path
+                    if (!bmf_output_path.empty()) {
+                        bmf_output_path = bundled_bmf_python + ":" + bmf_output_path;
+                    } else {
+                        bmf_output_path = bundled_bmf_python;
+                    }
+                    BMFLOG(BMF_INFO) << "Found bundled BMF Python package at: " << bundled_bmf_python;
+                }
+                bmf_python_check.close();
+            }
+        }
+    }
+#endif
+
+    // Set PYTHONHOME if using bundled Python
+    if (is_bundled && !python_home.empty()) {
+        setenv("PYTHONHOME", python_home.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set PYTHONHOME: " << python_home;
+
+        // Add bundled Python's site-packages to PYTHONPATH
+        std::string python_version = "3.9";  // Default, will be detected from bundled Python
+        std::string site_packages = python_home + "/lib/python" + python_version + "/site-packages";
+        bmf_output_path = site_packages + ":" + bmf_output_path;
+    }
+
+    // Get current PYTHONPATH
+    std::string current_pythonpath;
+    const char* existing_pythonpath = std::getenv("PYTHONPATH");
+    if (existing_pythonpath) {
+        current_pythonpath = existing_pythonpath;
+    }
+
+    // Append BMF paths to PYTHONPATH
+    std::string new_pythonpath = bmf_lib_path + ":" + bmf_output_path;
+    if (!current_pythonpath.empty()) {
+        new_pythonpath += ":" + current_pythonpath;
+    }
+
+    // Set PYTHONPATH environment variable
+    setenv("PYTHONPATH", new_pythonpath.c_str(), 1);
+    BMFLOG(BMF_INFO) << "Set PYTHONPATH: " << new_pythonpath;
+
+    // Set BMF_MODULE_CONFIG_PATH to point to BUILTIN_CONFIG.json
+    setenv("BMF_MODULE_CONFIG_PATH", bmf_config_path.c_str(), 1);
+    BMFLOG(BMF_INFO) << "Set BMF_MODULE_CONFIG_PATH: " << bmf_config_path;
 }
 
 std::string TranscoderBMF::get_python_module_path() {
@@ -72,17 +238,28 @@ std::string TranscoderBMF::get_python_module_path() {
 #else
     // For Linux/Windows
     // Try current directory first
-    std::filesystem::path current_modules = std::filesystem::current_path() / "modules";
-    if (std::filesystem::exists(current_modules)) {
-        module_path = current_modules.string();
-        BMFLOG(BMF_INFO) << "Using current directory module path: " << module_path;
-        return module_path;
+    try {
+        std::filesystem::path current_modules = std::filesystem::current_path() / "modules";
+        if (std::filesystem::exists(current_modules)) {
+            module_path = current_modules.string();
+            BMFLOG(BMF_INFO) << "Using current directory module path: " << module_path;
+            return module_path;
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        BMFLOG(BMF_WARNING) << "Failed to get current directory: " << e.what();
     }
 #endif
 
-    // Fallback: use current directory
-    module_path = std::filesystem::current_path().string();
-    BMFLOG(BMF_WARNING) << "Module path not found, using current directory: " << module_path;
+    // Fallback: use a safe default path
+    try {
+        module_path = std::filesystem::current_path().string();
+        BMFLOG(BMF_WARNING) << "Module path not found, using current directory: " << module_path;
+    } catch (const std::filesystem::filesystem_error& e) {
+        // If we can't get current directory, use /tmp as last resort
+        module_path = "/tmp";
+        BMFLOG(BMF_ERROR) << "Failed to get current directory: " << e.what();
+        BMFLOG(BMF_ERROR) << "Using fallback path: " << module_path;
+    }
     return module_path;
 }
 
@@ -206,6 +383,54 @@ bool TranscoderBMF::prepare_info(std::string input_path,
 }
 
 bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
+    // Set up Python environment (PYTHONPATH) for BMF Python modules
+    setup_python_environment();
+
+    // Set a valid working directory to prevent BMF's internal getcwd() calls from failing
+    // When app is launched from Finder, there's no valid current working directory
+    try {
+        std::filesystem::current_path();  // Test if current path is valid
+    } catch (const std::filesystem::filesystem_error& e) {
+        // Current directory is invalid, set to a safe location
+        try {
+#ifdef __APPLE__
+            // Try to use app bundle's Resources directory
+            char exe_path[1024];
+            uint32_t size = sizeof(exe_path);
+            if (_NSGetExecutablePath(exe_path, &size) == 0) {
+                char *real_path = realpath(exe_path, nullptr);
+                if (real_path) {
+                    std::filesystem::path exe_dir = std::filesystem::path(real_path).parent_path();
+                    free(real_path);
+
+                    // If in app bundle, use Resources directory
+                    if (exe_dir.filename() == "MacOS") {
+                        std::filesystem::path resources_dir = exe_dir.parent_path() / "Resources";
+                        if (std::filesystem::exists(resources_dir)) {
+                            std::filesystem::current_path(resources_dir);
+                            BMFLOG(BMF_INFO) << "Set working directory to: " << resources_dir.string();
+                        } else {
+                            // Fallback to /tmp
+                            std::filesystem::current_path("/tmp");
+                            BMFLOG(BMF_INFO) << "Set working directory to: /tmp";
+                        }
+                    } else {
+                        // Not in app bundle, use executable directory
+                        std::filesystem::current_path(exe_dir);
+                        BMFLOG(BMF_INFO) << "Set working directory to: " << exe_dir.string();
+                    }
+                }
+            }
+#else
+            // For Linux/Windows, use /tmp or C:\Temp
+            std::filesystem::current_path("/tmp");
+            BMFLOG(BMF_INFO) << "Set working directory to: /tmp";
+#endif
+        } catch (const std::filesystem::filesystem_error& e2) {
+            BMFLOG(BMF_ERROR) << "Failed to set working directory: " << e2.what();
+            // Continue anyway, BMF might still work
+        }
+    }
 
     prepare_info(input_path, output_path);
     int scheduler_cnt = 0;

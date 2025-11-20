@@ -36,9 +36,13 @@ def load_model():
 
 
 def prepare_model(model_name, file_url):
-    model_path = os.path.join("weights", model_name + ".pth")
+    # Get the directory where this module is located
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(ROOT_DIR, "weights", model_name + ".pth")
+
+    # Check if model already exists (bundled or previously downloaded)
     if not os.path.isfile(model_path):
-        ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+        print(f"Model not found at {model_path}, attempting to download...")
         for url in file_url:
             # model_path will be updated
             model_path = load_file_from_url(
@@ -47,6 +51,9 @@ def prepare_model(model_name, file_url):
                 progress=True,
                 file_name=None,
             )
+    else:
+        print(f"Using bundled model from: {model_path}")
+
     return model_path
 
 

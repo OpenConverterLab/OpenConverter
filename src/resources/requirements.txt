@@ -1,0 +1,47 @@
+# OpenConverter AI Processing Requirements
+# Python 3.9 required
+
+# Note: BMF (BabitMF) is not available on PyPI for macOS
+# It will be copied from system installation after pip install
+
+# Core deep learning framework
+torch>=2.5.1
+torchvision>=0.12.0
+
+# Image super-resolution
+basicsr==1.4.2
+realesrgan==0.3.0
+
+# Image processing
+opencv-python>=4.11.0
+Pillow>=11.0.0
+
+# Scientific computing
+numpy<2
+scipy>=1.13.0
+scikit-image>=0.24.0
+
+# Utilities
+PyYAML>=6.0.0
+tqdm>=4.67.0
+lmdb>=1.7.0
+requests>=2.32.0
+typing_extensions>=4.15.0
+filelock>=3.19.0
+
+# Optional: Face enhancement
+facexlib>=0.3.0
+gfpgan>=1.3.8
+
+# Additional dependencies (auto-installed by above packages)
+# Listed here for reference:
+# - certifi
+# - charset-normalizer
+# - idna
+# - urllib3
+# - sympy
+# - mpmath
+# - networkx
+# - jinja2
+# - markupsafe
+# - fsspec

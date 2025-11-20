@@ -156,9 +156,9 @@ jobs:
         export PATH="$(brew --prefix qt@5)/bin:$PATH"
 
         cd src
-        cmake -B build \
+        cmake -B build -DCMAKE_BUILD_TYPE=Release \
           -DFFMPEG_ROOT_PATH="$(brew --prefix ffmpeg@5)" \
-          -DBMF_TRANSCODER=OFF
+          -DBMF_TRANSCODER=ON
 
         cd build
         make -j$(sysctl -n hw.ncpu)

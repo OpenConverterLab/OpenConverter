@@ -20,7 +20,15 @@ static bool is_existing_regular_file(const fs::path &p) {
 static bool is_valid_output_candidate(const fs::path &p) {
     if (!p.has_filename()) return false;        // reject directory-only paths
     fs::path parent = p.parent_path();
-    if (parent.empty()) parent = fs::current_path();
+    if (parent.empty()) {
+        try {
+            parent = fs::current_path();
+        } catch (const fs::filesystem_error& e) {
+            // If we can't get current directory, assume current directory is valid
+            std::cerr << "Warning: Failed to get current directory: " << e.what() << std::endl;
+            return true; // Assume valid if we can't check
+        }
+    }
     if (fs::exists(p)) return !fs::is_directory(p);        // existing file ok (not a dir)
     return fs::exists(parent) && fs::is_directory(parent); // non-existing file OK if parent dir exists
 }

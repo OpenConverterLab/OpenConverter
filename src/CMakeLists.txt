@@ -16,7 +16,7 @@ endif()
 option(ENABLE_GUI "enable GUI" ON)
 option(ENABLE_TESTS "enable unit tests" OFF)
 # BMF is experimental feature, so we can't enable it by default
-option(BMF_TRANSCODER "enable BMF Transcoder" OFF)
+option(BMF_TRANSCODER "enable BMF Transcoder" ON)
 option(FFTOOL_TRANSCODER "enable FFmpeg Command Tool Transcoder" ON)
 option(FFMPEG_TRANSCODER "enable FFmpeg Core Transcoder" ON)
 
@@ -71,9 +71,18 @@ endif()
 if(BMF_TRANSCODER)
     if(DEFINED ENV{BMF_ROOT_PATH})
         set(BMF_ROOT_PATH $ENV{BMF_ROOT_PATH})
+        # If BMF_ROOT_PATH doesn't end with /output/bmf, append it
+        if(NOT BMF_ROOT_PATH MATCHES "output/bmf$")
+            set(BMF_ROOT_PATH "${BMF_ROOT_PATH}/output/bmf")
+        endif()
     else()
         set(BMF_ROOT_PATH "/Users/jacklau/Documents/Programs/Git/Github/bmf/output/bmf")
     endif()
+    message(STATUS "Using BMF from: ${BMF_ROOT_PATH}")
+
+    # Pass BMF_ROOT_PATH to C++ code as compile definition
+    add_definitions(-DBMF_ROOT_PATH_STR="${BMF_ROOT_PATH}")
+
     include_directories(${BMF_ROOT_PATH}/include)
     link_directories(${BMF_ROOT_PATH}/lib)
     add_definitions(-DENABLE_BMF)
@@ -243,14 +252,15 @@ if(ENABLE_GUI)
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
 
-    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets Network)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets Network)
 
     # Add GUI-specific sources
     list(APPEND GUI_SOURCES
         ${CMAKE_SOURCE_DIR}/builder/src/base_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/converter_runner.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/transcoder_helper.cpp
+        ${CMAKE_SOURCE_DIR}/builder/src/python_manager.cpp
         ${CMAKE_SOURCE_DIR}/component/src/file_selector_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/filter_tag_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/progress_widget.cpp
@@ -263,6 +273,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/component/src/quality_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/codec_selector_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/format_selector_widget.cpp
+        ${CMAKE_SOURCE_DIR}/component/src/python_install_dialog.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_item.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_queue.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_file_dialog.cpp
@@ -286,6 +297,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/base_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/converter_runner.h
         ${CMAKE_SOURCE_DIR}/builder/include/transcoder_helper.h
+        ${CMAKE_SOURCE_DIR}/builder/include/python_manager.h
         ${CMAKE_SOURCE_DIR}/component/include/file_selector_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/filter_tag_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/progress_widget.h
@@ -298,6 +310,7 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/component/include/quality_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/codec_selector_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/format_selector_widget.h
+        ${CMAKE_SOURCE_DIR}/component/include/python_install_dialog.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_item.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_queue.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_file_dialog.h
@@ -355,6 +368,7 @@ if(ENABLE_GUI)
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Gui
         Qt${QT_VERSION_MAJOR}::Widgets
+        Qt${QT_VERSION_MAJOR}::Network
     )
 
     if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -372,11 +386,69 @@ if(ENABLE_GUI)
 
     # Bundle Python modules into app (if BMF is enabled)
     if(BMF_TRANSCODER)
+        # Always bundle Python modules (needed for both Debug and Release)
         file(GLOB PYTHON_MODULES "${CMAKE_SOURCE_DIR}/modules/*.py")
         foreach(MODULE_FILE ${PYTHON_MODULES})
             set_source_files_properties(${MODULE_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/modules")
             target_sources(OpenConverter PRIVATE ${MODULE_FILE})
         endforeach()
+
+        # Always bundle AI model weights if they exist (for both Debug and Release)
+        # This allows AI features to work without internet connection
+        file(GLOB_RECURSE MODEL_WEIGHTS "${CMAKE_SOURCE_DIR}/modules/weights/*.pth")
+        if(MODEL_WEIGHTS)
+            message(STATUS "Bundling existing AI model weights (${CMAKE_BUILD_TYPE} mode)")
+            foreach(WEIGHT_FILE ${MODEL_WEIGHTS})
+                set_source_files_properties(${WEIGHT_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/modules/weights")
+                target_sources(OpenConverter PRIVATE ${WEIGHT_FILE})
+            endforeach()
+        else()
+            message(STATUS "No AI model weights found. Run tool/download_models.sh to download them.")
+        endif()
+
+        # Bundle requirements.txt for Python package installation
+        set(REQUIREMENTS_FILE "${CMAKE_SOURCE_DIR}/resources/requirements.txt")
+        if(EXISTS ${REQUIREMENTS_FILE})
+            set_source_files_properties(${REQUIREMENTS_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+            target_sources(OpenConverter PRIVATE ${REQUIREMENTS_FILE})
+            message(STATUS "Bundling requirements.txt for Python package installation")
+        endif()
+
+        # Check if this is a Release build
+        if(CMAKE_BUILD_TYPE MATCHES "Release")
+            message(STATUS "========================================")
+            message(STATUS "RELEASE BUILD - Library bundling via fix_macos_libs.sh")
+            message(STATUS "========================================")
+            message(STATUS "After building, run: ../tool/fix_macos_libs.sh")
+            message(STATUS "This will bundle Qt, FFmpeg, and BMF libraries")
+            message(STATUS "========================================")
+
+            # Set rpath to find bundled libraries (Release mode)
+            # Include Frameworks, Frameworks/lib, and Python.framework
+            if(APPLE)
+                set_target_properties(OpenConverter PROPERTIES
+                    BUILD_WITH_INSTALL_RPATH TRUE
+                    INSTALL_RPATH "@executable_path/../Frameworks;@executable_path/../Frameworks/lib;@executable_path/../Frameworks/Python.framework/Versions/Current/lib"
+                )
+            endif()
+        else()
+            # Debug mode - minimal bundling
+            message(STATUS "========================================")
+            message(STATUS "DEBUG BUILD - Using system libraries")
+            message(STATUS "========================================")
+            message(STATUS "Set environment variables:")
+            message(STATUS "  export BMF_ROOT_PATH=${BMF_ROOT_PATH}")
+            message(STATUS "  export PYTHONPATH=${BMF_ROOT_PATH}/lib:${BMF_ROOT_PATH}")
+            message(STATUS "========================================")
+
+            # Set rpath for development (use system libraries) - macOS only
+            if(APPLE)
+                set_target_properties(OpenConverter PROPERTIES
+                    BUILD_WITH_INSTALL_RPATH FALSE
+                    INSTALL_RPATH "@executable_path/../Frameworks;@executable_path/../Frameworks/lib"
+                )
+            endif()
+        endif()
     endif()
 
     set_target_properties(OpenConverter PROPERTIES
