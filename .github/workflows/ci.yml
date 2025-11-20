@@ -37,7 +37,7 @@ jobs:
     - name: Build with CMake
       run: |
         export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
-        (cd src && cmake -B build -DENABLE_TESTS=ON -DENABLE_GUI=OFF && cd build && make -j$(nproc))
+        (cd src && cmake -B build -DENABLE_TESTS=ON -DBMF_TRANSCODER=OFF -DENABLE_GUI=OFF && cd build && make -j$(nproc))
 
     - name: Run tests
       run: |

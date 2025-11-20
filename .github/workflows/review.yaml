@@ -137,7 +137,7 @@ jobs:
     - name: Install FFmpeg and Qt via Homebrew
       run: |
         # Install FFmpeg 5 with x264, x265 support (pre-built from Homebrew)
-        brew install ffmpeg@5 qt@5
+        brew install ffmpeg@5 qt@5 python@3.9
 
         # Set FFmpeg path
         export FFMPEG_ROOT_PATH=$(brew --prefix ffmpeg@5)
@@ -147,6 +147,65 @@ jobs:
         echo "FFmpeg configuration:"
         $FFMPEG_ROOT_PATH/bin/ffmpeg -version | head -n 1
         $FFMPEG_ROOT_PATH/bin/ffmpeg -encoders 2>/dev/null | grep -E "libx264|libx265" || echo "Warning: x264/x265 not found"
+
+    - name: Checkout BMF repository(specific branch)
+      run: |
+        git clone https://github.com/OpenConverterLab/bmf.git
+
+        wget https://invisible-island.net/archives/ncurses/ncurses-6.5.tar.gz
+        wget https://ftp.gnu.org/gnu/binutils/binutils-2.43.1.tar.bz2
+
+    - name: Cache ncurses build
+      uses: actions/cache@v3
+      with:
+        path: opt/ncurses
+        key: ${{ runner.os }}-ncurses-${{ hashFiles('ncurses-6.5.tar.gz') }}
+        restore-keys: |
+          ${{ runner.os }}-ncurses-
+
+    - name: Cache binutils build
+      uses: actions/cache@v3
+      with:
+        path: opt/binutils
+        key: ${{ runner.os }}-binutils-${{ hashFiles('binutils-2.43.1.tar.bz2') }}
+        restore-keys: |
+          ${{ runner.os }}-binutils-
+
+    - name: compile dependencies
+      run: |
+        if [ ! -d "$(pwd)/opt/ncurses" ]; then
+          tar -xzvf ncurses-6.5.tar.gz
+          (cd ncurses-6.5 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/ncurses && make -j$(sysctl -n hw.ncpu) && sudo make install)
+        else
+          echo "ncurses is already installed, skipping build."
+        fi
+
+        if [ ! -d "$(pwd)/opt/binutils" ]; then
+          tar xvf binutils-2.43.1.tar.bz2
+          (cd binutils-2.43.1 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/binutils --enable-install-libiberty && make -j$(sysctl -n hw.ncpu) && sudo make install)
+        else
+          echo "binutils is already installed, skipping build."
+        fi
+
+    - name: Cache BMF build
+      uses: actions/cache@v3
+      with:
+        path: bmf/output/
+        key: ${{ runner.os }}-bmf-${{ hashFiles('bmf/build.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-bmf-macos-arm-
+
+    - name: Set up BMF if not cached
+      run: |
+        if [ ! -d "$(pwd)/bmf/output/" ]; then
+          export LIBRARY_PATH=$(pwd)/opt/binutils/lib:$LIBRARY_PATH
+          export CMAKE_PREFIX_PATH=$(pwd)/opt/binutils:$CMAKE_PREFIX_PATH
+          pip install setuptools
+          (cd bmf && git checkout oc && git submodule update --init --recursive && ./build_osx.sh)
+        else
+          echo "BMF is already installed, skipping build."
+        fi
+        echo "BMF_ROOT_PATH=$(pwd)/bmf/output/bmf" >> $GITHUB_ENV
 
     - name: Build and Deploy
       run: |
@@ -228,7 +287,7 @@ jobs:
       - name: Build Qt project
         run: |
           (cd src &&
-          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" -DFFTOOL_TRANSCODER=OFF &&
+          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" -DFFTOOL_TRANSCODER=OFF -DBMF_TRANSCODER=OFF &&
           cmake --build build --config Release --parallel)
 
       - name : Deploy project
