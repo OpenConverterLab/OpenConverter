@@ -152,24 +152,24 @@ jobs:
       run: |
         git clone https://github.com/OpenConverterLab/bmf.git
 
-        wget https://invisible-island.net/archives/ncurses/ncurses-6.5.tar.gz
-        wget https://ftp.gnu.org/gnu/binutils/binutils-2.43.1.tar.bz2
+        # wget https://invisible-island.net/archives/ncurses/ncurses-6.5.tar.gz
+        # wget https://ftp.gnu.org/gnu/binutils/binutils-2.43.1.tar.bz2
 
-    - name: Cache ncurses build
-      uses: actions/cache@v3
-      with:
-        path: opt/ncurses
-        key: ${{ runner.os }}-ncurses-${{ hashFiles('ncurses-6.5.tar.gz') }}
-        restore-keys: |
-          ${{ runner.os }}-ncurses-
+    # - name: Cache ncurses build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: opt/ncurses
+    #     key: ${{ runner.os }}-ncurses-${{ hashFiles('ncurses-6.5.tar.gz') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-ncurses-
 
-    - name: Cache binutils build
-      uses: actions/cache@v3
-      with:
-        path: opt/binutils
-        key: ${{ runner.os }}-binutils-${{ hashFiles('binutils-2.43.1.tar.bz2') }}
-        restore-keys: |
-          ${{ runner.os }}-binutils-
+    # - name: Cache binutils build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: opt/binutils
+    #     key: ${{ runner.os }}-binutils-${{ hashFiles('binutils-2.43.1.tar.bz2') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-binutils-
 
     # - name: compile dependencies
     #   run: |
@@ -198,8 +198,8 @@ jobs:
     - name: Set up BMF if not cached
       run: |
         if [ ! -d "$(pwd)/bmf/output/" ]; then
-          export LIBRARY_PATH=$(pwd)/opt/binutils/lib:$LIBRARY_PATH
-          export CMAKE_PREFIX_PATH=$(pwd)/opt/binutils:$CMAKE_PREFIX_PATH
+          # export LIBRARY_PATH=$(pwd)/opt/binutils/lib:$LIBRARY_PATH
+          # export CMAKE_PREFIX_PATH=$(pwd)/opt/binutils:$CMAKE_PREFIX_PATH
           pip install setuptools
           (cd bmf && git checkout oc && git submodule update --init --recursive && ./build_osx.sh)
         else
