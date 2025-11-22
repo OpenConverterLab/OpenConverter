@@ -344,7 +344,11 @@ bool TranscoderBMF::prepare_info(std::string input_path,
     nlohmann::json video_params = nlohmann::json::object();
 
     // Always add codec and bitrate
-    video_params["codec"] = encode_parameter->get_video_codec_name();
+    std::string video_codec_name = encode_parameter->get_video_codec_name();
+    if (!video_codec_name.empty())
+        video_params["codec"] = video_codec_name;
+    else
+        video_params["codec"] = "libx264";
     video_params["bit_rate"] = encode_parameter->get_video_bit_rate();
 
     // Only add width if it's set (> 0)
@@ -373,7 +377,11 @@ bool TranscoderBMF::prepare_info(std::string input_path,
 
     // Build audio_params object
     nlohmann::json audio_params = nlohmann::json::object();
-    audio_params["codec"] = encode_parameter->get_audio_codec_name();
+    std::string audio_codec_name = encode_parameter->get_audio_codec_name();
+    if (!audio_codec_name.empty())
+        audio_params["codec"] = audio_codec_name;
+    else
+        audio_params["codec"] = "aac";
     audio_params["bit_rate"] = encode_parameter->get_audio_bit_rate();
 
     encoder_para = {{"output_path", output_path},
