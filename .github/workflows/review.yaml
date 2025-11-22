@@ -171,21 +171,21 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-binutils-
 
-    - name: compile dependencies
-      run: |
-        if [ ! -d "$(pwd)/opt/ncurses" ]; then
-          tar -xzvf ncurses-6.5.tar.gz
-          (cd ncurses-6.5 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/ncurses && make -j$(sysctl -n hw.ncpu) && sudo make install)
-        else
-          echo "ncurses is already installed, skipping build."
-        fi
+    # - name: compile dependencies
+    #   run: |
+    #     if [ ! -d "$(pwd)/opt/ncurses" ]; then
+    #       tar -xzvf ncurses-6.5.tar.gz
+    #       (cd ncurses-6.5 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/ncurses && make -j$(sysctl -n hw.ncpu) && sudo make install)
+    #     else
+    #       echo "ncurses is already installed, skipping build."
+    #     fi
 
-        if [ ! -d "$(pwd)/opt/binutils" ]; then
-          tar xvf binutils-2.43.1.tar.bz2
-          (cd binutils-2.43.1 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/binutils --enable-install-libiberty && make -j$(sysctl -n hw.ncpu) && sudo make install)
-        else
-          echo "binutils is already installed, skipping build."
-        fi
+    #     if [ ! -d "$(pwd)/opt/binutils" ]; then
+    #       tar xvf binutils-2.43.1.tar.bz2
+    #       (cd binutils-2.43.1 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/binutils --enable-install-libiberty && make -j$(sysctl -n hw.ncpu) && sudo make install)
+    #     else
+    #       echo "binutils is already installed, skipping build."
+    #     fi
 
     - name: Cache BMF build
       uses: actions/cache@v3
