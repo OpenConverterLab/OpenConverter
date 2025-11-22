@@ -56,6 +56,7 @@ private slots:
     void OnInputFileSelected(const QString &filePath);
     void OnOutputFileSelected(const QString &filePath);
     void OnAlgorithmChanged(int index);
+    void OnFormatChanged(int index);
     void OnProcessClicked();
     void OnProcessFinished(bool success);
 
@@ -102,6 +103,11 @@ private:
     QComboBox *audioCodecComboBox;
     QLabel *audioBitrateLabel;
     BitrateWidget *audioBitrateWidget;
+
+    // Format section
+    QGroupBox *formatGroupBox;
+    QLabel *formatLabel;
+    QComboBox *formatComboBox;
 
     // Progress section
     ProgressWidget *progressWidget;

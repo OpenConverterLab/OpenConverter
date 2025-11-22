@@ -72,7 +72,7 @@ void TranscodePage::SetupUI() {
         tr("Input File"),
         FileSelectorWidget::InputFile,
         tr("Select a media file or click Batch for multiple files..."),
-        tr("Media Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"),
+        tr("All Files (*.*)"),
         tr("Select Media File"),
         this
     );
@@ -159,7 +159,7 @@ void TranscodePage::SetupUI() {
 
     formatLabel = new QLabel(tr("Format:"), formatGroupBox);
     formatComboBox = new QComboBox(formatGroupBox);
-    formatComboBox->addItems({"mp4", "mkv", "avi", "mov", "flv", "webm", "ts"});
+    formatComboBox->addItems({"mp4", "mkv", "avi", "mov", "flv", "webm", "ts", "jpg", "png"});
     formatComboBox->setCurrentText("mp4");
     connect(formatComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &TranscodePage::OnFormatChanged);

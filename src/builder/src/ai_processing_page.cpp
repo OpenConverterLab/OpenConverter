@@ -84,6 +84,13 @@ void AIProcessingPage::OnPageActivated() {
 }
 
 void AIProcessingPage::OnInputFileChanged(const QString &newPath) {
+    QString ext = GetFileExtension(newPath);
+    if (!ext.isEmpty()) {
+        int index = formatComboBox->findText(ext);
+        if (index >= 0) {
+            formatComboBox->setCurrentIndex(index);
+        }
+    }
     // Update output path when input changes
     UpdateOutputPath();
 }
@@ -94,6 +101,8 @@ void AIProcessingPage::OnOutputPathUpdate() {
 
 void AIProcessingPage::OnPageDeactivated() {
     BasePage::OnPageDeactivated();
+    HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
+                           formatComboBox->currentText());
 }
 
 void AIProcessingPage::SetupUI() {
@@ -106,7 +115,7 @@ void AIProcessingPage::SetupUI() {
         tr("Input File"),
         FileSelectorWidget::InputFile,
         tr("Select a media file or click Batch for multiple files..."),
-        tr("Media Files (*.mp4 *.avi *.mkv *.mov *.flv *.wmv *.webm *.ts *.m4v);;All Files (*.*)"),
+        tr("All Files (*.*)"),
         tr("Select Media File"),
         this
     );
@@ -166,8 +175,8 @@ void AIProcessingPage::SetupUI() {
 
     videoCodecLabel = new QLabel(tr("Codec:"), videoGroupBox);
     videoCodecComboBox = new QComboBox(videoGroupBox);
-    videoCodecComboBox->addItems({"libx264", "libx265", "libvpx-vp9", "copy"});
-    videoCodecComboBox->setCurrentText("libx264");
+    videoCodecComboBox->addItems({"auto", "libx264", "libx265", "libvpx-vp9", "copy"});
+    videoCodecComboBox->setCurrentText("auto");
 
     videoBitrateLabel = new QLabel(tr("Bitrate:"), videoGroupBox);
     videoBitrateWidget = new BitrateWidget(BitrateWidget::Video, videoGroupBox);
@@ -186,8 +195,8 @@ void AIProcessingPage::SetupUI() {
 
     audioCodecLabel = new QLabel(tr("Codec:"), audioGroupBox);
     audioCodecComboBox = new QComboBox(audioGroupBox);
-    audioCodecComboBox->addItems({"aac", "libmp3lame", "libopus", "copy"});
-    audioCodecComboBox->setCurrentText("aac");
+    audioCodecComboBox->addItems({"auto", "aac", "libmp3lame", "libopus", "copy"});
+    audioCodecComboBox->setCurrentText("auto");
 
     audioBitrateLabel = new QLabel(tr("Bitrate:"), audioGroupBox);
     audioBitrateWidget = new BitrateWidget(BitrateWidget::Audio, audioGroupBox);
@@ -199,12 +208,29 @@ void AIProcessingPage::SetupUI() {
 
     mainLayout->addWidget(audioGroupBox);
 
+    // Format Section
+    formatGroupBox = new QGroupBox(tr("File Format"), this);
+    QHBoxLayout *formatLayout = new QHBoxLayout(formatGroupBox);
+
+    formatLabel = new QLabel(tr("Format:"), formatGroupBox);
+    formatComboBox = new QComboBox(formatGroupBox);
+    formatComboBox->addItems({"mp4", "mkv", "avi", "mov", "flv", "webm", "ts", "jpg", "png"});
+    formatComboBox->setCurrentText("mp4");
+    connect(formatComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &AIProcessingPage::OnFormatChanged);
+
+    formatLayout->addWidget(formatLabel);
+    formatLayout->addWidget(formatComboBox);
+    formatLayout->addStretch();
+
+    mainLayout->addWidget(formatGroupBox);
+
     // Output File Selector
     outputFileSelector = new FileSelectorWidget(
         tr("Output File"),
         FileSelectorWidget::OutputFile,
         tr("Output file path..."),
-        tr("Media Files (*.mp4 *.avi *.mkv *.mov);;All Files (*.*)"),
+        tr("All Files (*.*)"),
         tr("Select Output File"),
         this
     );
@@ -259,6 +285,15 @@ void AIProcessingPage::OnInputFileSelected(const QString &filePath) {
         mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
 
+    // Set default format to same as input file
+    QString ext = GetFileExtension(filePath);
+    if (!ext.isEmpty()) {
+        int index = formatComboBox->findText(ext);
+        if (index >= 0) {
+            formatComboBox->setCurrentIndex(index);
+        }
+    }
+
     // Update output path
     UpdateOutputPath();
 }
@@ -276,11 +311,17 @@ void AIProcessingPage::OnAlgorithmChanged(int index) {
     algoSettingsStack->setCurrentIndex(index);
 }
 
+void AIProcessingPage::OnFormatChanged(int index) {
+    Q_UNUSED(index);
+    UpdateOutputPath();
+}
+
 void AIProcessingPage::OnProcessClicked() {
     // Check if batch mode is active
     if (batchModeHelper->IsBatchMode()) {
         // Batch mode: Add to queue
-        batchModeHelper->AddToQueue("mp4");  // Default output format
+        QString format = formatComboBox->currentText();
+        batchModeHelper->AddToQueue(format);
         return;
     }
 
@@ -321,7 +362,8 @@ void AIProcessingPage::UpdateOutputPath() {
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
-            QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath("mp4");
+            QString format = formatComboBox->currentText();
+            QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
             outputFileSelector->SetFilePath(outputPath);
             processButton->setEnabled(true);
         }
