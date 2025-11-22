@@ -483,14 +483,6 @@ else()
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
-
-    # Install Python modules for CLI mode (if BMF is enabled)
-    if(BMF_TRANSCODER)
-        install(DIRECTORY ${CMAKE_BINARY_DIR}/modules
-            DESTINATION ${CMAKE_INSTALL_BINDIR}
-            FILES_MATCHING PATTERN "*.py"
-        )
-    endif()
 endif()
 
 # Test dependencies
