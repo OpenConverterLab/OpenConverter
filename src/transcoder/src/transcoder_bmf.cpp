@@ -301,7 +301,7 @@ bmf_sdk::CBytes TranscoderBMF::encoder_callback(bmf_sdk::CBytes input) {
         }
 
     } else {
-        BMFLOG(BMF_WARNING) << "Failed to extract frame number";
+        BMFLOG(BMF_WARNING) << "Failed to extract frame number from: " << str_info;
     }
 
     uint8_t bytes[] = {97, 98, 99, 100, 101, 0};
@@ -448,7 +448,7 @@ bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
     auto graph = bmf::builder::Graph(bmf::builder::NormalMode);
 
     auto decoder =
-        graph.Decode(bmf_sdk::JsonParam(decoder_para), "", scheduler_cnt++);
+        graph.Decode(bmf_sdk::JsonParam(decoder_para), "", scheduler_cnt);
 
     if (algo_mode == AlgoMode::Upscale) {
         int upscale_factor = encode_parameter->get_upscale_factor();
@@ -467,13 +467,13 @@ bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
                          module_path,
                          "enhance_module.EnhanceModule",
                          bmf::builder::Immediate,
-                         scheduler_cnt++));
+                         scheduler_cnt));
     }
 
     auto encoder =
         graph.Encode(algo_mode == AlgoMode::Upscale ? *algo_node : decoder["video"],
                      decoder["audio"],
-                     bmf_sdk::JsonParam(encoder_para), "", scheduler_cnt++);
+                     bmf_sdk::JsonParam(encoder_para), "", scheduler_cnt);
 
     auto de_callback = std::bind(&TranscoderBMF::decoder_callback, this,
                                  std::placeholders::_1);
@@ -482,8 +482,13 @@ bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
 
     decoder.AddCallback(
         0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(de_callback));
-    encoder.AddCallback(
-        0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(en_callback));
+    if (algo_mode != AlgoMode::None) {
+        algo_node->AddCallback(
+            0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(en_callback));
+    } else {
+        encoder.AddCallback(
+            0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(en_callback));
+    }
 
     nlohmann::json graph_para = {{"dump_graph", 1}};
     graph.SetOption(bmf_sdk::JsonParam(graph_para));

@@ -65,6 +65,8 @@ class EnhanceModule(Module):
             Log.log_node(LogLevel.ERROR, self._node, "no option")
             return
 
+        self.frame_number = 0
+
         tile = option.get("tile", 0)
         tile_pad = option.get("tile_pad", 10)
         pre_pad = option.get("pre_pad", 10)
@@ -140,5 +142,9 @@ class EnhanceModule(Module):
             output_pkt.timestamp = pkt.timestamp
             if output_queue is not None:
                 output_queue.put(output_pkt)
+                if self.callback_ is not None:
+                    self.frame_number += 1
+                    message = "frame number: " + str(self.frame_number)
+                    self.callback_(0, bytes(message, "utf-8"))
 
         return ProcessResult.OK
