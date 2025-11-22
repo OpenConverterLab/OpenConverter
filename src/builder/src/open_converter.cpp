@@ -152,7 +152,9 @@ OpenConverter::OpenConverter(QWidget *parent)
     navButtonGroup->addButton(ui->btnCreateGif, 4);
     navButtonGroup->addButton(ui->btnRemux, 5);
     navButtonGroup->addButton(ui->btnTranscode, 6);
+#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
     navButtonGroup->addButton(ui->btnAIProcessing, 7);
+#endif
 
     // Connect navigation button group
     connect(navButtonGroup, QOverload<int>::of(&QButtonGroup::idClicked),
@@ -344,7 +346,9 @@ void OpenConverter::InitializePages() {
     // Advanced section
     pages.append(new RemuxPage(this));
     pages.append(new TranscodePage(this));
+#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
     pages.append(new AIProcessingPage(this));
+#endif
 
     // Add all pages to the stacked widget
     for (BasePage *page : pages) {

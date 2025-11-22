@@ -260,7 +260,6 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/base_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/converter_runner.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/transcoder_helper.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/python_manager.cpp
         ${CMAKE_SOURCE_DIR}/component/src/file_selector_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/filter_tag_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/progress_widget.cpp
@@ -273,7 +272,6 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/component/src/quality_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/codec_selector_widget.cpp
         ${CMAKE_SOURCE_DIR}/component/src/format_selector_widget.cpp
-        ${CMAKE_SOURCE_DIR}/component/src/python_install_dialog.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_item.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_queue.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/batch_file_dialog.cpp
@@ -287,7 +285,6 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/src/cut_video_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/remux_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/transcode_page.cpp
-        ${CMAKE_SOURCE_DIR}/builder/src/ai_processing_page.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/shared_data.cpp
         ${CMAKE_SOURCE_DIR}/builder/src/open_converter.cpp
     )
@@ -297,7 +294,6 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/base_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/converter_runner.h
         ${CMAKE_SOURCE_DIR}/builder/include/transcoder_helper.h
-        ${CMAKE_SOURCE_DIR}/builder/include/python_manager.h
         ${CMAKE_SOURCE_DIR}/component/include/file_selector_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/filter_tag_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/progress_widget.h
@@ -310,7 +306,6 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/component/include/quality_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/codec_selector_widget.h
         ${CMAKE_SOURCE_DIR}/component/include/format_selector_widget.h
-        ${CMAKE_SOURCE_DIR}/component/include/python_install_dialog.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_item.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_queue.h
         ${CMAKE_SOURCE_DIR}/builder/include/batch_file_dialog.h
@@ -324,10 +319,22 @@ if(ENABLE_GUI)
         ${CMAKE_SOURCE_DIR}/builder/include/cut_video_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/remux_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/transcode_page.h
-        ${CMAKE_SOURCE_DIR}/builder/include/ai_processing_page.h
         ${CMAKE_SOURCE_DIR}/builder/include/shared_data.h
         ${CMAKE_SOURCE_DIR}/builder/include/open_converter.h
     )
+
+    if(BMF_TRANSCODER)
+        list(APPEND GUI_SOURCES
+            ${CMAKE_SOURCE_DIR}/component/src/python_install_dialog.cpp
+            ${CMAKE_SOURCE_DIR}/builder/src/python_manager.cpp
+            ${CMAKE_SOURCE_DIR}/builder/src/ai_processing_page.cpp
+        )
+        list(APPEND GUI_HEADERS
+            ${CMAKE_SOURCE_DIR}/component/include/python_install_dialog.h
+            ${CMAKE_SOURCE_DIR}/builder/include/python_manager.h
+            ${CMAKE_SOURCE_DIR}/builder/include/ai_processing_page.h
+        )
+    endif()
 
     # Add UI files
     list(APPEND UI_FILES
