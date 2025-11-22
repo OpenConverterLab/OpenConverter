@@ -29,6 +29,7 @@ public:
     Transcoder(ProcessParameter *process_parameter,
                EncodeParameter *encode_parameter)
         : process_parameter(process_parameter), encode_parameter(encode_parameter) {
+        first_frame_time = std::chrono::system_clock::time_point{};
         last_ui_update = std::chrono::system_clock::now();
     }
 
@@ -36,34 +37,28 @@ public:
 
     virtual bool transcode(std::string input_path, std::string output_path) = 0;
 
-    double compute_smooth_duration(double new_duration) {
-        if (new_duration >= min_duration_threshold) {
-            duration_history.push_back(new_duration);
-            if (duration_history.size() > max_history_size) {
-                duration_history.erase(duration_history.begin());
-            }
-        }
-        return duration_history.empty()
-                   ? 0.0
-                   : std::accumulate(duration_history.begin(),
-                                     duration_history.end(), 0.0) /
-                         duration_history.size();
-    }
-
     void send_process_parameter(int64_t frame_number, int64_t frame_total_number) {
-        process_number = frame_number * 100 / frame_total_number;
+        if (first_frame_time == std::chrono::system_clock::time_point{}) {
+            first_frame_time = std::chrono::system_clock::now();
+        }
 
-        static auto last_encoder_call_time = std::chrono::system_clock::now();
+        double fraction = 0.0;
+        if (frame_total_number > 0) {
+            fraction = static_cast<double>(frame_number) / static_cast<double>(frame_total_number);
+            if (fraction > 1.0) fraction = 1.0; // clamp just in case
+            if (fraction < 0.0) fraction = 0.0;
+        }
+        process_number = static_cast<int>(fraction * 100.0);
+
         auto now = std::chrono::system_clock::now();
 
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                            now - last_encoder_call_time)
+        auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            now - first_frame_time)
                             .count();
-        last_encoder_call_time = now;
 
-        double smooth_duration = compute_smooth_duration(duration);
         if (frame_number > 0 && frame_total_number > 0) {
-            remain_time = smooth_duration * (100 - process_number) / 1000;
+            double elapsed_ms_d = static_cast<double>(elapsed_ms);
+            remain_seconds = (elapsed_ms / fraction - elapsed_ms_d) / 1000.0;
         }
 
         // Only update UI if enough time has passed (100ms)
@@ -74,15 +69,14 @@ public:
         if (time_since_last_ui_update >= 100) {
             process_parameter->set_process_number(process_number);
             if (frame_number > 0 && frame_total_number > 0) {
-                process_parameter->set_time_required(remain_time);
+                process_parameter->set_time_required(remain_seconds);
             }
             last_ui_update = now;
         }
 
         std::cout << "Process Number (percentage): " << process_number << "%\t"
-                  << "Current duration (milliseconds): " << duration << "\t"
-                  << "Smoothed Duration: " << smooth_duration << " ms\t"
-                  << "Estimated Rest Time (seconds): " << remain_time
+                  << "Elapsed Time (milliseconds): " << elapsed_ms << "\t"
+                  << "Estimated Rest Time (seconds): " << remain_seconds
                   << std::endl;
     }
 
@@ -92,17 +86,12 @@ public:
     int64_t frame_number = 0;
     int64_t frame_total_number = 0;
     int process_number = 0;
-    double remain_time = 0;
+    double remain_seconds = 0;
 
+    std::chrono::system_clock::time_point first_frame_time;
     std::chrono::system_clock::time_point
         last_ui_update; // Track last UI update time
-    std::vector<double>
-        duration_history; // Store recent durations for averaging
 
-    static constexpr size_t max_history_size =
-        20; // Limit for the number of durations tracked
-    static constexpr double min_duration_threshold =
-        10.0; // Ignore durations < 10 ms
 };
 
 #endif

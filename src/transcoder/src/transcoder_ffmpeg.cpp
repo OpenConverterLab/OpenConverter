@@ -23,6 +23,7 @@ extern "C" {
 TranscoderFFmpeg::TranscoderFFmpeg(ProcessParameter *process_parameter,
                                    EncodeParameter *encode_parameter)
     : Transcoder(process_parameter, encode_parameter) {
+    frame_number = 0;
     frame_total_number = 0;
     total_duration = 0;
     current_duration = 0;
@@ -546,8 +547,6 @@ end:
 
 int TranscoderFFmpeg::open_media() {
     int ret = -1;
-    /* set the frame_number to zero to avoid some bugs */
-    frame_number = 0;
     // open the multimedia file
     if ((ret = avformat_open_input(&decoder->fmtCtx, decoder->filename, NULL,
                                    NULL)) < 0) {
@@ -574,9 +573,12 @@ void TranscoderFFmpeg::adjust_frame_pts_to_encoder_timebase(AVFrame *frame, int 
     AVFilterContext *filter = filters_ctx[index].buffersink_ctx;
     AVRational filter_tb = av_buffersink_get_time_base(filter);
     AVRational av_tb = {1, AV_TIME_BASE};
+    int64_t td;
     frame->pts =
         av_rescale_q(frame->pts, filter_tb, tb) -
         av_rescale_q(start_time, av_tb, tb);
+    td = av_rescale_q(total_duration, av_tb, tb);
+    send_process_parameter(frame->pts, td);
     return;
 }
 
