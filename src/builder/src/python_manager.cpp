@@ -49,7 +49,7 @@ const QString PYTHON_ARCHIVE_SIZE_MB = "18";
 const QString PYTHON_DOWNLOAD_URL = "https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.9.25+20251031-aarch64-unknown-linux-gnu-install_only.tar.gz";
 const QString PYTHON_ARCHIVE_SIZE_MB = "18";
 #else
-const QString PYTHON_DOWNLOAD_URL = "https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.10.19+20251031-x86_64-unknown-linux-gnu-install_only.tar.gz";
+const QString PYTHON_DOWNLOAD_URL = "https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.9.25+20251031-x86_64-unknown-linux-gnu-install_only.tar.gz";
 const QString PYTHON_ARCHIVE_SIZE_MB = "18";
 #endif
 #endif
