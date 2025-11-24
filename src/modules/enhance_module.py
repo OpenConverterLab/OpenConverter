@@ -19,6 +19,8 @@ import os
 
 import torch
 
+import platform
+
 def load_model():
     model = SRVGGNetCompact(
         num_in_ch=3,
@@ -77,7 +79,7 @@ class EnhanceModule(Module):
 
         # Agregar estas líneas para verificar el dispositivo
         print("Checking available device...")
-        if torch.backends.mps.is_available():
+        if platform.system() == "Darwin" and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             print("MPS is available - using M1 GPU")
             device = torch.device("mps")
         else:
