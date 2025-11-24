@@ -387,7 +387,8 @@ EncodeParameter* AIProcessingPage::CreateEncodeParameter() {
 
     // Set video codec and bitrate
     QString videoCodec = videoCodecComboBox->currentText();
-    encodeParam->set_video_codec_name(videoCodec.toStdString());
+    if (videoCodec != "auto")
+        encodeParam->set_video_codec_name(videoCodec.toStdString());
 
     int videoBitrate = videoBitrateWidget->GetBitrate();
     if (videoBitrate > 0) {
@@ -396,7 +397,8 @@ EncodeParameter* AIProcessingPage::CreateEncodeParameter() {
 
     // Set audio codec and bitrate
     QString audioCodec = audioCodecComboBox->currentText();
-    encodeParam->set_audio_codec_name(audioCodec.toStdString());
+    if (audioCodec != "auto")
+        encodeParam->set_audio_codec_name(audioCodec.toStdString());
 
     int audioBitrate = audioBitrateWidget->GetBitrate();
     if (audioBitrate > 0) {
