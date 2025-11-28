@@ -158,7 +158,6 @@ private:
     QString GetPythonFrameworkPath();
     QString GetRequirementsPath();
     bool ExtractPythonArchive(const QString &archivePath);
-    bool CopyBMFPythonBindings();
     bool CopyDirectoryRecursively(const QString &source, const QString &destination);
     void SetStatus(Status newStatus, const QString &message);
     void SetProgress(int value, const QString &message);

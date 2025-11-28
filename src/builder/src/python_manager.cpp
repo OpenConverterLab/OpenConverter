@@ -114,7 +114,19 @@ QString PythonManager::GetAppBundlePath() {
 }
 
 QString PythonManager::GetPythonFrameworkPath() {
+    // Install embedded Python into Application Support on macOS so
+    // the app bundle remains immutable. Use QStandardPaths to get
+    // the per-user Application Support directory for the app.
+    // macOS: ~/Library/Application Support/OpenConverter/Python.framework
+#ifdef __APPLE__
+    QString appSupportBase = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    // Ensure directory exists
+    QDir().mkpath(appSupportBase);
+    return appSupportBase + "/Python.framework";
+#else
+    // Linux: Use app bundle location (legacy behavior for now)
     return GetAppBundlePath() + "/Contents/Frameworks/Python.framework";
+#endif
 }
 
 QString PythonManager::GetPythonPath() {
@@ -160,21 +172,15 @@ bool PythonManager::ArePackagesInstalled() {
     // Fast check: Just verify package directories exist in site-packages
     // This is much faster than importing packages (which can take 10+ seconds)
 
-    QString appBundlePath = GetAppBundlePath();
-    if (appBundlePath.isEmpty()) {
-        return false;
-    }
-
-    // Get site-packages directory
-    QString sitePackages = appBundlePath + "/Contents/Frameworks/Python.framework/lib/python3.9/site-packages";
-
-    if (!QDir(sitePackages).exists()) {
+    QString sitePackages = GetSitePackagesPath();
+    if (sitePackages.isEmpty()) {
         qDebug() << "site-packages directory not found:" << sitePackages;
         return false;
     }
 
     // Check if key package directories exist
-    QStringList requiredPackages = {"torch", "basicsr", "realesrgan", "bmf"};
+    // Note: BMF is bundled with the app and loaded via PYTHONPATH, not installed here
+    QStringList requiredPackages = {"torch", "basicsr", "realesrgan"};
 
     for (const QString &package : requiredPackages) {
         QString packagePath = sitePackages + "/" + package;
@@ -388,16 +394,24 @@ bool PythonManager::ExtractPythonArchive(const QString &archivePath) {
     // Remove existing Python.framework if it exists
     QDir(targetPath).removeRecursively();
 
-    // Move extracted Python to Python.framework
-    if (!QFile::rename(extractedPython, targetPath)) {
-        qWarning() << "Failed to move Python to:" << targetPath;
+    // Try to rename (fast when same filesystem). If rename fails (different filesystems),
+    // fall back to recursive copy.
+    if (QFile::rename(extractedPython, targetPath)) {
+        QDir(extractDir).removeRecursively();
+        qDebug() << "Python extracted successfully to:" << targetPath;
+        return true;
+    }
+
+    qWarning() << "Rename failed; attempting recursive copy to:" << targetPath;
+    // Attempt recursive copy as fallback
+    if (!CopyDirectoryRecursively(extractedPython, targetPath)) {
+        qWarning() << "Failed to copy extracted Python to:" << targetPath;
         return false;
     }
 
     // Clean up extraction directory
     QDir(extractDir).removeRecursively();
-
-    qDebug() << "Python extracted successfully to:" << targetPath;
+    qDebug() << "Python extracted successfully to (copied):" << targetPath;
     return true;
 }
 
@@ -472,18 +486,9 @@ void PythonManager::OnInstallProcessFinished(int exitCode, QProcess::ExitStatus 
         return;
     }
 
-    // Pip install succeeded, now copy BMF Python bindings
-    SetProgress(95, "Copying BMF Python bindings...");
-
-    if (!CopyBMFPythonBindings()) {
-        QString error = "Failed to copy BMF Python bindings";
-        SetStatus(Status::Error, error);
-        emit InstallationFailed(error);
-        installProcess->deleteLater();
-        installProcess = nullptr;
-        return;
-    }
-
+    // Pip install succeeded
+    // Note: BMF Python bindings are loaded via PYTHONPATH in transcoder_bmf.cpp
+    // from app bundle's Resources/bmf directory, so no need to copy them here
     SetProgress(100, "All packages installed successfully");
     SetStatus(Status::Installed, "Python and packages ready");
     emit PackagesInstalled();
@@ -500,41 +505,6 @@ void PythonManager::CancelInstallation() {
         installProcess->kill();
     }
     SetStatus(Status::NotInstalled, "Installation cancelled");
-}
-
-bool PythonManager::CopyBMFPythonBindings() {
-    // BMF Python package is bundled in the app's Resources/bmf_python/
-    // We need to copy it to the embedded Python's site-packages
-
-    QString embeddedSitePackages = GetSitePackagesPath();
-    if (embeddedSitePackages.isEmpty()) {
-        qWarning() << "Embedded site-packages not found";
-        return false;
-    }
-
-    // Get bundled BMF Python package path
-    QString appBundlePath = GetAppBundlePath();
-    QString bmfSourcePath = appBundlePath + "/Contents/Resources/bmf_python";
-
-    if (!QDir(bmfSourcePath).exists()) {
-        qWarning() << "Bundled BMF Python package not found at:" << bmfSourcePath;
-        return false;
-    }
-
-    // Copy BMF directory to embedded site-packages
-    QString bmfDestPath = embeddedSitePackages + "/bmf";
-
-    // Remove existing BMF if present
-    QDir(bmfDestPath).removeRecursively();
-
-    // Copy BMF directory recursively
-    if (!CopyDirectoryRecursively(bmfSourcePath, bmfDestPath)) {
-        qWarning() << "Failed to copy BMF from" << bmfSourcePath << "to" << bmfDestPath;
-        return false;
-    }
-
-    qDebug() << "BMF Python bindings copied successfully from" << bmfSourcePath;
-    return true;
 }
 
 bool PythonManager::CopyDirectoryRecursively(const QString &source, const QString &destination) {

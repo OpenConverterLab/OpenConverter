@@ -48,7 +48,8 @@ private:
     nlohmann::json encoder_para;
 
     // Helper function to set up Python environment (PYTHONPATH)
-    void setup_python_environment();
+    // Returns true if setup succeeded, false if App Python is not installed
+    bool setup_python_environment();
 
     // Helper function to get the Python module path
     std::string get_python_module_path();

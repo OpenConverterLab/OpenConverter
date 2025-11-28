@@ -43,6 +43,7 @@
 #include <QString>
 #include <QThread>
 #include <QToolButton>
+#include <QSettings>
 #include <QTranslator>
 #include <QUrl>
 
@@ -88,6 +89,7 @@ protected:
 private slots:
     void SlotLanguageChanged(QAction *action);
     void SlotTranscoderChanged(QAction *action);
+    void SlotPythonChanged(QAction *action);
     void OnNavigationButtonClicked(int pageIndex);
     void OnQueueButtonClicked();
 
@@ -107,6 +109,8 @@ private:
     QMessageBox *displayResult;
     QActionGroup *transcoderGroup;
     QActionGroup *languageGroup;
+    QActionGroup *pythonGroup;
+    QString customPythonPath;
 
     // Navigation and page management
     QButtonGroup *navButtonGroup;
@@ -130,6 +134,12 @@ public:
 
     // Get current transcoder name
     QString GetCurrentTranscoderName() const;
+
+    // Get current Python path setting
+    QString GetPythonSitePackagesPath() const;
+
+    // Static method for transcoder_bmf to get Python path
+    static QString GetStoredPythonPath();
 };
 
 #endif // OPEN_CONVERTER_H
