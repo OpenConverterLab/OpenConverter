@@ -142,6 +142,15 @@ copy_lib_if_needed() {
     return 1
 }
 
+# Pre-bundle libavdevice which is needed by BMF's libbuiltin_modules but not bundled by macdeployqt
+if [ -f "$FFMPEG_LIB_DIR/libavdevice.59.dylib" ]; then
+    if [ ! -f "$APP_FRAMEWORKS/libavdevice.59.dylib" ]; then
+        echo "  Pre-copying libavdevice.59.dylib (needed by BMF builtin modules)"
+        cp "$FFMPEG_LIB_DIR/libavdevice.59.dylib" "$APP_FRAMEWORKS/"
+        chmod +w "$APP_FRAMEWORKS/libavdevice.59.dylib"
+    fi
+fi
+
 # Iterate multiple times to catch transitive dependencies
 for iteration in 1 2 3; do
     echo "Pass $iteration: Scanning for missing dependencies..."
@@ -240,7 +249,12 @@ for iteration in 1 2 3; do
         # Fix the library's own ID if it's an absolute path or @rpath
         lib_id=$(otool -D "$lib_path" 2>/dev/null | tail -n +2 | head -n 1 || true)
         if [[ ! -z "$lib_id" ]] && [[ "$lib_id" != @executable_path* ]] && [[ "$lib_id" != /usr/lib* ]] && [[ "$lib_id" != /System* ]]; then
-            install_name_tool -id "@executable_path/../Frameworks/$lib_name" "$lib_path" 2>/dev/null || true
+            # For libraries in lib/ subdirectory, use the correct path
+            if [[ "$lib_path" == *"/Frameworks/lib/"* ]]; then
+                install_name_tool -id "@executable_path/../Frameworks/lib/$lib_name" "$lib_path" 2>/dev/null || true
+            else
+                install_name_tool -id "@executable_path/../Frameworks/$lib_name" "$lib_path" 2>/dev/null || true
+            fi
         fi
     done
 
