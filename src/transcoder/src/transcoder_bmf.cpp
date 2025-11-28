@@ -17,6 +17,12 @@
 #include <filesystem>
 #include <fstream>
 
+#ifdef ENABLE_GUI
+#include <QDir>
+#include <QSettings>
+#include <QString>
+#endif
+
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #include <libgen.h>
@@ -29,9 +35,9 @@ TranscoderBMF::TranscoderBMF(ProcessParameter *process_parameter,
     frame_total_number = 0;
 }
 
-void TranscoderBMF::setup_python_environment() {
+bool TranscoderBMF::setup_python_environment() {
     // In Debug mode, use system PYTHONPATH from environment (set by developer/CMake)
-    // In Release mode, set up PYTHONPATH for bundled BMF and Python
+    // In Release mode, set up PYTHONPATH for bundled BMF and external Python (App Support or Custom)
 #ifndef NDEBUG
     // Debug mode: Set PYTHONPATH based on BMF_ROOT_PATH from environment or CMake
     BMFLOG(BMF_INFO) << "Debug mode: Setting PYTHONPATH from BMF_ROOT_PATH";
@@ -91,15 +97,44 @@ void TranscoderBMF::setup_python_environment() {
         BMFLOG(BMF_WARNING) << "Example: export BMF_ROOT_PATH=/path/to/bmf";
     }
 
-    return;  // Skip bundled BMF setup in Debug mode
+    return true;  // Debug mode always succeeds (uses system Python)
 #endif
 
-    // Release mode: Set up PYTHONPATH for bundled BMF and Python
+    // Release mode: Set up PYTHONPATH for bundled BMF libraries and external Python
     std::string bmf_lib_path;
     std::string bmf_output_path;
     std::string bmf_config_path;
-    std::string python_home;
-    bool is_bundled = false;
+    std::string python_site_packages;
+
+#ifdef ENABLE_GUI
+    // Get Python path from QSettings (default to App Python in Application Support)
+    QSettings settings("OpenConverter", "OpenConverter");
+    QString pythonMode = settings.value("python/mode", "pythonAppSupport").toString();
+
+    if (pythonMode == "pythonCustom") {
+        QString customPath = settings.value("python/customPath", "").toString();
+        if (!customPath.isEmpty()) {
+            python_site_packages = customPath.toStdString();
+            BMFLOG(BMF_INFO) << "Using custom Python site-packages: " << python_site_packages;
+        }
+    }
+
+    // Default to App Python if not custom
+    if (python_site_packages.empty()) {
+        QString appSupportDir = QDir::homePath() + "/Library/Application Support/OpenConverter";
+        QString sitePackages = appSupportDir + "/Python.framework/lib/python3.9/site-packages";
+
+        // Check if App Python exists - NO FALLBACK, App Python is required
+        if (QDir(sitePackages).exists()) {
+            python_site_packages = sitePackages.toStdString();
+            BMFLOG(BMF_INFO) << "Using App Python site-packages: " << python_site_packages;
+        } else {
+            BMFLOG(BMF_ERROR) << "App Python not found at: " << sitePackages.toStdString();
+            BMFLOG(BMF_ERROR) << "Please install App Python via Python menu -> Install Python";
+            return false;  // Don't continue without App Python - no fallback to system Python
+        }
+    }
+#endif
 
 #ifdef __APPLE__
     // Check if running from app bundle
@@ -116,7 +151,7 @@ void TranscoderBMF::setup_python_environment() {
                 size_t app_pos = exe_dir.find(".app/Contents/MacOS");
                 std::string app_bundle = exe_dir.substr(0, app_pos + 4);  // Include .app
 
-                // Check if BMF libraries are actually bundled (Release build)
+                // Check if BMF libraries are bundled (Release build)
                 std::string bundled_bmf_lib = app_bundle + "/Contents/Frameworks/lib";
                 std::string bundled_config = app_bundle + "/Contents/Frameworks/BUILTIN_CONFIG.json";
                 std::ifstream bmf_check(bundled_config);
@@ -133,27 +168,20 @@ void TranscoderBMF::setup_python_environment() {
                 }
                 bmf_check.close();
 
-                // Check if Python.framework is bundled (Release build)
-                std::string python_framework = app_bundle + "/Contents/Frameworks/Python.framework";
-                std::ifstream python_check(python_framework + "/Versions/Current/bin/python3");
-                if (python_check.good()) {
-                    python_home = python_framework + "/Versions/Current";
-                    is_bundled = true;
-                    BMFLOG(BMF_INFO) << "Using bundled Python from: " << python_home;
-                }
-                python_check.close();
-
-                // Check for bundled BMF Python package in Resources/bmf_python/
-                std::string bundled_bmf_python = app_bundle + "/Contents/Resources/bmf_python";
+                // Check for bundled BMF Python package in Resources/bmf/
+                // The bmf package is at Resources/bmf/, so we add Resources/ to PYTHONPATH
+                std::string bundled_bmf_python = app_bundle + "/Contents/Resources/bmf";
+                std::string resources_dir = app_bundle + "/Contents/Resources";
                 std::ifstream bmf_python_check(bundled_bmf_python + "/__init__.py");
                 if (bmf_python_check.good()) {
-                    // Add bundled BMF Python package to bmf_output_path
+                    // Add Resources directory to bmf_output_path so 'import bmf' finds Resources/bmf/
                     if (!bmf_output_path.empty()) {
-                        bmf_output_path = bundled_bmf_python + ":" + bmf_output_path;
+                        bmf_output_path = resources_dir + ":" + bmf_output_path;
                     } else {
-                        bmf_output_path = bundled_bmf_python;
+                        bmf_output_path = resources_dir;
                     }
                     BMFLOG(BMF_INFO) << "Found bundled BMF Python package at: " << bundled_bmf_python;
+                    BMFLOG(BMF_INFO) << "Added to PYTHONPATH: " << resources_dir;
                 }
                 bmf_python_check.close();
             }
@@ -161,15 +189,13 @@ void TranscoderBMF::setup_python_environment() {
     }
 #endif
 
-    // Set PYTHONHOME if using bundled Python
-    if (is_bundled && !python_home.empty()) {
-        setenv("PYTHONHOME", python_home.c_str(), 1);
-        BMFLOG(BMF_INFO) << "Set PYTHONHOME: " << python_home;
-
-        // Add bundled Python's site-packages to PYTHONPATH
-        std::string python_version = "3.9";  // Default, will be detected from bundled Python
-        std::string site_packages = python_home + "/lib/python" + python_version + "/site-packages";
-        bmf_output_path = site_packages + ":" + bmf_output_path;
+    // Add Python site-packages to PYTHONPATH (App Python or Custom)
+    if (!python_site_packages.empty()) {
+        if (!bmf_output_path.empty()) {
+            bmf_output_path = python_site_packages + ":" + bmf_output_path;
+        } else {
+            bmf_output_path = python_site_packages;
+        }
     }
 
     // Get current PYTHONPATH
@@ -192,6 +218,8 @@ void TranscoderBMF::setup_python_environment() {
     // Set BMF_MODULE_CONFIG_PATH to point to BUILTIN_CONFIG.json
     setenv("BMF_MODULE_CONFIG_PATH", bmf_config_path.c_str(), 1);
     BMFLOG(BMF_INFO) << "Set BMF_MODULE_CONFIG_PATH: " << bmf_config_path;
+
+    return true;  // Environment setup succeeded
 }
 
 std::string TranscoderBMF::get_python_module_path() {
@@ -392,7 +420,11 @@ bool TranscoderBMF::prepare_info(std::string input_path,
 
 bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
     // Set up Python environment (PYTHONPATH) for BMF Python modules
-    setup_python_environment();
+    // Returns false if App Python is not installed (no fallback to system Python)
+    if (!setup_python_environment()) {
+        BMFLOG(BMF_ERROR) << "Failed to set up Python environment. Transcoding aborted.";
+        return false;
+    }
 
     // Set a valid working directory to prevent BMF's internal getcwd() calls from failing
     // When app is launched from Finder, there's no valid current working directory

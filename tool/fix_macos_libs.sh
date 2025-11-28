@@ -110,11 +110,11 @@ if [ -n "$BMF_ROOT_PATH" ] && [ -d "$BMF_ROOT_PATH" ]; then
         echo "    Copied: BUILTIN_CONFIG.json"
     fi
 
-    # Bundle BMF Python package to Resources/bmf_python/
-    echo "  Copying BMF Python package to Resources/bmf_python/..."
-    rm -rf "$APP_DIR/Contents/Resources/bmf_python"
-    cp -R "$BMF_ROOT_PATH" "$APP_DIR/Contents/Resources/bmf_python" 2>/dev/null || true
-    echo "    Copied BMF Python package"
+    # Bundle BMF Python package to Resources/bmf/ (named 'bmf' for Python import)
+    echo "  Copying BMF Python package to Resources/bmf/..."
+    rm -rf "$APP_DIR/Contents/Resources/bmf"
+    cp -R "$BMF_ROOT_PATH" "$APP_DIR/Contents/Resources/bmf" 2>/dev/null || true
+    echo "    Copied BMF Python package as 'bmf'"
 
     echo -e "${GREEN}BMF libraries bundled successfully${NC}"
 fi

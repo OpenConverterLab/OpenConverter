@@ -19,6 +19,7 @@
 #include <QApplication>
 #include <QByteArray>
 #include <QDebug>
+#include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QEvent>
@@ -131,6 +132,27 @@ OpenConverter::OpenConverter(QWidget *parent)
         languageGroup->addAction(action);
     }
 
+    // Setup Python menu
+    pythonGroup = new QActionGroup(this);
+    pythonGroup->setExclusive(true);
+    QList<QAction*> pythonActions = ui->menuPython->actions();
+    for (QAction* action : pythonActions) {
+        action->setCheckable(true);
+        pythonGroup->addAction(action);
+    }
+
+    // Load saved Python setting or default to App Python
+    QSettings settings("OpenConverter", "OpenConverter");
+    QString savedPython = settings.value("python/mode", "pythonAppSupport").toString();
+    customPythonPath = settings.value("python/customPath", "").toString();
+
+    for (QAction* action : pythonActions) {
+        if (action->objectName() == savedPython) {
+            action->setChecked(true);
+            break;
+        }
+    }
+
     // Initialize language - default to English (no translation file needed)
     m_currLang = "english";
     m_langPath = ":/";
@@ -174,6 +196,9 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     connect(ui->menuTranscoder, SIGNAL(triggered(QAction *)), this,
             SLOT(SlotTranscoderChanged(QAction *)));
+
+    connect(ui->menuPython, SIGNAL(triggered(QAction *)), this,
+            SLOT(SlotPythonChanged(QAction *)));
 
     // Connect Queue button
     connect(ui->queueButton, &QPushButton::clicked, this, &OpenConverter::OnQueueButtonClicked);
@@ -235,6 +260,48 @@ void OpenConverter::SlotTranscoderChanged(QAction *action) {
         } else {
             std::cout << "Error: Undefined transcoder name - "
                       << transcoderName.c_str() << std::endl;
+        }
+    }
+}
+
+// Called every time, when a menu entry of the Python menu is called
+void OpenConverter::SlotPythonChanged(QAction *action) {
+    if (!action) return;
+
+    QString pythonMode = action->objectName();
+    QSettings settings("OpenConverter", "OpenConverter");
+
+    if (pythonMode == "pythonCustom") {
+        // Show file dialog to select site-packages path
+        QString dir = QFileDialog::getExistingDirectory(
+            this,
+            tr("Select Python site-packages Directory"),
+            customPythonPath.isEmpty() ? "/opt/homebrew/lib/python3.9/site-packages" : customPythonPath,
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+        );
+
+        if (!dir.isEmpty()) {
+            customPythonPath = dir;
+            settings.setValue("python/mode", pythonMode);
+            settings.setValue("python/customPath", customPythonPath);
+            ui->statusBar->showMessage(
+                tr("Python path set to: %1").arg(customPythonPath));
+        } else {
+            // User cancelled, revert to previous selection
+            QString savedPython = settings.value("python/mode", "pythonAppSupport").toString();
+            QList<QAction*> pythonActions = ui->menuPython->actions();
+            for (QAction* act : pythonActions) {
+                if (act->objectName() == savedPython) {
+                    act->setChecked(true);
+                    break;
+                }
+            }
+            return;
+        }
+    } else {
+        settings.setValue("python/mode", pythonMode);
+        if (pythonMode == "pythonAppSupport") {
+            ui->statusBar->showMessage(tr("Using App Python"));
         }
     }
 }
@@ -427,6 +494,37 @@ QString OpenConverter::GetCurrentTranscoderName() const {
     }
     // Default to FFMPEG if no transcoder is selected
     return "FFMPEG";
+}
+
+QString OpenConverter::GetPythonSitePackagesPath() const {
+    QAction *checkedAction = pythonGroup->checkedAction();
+    if (checkedAction) {
+        QString mode = checkedAction->objectName();
+        if (mode == "pythonCustom" && !customPythonPath.isEmpty()) {
+            return customPythonPath;
+        } else if (mode == "pythonAppSupport") {
+            // Python installed in ~/Library/Application Support/OpenConverter/
+            QString appSupportPath = QDir::homePath() +
+                "/Library/Application Support/OpenConverter/Python.framework/lib/python3.9/site-packages";
+            return appSupportPath;
+        }
+    }
+    // Default: Bundled or empty (transcoder will use bundled)
+    return QString();
+}
+
+QString OpenConverter::GetStoredPythonPath() {
+    // Static method that can be called from transcoder_bmf without GUI instance
+    QSettings settings("OpenConverter", "OpenConverter");
+    QString pythonMode = settings.value("python/mode", "pythonAppSupport").toString();
+
+    if (pythonMode == "pythonCustom") {
+        return settings.value("python/customPath", "").toString();
+    }
+    // Default to App Python (~/Library/Application Support/OpenConverter/)
+    QString appSupportPath = QDir::homePath() +
+        "/Library/Application Support/OpenConverter/Python.framework/lib/python3.9/site-packages";
+    return appSupportPath;
 }
 
 #include "open_converter.moc"
