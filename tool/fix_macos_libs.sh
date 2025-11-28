@@ -119,6 +119,41 @@ if [ -n "$BMF_ROOT_PATH" ] && [ -d "$BMF_ROOT_PATH" ]; then
     echo -e "${GREEN}BMF libraries bundled successfully${NC}"
 fi
 
+# Bundle Homebrew Python stdlib (required for embedded Python in BMF)
+echo -e "${YELLOW}Step 2.6: Bundling Python stdlib from Homebrew...${NC}"
+PYTHON_PREFIX=$(brew --prefix python@3.9 2>/dev/null || echo "")
+if [ -n "$PYTHON_PREFIX" ]; then
+    PYTHON_FRAMEWORK="$PYTHON_PREFIX/Frameworks/Python.framework/Versions/3.9"
+    PYTHON_STDLIB="$PYTHON_FRAMEWORK/lib/python3.9"
+    PYTHON_LIB="$PYTHON_FRAMEWORK/Python"
+
+    if [ -d "$PYTHON_STDLIB" ] && [ -f "$PYTHON_LIB" ]; then
+        # Create Python directory structure in Frameworks
+        mkdir -p "$APP_FRAMEWORKS/Python/lib"
+
+        # Copy libpython
+        echo "  Copying libpython..."
+        cp "$PYTHON_LIB" "$APP_FRAMEWORKS/Python/lib/libpython3.9.dylib" 2>/dev/null || true
+        chmod +w "$APP_FRAMEWORKS/Python/lib/libpython3.9.dylib" 2>/dev/null || true
+
+        # Copy Python stdlib (excluding site-packages and test directories to save space)
+        echo "  Copying Python stdlib (this may take a moment)..."
+        mkdir -p "$APP_FRAMEWORKS/Python/lib/python3.9"
+        rsync -a --exclude='site-packages' --exclude='test' --exclude='tests' --exclude='__pycache__' \
+            "$PYTHON_STDLIB/" "$APP_FRAMEWORKS/Python/lib/python3.9/" 2>/dev/null || true
+
+        # Create empty site-packages directory
+        mkdir -p "$APP_FRAMEWORKS/Python/lib/python3.9/site-packages"
+
+        echo -e "${GREEN}Python stdlib bundled successfully${NC}"
+        echo "  Size: $(du -sh "$APP_FRAMEWORKS/Python" | cut -f1)"
+    else
+        echo -e "${RED}Warning: Homebrew Python 3.9 not found at expected location${NC}"
+    fi
+else
+    echo -e "${RED}Warning: Homebrew Python 3.9 not installed${NC}"
+fi
+
 echo -e "${YELLOW}Step 3: Checking if dylibbundler is available...${NC}"
 if ! command -v dylibbundler &> /dev/null; then
     echo -e "${YELLOW}dylibbundler not found, installing via Homebrew...${NC}"
