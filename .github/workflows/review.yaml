@@ -135,9 +135,14 @@ jobs:
 
     - name: Checkout BMF repository(specific branch)
       run: |
-        wget https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-macOS-arm64-cp39.tar.gz
-        tar xzvf bmf-bin-macOS-arm64-cp39.tar.gz
-        echo "BMF_ROOT_PATH=$(pwd)/output/bmf" >> $GITHUB_ENV
+        git clone https://github.com/OpenConverterLab/bmf.git
+        brew link --force python@3.9
+        export BMF_PYTHON_VERSION="3.9"
+        (cd bmf && git checkout oc && git submodule update --init --recursive && ./build_osx.sh)
+
+        # wget https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-macOS-arm64-cp39.tar.gz
+        # tar xzvf bmf-bin-macOS-arm64-cp39.tar.gz
+        # echo "BMF_ROOT_PATH=$(pwd)/output/bmf" >> $GITHUB_ENV
 
     - name: Build and Deploy
       run: |
