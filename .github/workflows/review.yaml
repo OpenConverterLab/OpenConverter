@@ -60,7 +60,7 @@ jobs:
     - name: Build with CMake
       run: |
         export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
-        (cd src && cmake -B build -DBMF_TRANSCODER=OFF && cd build && make -j$(nproc))
+        (cd src && cmake -B build && cd build && make -j$(nproc))
 
     - name: Copy libs
       run: |
