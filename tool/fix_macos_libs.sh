@@ -303,8 +303,35 @@ done
 
 echo ""
 echo -e "${YELLOW}Step 5: Re-signing the app bundle...${NC}"
-codesign --force --deep --sign - "$APP_DIR" 2>&1 || {
-    echo -e "${RED}Warning: Code signing failed. App may not run.${NC}"
+
+# Sign all dylibs and .so files individually first
+echo "  Signing individual libraries..."
+find "$APP_FRAMEWORKS" -type f \( -name "*.dylib" -o -name "*.so" \) | while read lib; do
+    codesign --force --sign - "$lib" 2>/dev/null || true
+done
+
+# Sign all .so files in Python stdlib
+if [ -d "$APP_FRAMEWORKS/Python/lib/python3.9/lib-dynload" ]; then
+    echo "  Signing Python stdlib extensions..."
+    find "$APP_FRAMEWORKS/Python/lib/python3.9/lib-dynload" -type f -name "*.so" | while read lib; do
+        codesign --force --sign - "$lib" 2>/dev/null || true
+    done
+fi
+
+# Sign plugins
+echo "  Signing plugins..."
+find "$APP_DIR/Contents/PlugIns" -type f \( -name "*.dylib" -o -name "*.so" \) 2>/dev/null | while read lib; do
+    codesign --force --sign - "$lib" 2>/dev/null || true
+done
+
+# Sign the main executable
+echo "  Signing main executable..."
+codesign --force --sign - "$APP_EXECUTABLE" 2>/dev/null || true
+
+# Finally sign the whole app bundle
+echo "  Signing app bundle..."
+codesign --force --sign - "$APP_DIR" 2>&1 || {
+    echo -e "${RED}Warning: App bundle signing failed, but individual components are signed.${NC}"
 }
 
 echo ""
