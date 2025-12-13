@@ -186,13 +186,13 @@ jobs:
     #       echo "binutils is already installed, skipping build."
     #     fi
 
-    - name: Cache BMF build
-      uses: actions/cache@v3
-      with:
-        path: bmf/output/
-        key: ${{ runner.os }}-bmf-${{ hashFiles('bmf/build.sh') }}
-        restore-keys: |
-          ${{ runner.os }}-bmf-macos-arm-
+    # - name: Cache BMF build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: bmf/output/
+    #     key: ${{ runner.os }}-bmf-${{ hashFiles('bmf/build.sh') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-bmf-macos-arm-
 
     - name: Set up BMF if not cached
       run: |
