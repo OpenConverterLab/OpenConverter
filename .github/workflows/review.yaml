@@ -199,6 +199,8 @@ jobs:
         if [ ! -d "$(pwd)/bmf/output/" ]; then
           # export LIBRARY_PATH=$(pwd)/opt/binutils/lib:$LIBRARY_PATH
           # export CMAKE_PREFIX_PATH=$(pwd)/opt/binutils:$CMAKE_PREFIX_PATH
+          brew link --force python@3.9
+          export BMF_PYTHON_VERSION="3.9"
           pip install setuptools
           (cd bmf && git checkout oc && git submodule update --init --recursive && ./build_osx.sh)
         else
