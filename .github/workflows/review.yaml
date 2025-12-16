@@ -108,6 +108,7 @@ jobs:
         touch src/build/run.sh
         echo export LD_LIBRARY_PATH="./lib" >> src/build/run.sh
         echo ./AppRun >> src/build/run.sh
+        cp src/resources/requirements.txt src/build/requirements.txt
 
     # Step to package the build directory
     - name: Create tar.gz package

@@ -27,6 +27,8 @@
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#elif defined(__linux__)
+#include <unistd.h>
 #endif
 
 // Python 3.9 standalone build URL (macOS)
@@ -114,19 +116,16 @@ QString PythonManager::GetAppBundlePath() {
 }
 
 QString PythonManager::GetPythonFrameworkPath() {
-    // Install embedded Python into Application Support on macOS so
-    // the app bundle remains immutable. Use QStandardPaths to get
+    // Install embedded Python into Application Support directory so
+    // the app bundle/installation remains immutable. Use QStandardPaths to get
     // the per-user Application Support directory for the app.
     // macOS: ~/Library/Application Support/OpenConverter/Python.framework
-#ifdef __APPLE__
+    // Linux: ~/.local/share/OpenConverter/Python.framework
+    // Windows: C:/Users/<USER>/AppData/Local/OpenConverter/Python.framework
     QString appSupportBase = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     // Ensure directory exists
     QDir().mkpath(appSupportBase);
     return appSupportBase + "/Python.framework";
-#else
-    // Linux: Use app bundle location (legacy behavior for now)
-    return GetAppBundlePath() + "/Contents/Frameworks/Python.framework";
-#endif
 }
 
 QString PythonManager::GetPythonPath() {
@@ -148,7 +147,29 @@ QString PythonManager::GetSitePackagesPath() {
 }
 
 QString PythonManager::GetRequirementsPath() {
+#ifdef __APPLE__
+    // macOS: App bundle structure
     return GetAppBundlePath() + "/Contents/Resources/requirements.txt";
+#else
+    // Linux: requirements.txt is in the same directory as the executable
+    // or in a resources subdirectory
+    QString appDir = GetAppBundlePath();
+
+    // First try: resources subdirectory
+    QString resourcesPath = appDir + "/resources/requirements.txt";
+    if (QFile::exists(resourcesPath)) {
+        return resourcesPath;
+    }
+
+    // Second try: same directory as executable
+    QString sameDirPath = appDir + "/requirements.txt";
+    if (QFile::exists(sameDirPath)) {
+        return sameDirPath;
+    }
+
+    // Fallback: return resources path (will show error if not found)
+    return resourcesPath;
+#endif
 }
 
 bool PythonManager::IsPythonInstalled() {
