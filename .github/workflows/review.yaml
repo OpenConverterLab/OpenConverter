@@ -95,7 +95,7 @@ jobs:
         cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json src/build
         touch src/build/run.sh
         echo export LD_LIBRARY_PATH="~/.local/share/OpenConverter/Python.framework/lib:./lib" >> src/build/run.sh
-        echo ./AppRun >> src/build/run.sh
+        echo ./OpenConverter >> src/build/run.sh
         cp src/resources/requirements.txt src/build/requirements.txt
         cp -r $BMF_ROOT_PATH src/build/
 
