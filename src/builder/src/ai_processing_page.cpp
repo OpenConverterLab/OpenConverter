@@ -46,7 +46,7 @@ void AIProcessingPage::OnPageActivated() {
 
     // Check if Python is installed for AI Processing
     // In Debug mode, skip installation dialog (assume developer has configured environment)
-#ifdef NDEBUG
+#if defined(NDEBUG) || defined(__linux__)
     // Release mode: check Python and offer installation
     PythonManager pythonManager;
 

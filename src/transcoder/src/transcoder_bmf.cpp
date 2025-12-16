@@ -97,8 +97,9 @@ bool TranscoderBMF::setup_python_environment() {
         BMFLOG(BMF_WARNING) << "BMF_ROOT_PATH not set. Please set it in environment or CMake.";
         BMFLOG(BMF_WARNING) << "Example: export BMF_ROOT_PATH=/path/to/bmf";
     }
-
+#ifndef __linux__
     return true;  // Debug mode always succeeds (uses system Python)
+#endif
 #endif
 
     // Release mode: Set up PYTHONPATH for bundled BMF libraries and external Python

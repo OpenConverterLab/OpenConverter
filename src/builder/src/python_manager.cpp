@@ -73,8 +73,8 @@ PythonManager::PythonManager(QObject *parent)
             SetStatus(Status::NotInstalled, "Python installed but packages missing");
         }
     } else {
-#ifndef NDEBUG
-        // Debug mode only: check if system Python 3.9 with required packages exists
+#if !defined(NDEBUG) && !defined(__linux__)
+        // Debug mode on macOS/Windows only: check if system Python 3.9 exists
         // This allows developers to use their existing Python environment
         if (CheckSystemPython()) {
             SetStatus(Status::Installed, "Using system Python 3.9 with required packages");
@@ -82,7 +82,7 @@ PythonManager::PythonManager(QObject *parent)
             SetStatus(Status::NotInstalled, "Python not installed");
         }
 #else
-        // Release mode: Only use bundled Python, never fall back to system Python
+        // Release mode OR Linux: Only use App Python, never fall back to system Python
         SetStatus(Status::NotInstalled, "Python not installed");
 #endif
     }
