@@ -14,11 +14,13 @@ jobs:
             runner: ubuntu-22.04
             ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
             ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1
+            bmf_url: https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-linux-x86_64-cp39.tar.gz
             appimagetool: appimagetool-x86_64.AppImage
           - arch: aarch64
             runner: ubuntu-22.04-arm
             ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1.tar.xz
             ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1
+            bmf_url: https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-linux-aarch64-cp39.tar.gz
             appimagetool: appimagetool-aarch64.AppImage
     runs-on: ${{ matrix.runner }}
     concurrency:
@@ -35,30 +37,10 @@ jobs:
         echo "Current commit hash: $(git rev-parse HEAD)"
         echo "Architecture: ${{ matrix.arch }}"
 
-    - name: Checkout BMF repository (specific branch)
+    - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y make git pkg-config libssl-dev cmake binutils-dev libgoogle-glog-dev libunwind-dev gcc g++ golang wget libgl1
-        sudo apt install -y libsndfile1 libsndfile1-dev
-
-        git clone https://github.com/JackLau1222/bmf.git
-
-    - name: Build and install Python 3.9
-      run: |
-        cd /opt
-        wget https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tgz
-        tar xvf Python-3.9.13.tgz
-        cd Python-3.9.13
-        sudo ./configure --enable-optimizations --enable-shared
-        sudo make altinstall
-
-    # - name: Cache BMF build
-    #   uses: actions/cache@v3
-    #   with:
-    #     path: bmf/output/
-    #     key: ${{ runner.os }}-bmf-${{ matrix.arch }}-${{ hashFiles('bmf/build.sh') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-bmf-linux-${{ matrix.arch }}
+        sudo apt install -y make git pkg-config cmake gcc g++ wget libgl1
 
     - name: Get FFmpeg
       run: |
@@ -67,15 +49,11 @@ jobs:
         ls ${{ matrix.ffmpeg_dir }}
         echo "FFMPEG_ROOT_PATH=$(pwd)/${{ matrix.ffmpeg_dir }}" >> $GITHUB_ENV
 
-    - name: Set up BMF if not cached
+    - name: Get BMF
       run: |
-        if [ ! -d "$(pwd)/bmf/output/" ]; then
-          export BMF_PYTHON_VERSION="3.9"
-          (cd bmf && git checkout oc && ./build.sh)
-        else
-          echo "BMF is already installed, skipping build."
-        fi
-        echo "BMF_ROOT_PATH=$(pwd)/bmf/output/bmf" >> $GITHUB_ENV
+        wget ${{ matrix.bmf_url }}
+        tar xzvf bmf-bin-linux-${{ matrix.arch }}-cp39.tar.gz
+        echo "BMF_ROOT_PATH=$(pwd)/output/bmf" >> $GITHUB_ENV
 
     - name: Set up Qt
       run: |
