@@ -43,13 +43,13 @@ jobs:
 
         git clone https://github.com/JackLau1222/bmf.git
 
-    - name: Cache BMF build
-      uses: actions/cache@v3
-      with:
-        path: bmf/output/
-        key: ${{ runner.os }}-bmf-${{ matrix.arch }}-${{ hashFiles('bmf/build.sh') }}
-        restore-keys: |
-          ${{ runner.os }}-bmf-linux-${{ matrix.arch }}
+    # - name: Cache BMF build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: bmf/output/
+    #     key: ${{ runner.os }}-bmf-${{ matrix.arch }}-${{ hashFiles('bmf/build.sh') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-bmf-linux-${{ matrix.arch }}
 
     - name: Get FFmpeg
       run: |
