@@ -103,9 +103,11 @@ jobs:
         cp $FFMPEG_ROOT_PATH/lib/libavfilter.so.8 src/build/lib
         cp $FFMPEG_ROOT_PATH/lib/libpostproc.so.56 src/build/lib
         cp $BMF_ROOT_PATH/lib/libbuiltin_modules.so src/build/lib
+        cp $BMF_ROOT_PATH/lib/libbmf_py_loader.so src/build/lib
         cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json src/build
-        touch src/build/activate_env.sh
-        echo export LD_LIBRARY_PATH="./lib" >> src/build/activate_env.sh
+        touch src/build/run.sh
+        echo export LD_LIBRARY_PATH="./lib" >> src/build/run.sh
+        echo ./AppRun >> src/build/run.sh
 
     # Step to package the build directory
     - name: Create tar.gz package
