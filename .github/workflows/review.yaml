@@ -43,6 +43,15 @@ jobs:
 
         git clone https://github.com/JackLau1222/bmf.git
 
+    - name: Build and install Python 3.9
+      run: |
+        cd /opt
+        wget https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tgz
+        tar xvf Python-3.9.13.tgz
+        cd Python-3.9.13
+        sudo ./configure --enable-optimizations --enable-shared
+        sudo make altinstall
+
     # - name: Cache BMF build
     #   uses: actions/cache@v3
     #   with:
@@ -61,6 +70,7 @@ jobs:
     - name: Set up BMF if not cached
       run: |
         if [ ! -d "$(pwd)/bmf/output/" ]; then
+          export BMF_PYTHON_VERSION="3.9"
           (cd bmf && git checkout oc && ./build.sh)
         else
           echo "BMF is already installed, skipping build."
