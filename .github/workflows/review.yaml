@@ -6,10 +6,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-linux-x86:
-    runs-on: ubuntu-22.04
+  build-linux:
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+            ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
+            ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1
+            appimagetool: appimagetool-x86_64.AppImage
+          - arch: aarch64
+            runner: ubuntu-22.04-arm
+            ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1.tar.xz
+            ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1
+            appimagetool: appimagetool-aarch64.AppImage
+    runs-on: ${{ matrix.runner }}
     concurrency:
-      group: "review-linux-${{ github.event.pull_request.number }}"
+      group: "review-linux-${{ matrix.arch }}-${{ github.event.pull_request.number }}"
       cancel-in-progress: true
 
     steps:
@@ -20,6 +33,7 @@ jobs:
       run: |
         echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
         echo "Current commit hash: $(git rev-parse HEAD)"
+        echo "Architecture: ${{ matrix.arch }}"
 
     - name: Checkout BMF repository (specific branch)
       run: |
@@ -33,16 +47,16 @@ jobs:
       uses: actions/cache@v3
       with:
         path: bmf/output/
-        key: ${{ runner.os }}-bmf-${{ hashFiles('bmf/build.sh') }}
+        key: ${{ runner.os }}-bmf-${{ matrix.arch }}-${{ hashFiles('bmf/build.sh') }}
         restore-keys: |
-          ${{ runner.os }}-bmf-linux-x86
+          ${{ runner.os }}-bmf-linux-${{ matrix.arch }}
 
     - name: Get FFmpeg
       run: |
-        wget https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
-        tar xJvf ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
-        ls ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1
-        echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1" >> $GITHUB_ENV
+        wget ${{ matrix.ffmpeg_url }}
+        tar xJvf ${{ matrix.ffmpeg_dir }}.tar.xz
+        ls ${{ matrix.ffmpeg_dir }}
+        echo "FFMPEG_ROOT_PATH=$(pwd)/${{ matrix.ffmpeg_dir }}" >> $GITHUB_ENV
 
     - name: Set up BMF if not cached
       run: |
@@ -70,14 +84,14 @@ jobs:
         sudo apt-get -y install git g++ libgl1-mesa-dev
         git clone https://github.com/probonopd/linuxdeployqt.git
         # Then build in Qt Creator, or use
-        export PATH=$(readlink -f /tmp/.mount_QtCreator-*-x86_64/*/gcc_64/bin/):$PATH
+        export PATH=$(readlink -f /tmp/.mount_QtCreator-*-${{ matrix.arch }}/*/gcc_64/bin/):$PATH
         (cd linuxdeployqt && qmake && make && sudo make install)
         # patchelf
         wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.bz2
         tar xf patchelf-0.9.tar.bz2
         ( cd patchelf-0.9/ && ./configure  && make && sudo make install )
         # appimage
-        sudo wget -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" -O /usr/local/bin/appimagetool
+        sudo wget -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/${{ matrix.appimagetool }}" -O /usr/local/bin/appimagetool
         sudo chmod a+x /usr/local/bin/appimagetool
         (linuxdeployqt/bin/linuxdeployqt ./src/build/OpenConverter -appimage)
       continue-on-error: true
@@ -97,8 +111,8 @@ jobs:
     - name: Create tar.gz package
       run: |
         BUILD_DIR="src/build"
-        PACKAGE_NAME="OpenConverter_Linux_x86.tar.gz"
-        OUTPUT_DIR="OpenConverter_Linux_x86"
+        PACKAGE_NAME="OpenConverter_Linux_${{ matrix.arch }}.tar.gz"
+        OUTPUT_DIR="OpenConverter_Linux_${{ matrix.arch }}"
         mkdir -p $OUTPUT_DIR
         cp -r $BUILD_DIR/* $OUTPUT_DIR/
         tar -czvf $PACKAGE_NAME -C $OUTPUT_DIR .
@@ -108,8 +122,8 @@ jobs:
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
-        name: OpenConverter_Linux_x86
-        path: OpenConverter_Linux_x86.tar.gz
+        name: OpenConverter_Linux_${{ matrix.arch }}
+        path: OpenConverter_Linux_${{ matrix.arch }}.tar.gz
 
     # - name: Setup tmate session
     #   if: ${{ failure() }}
