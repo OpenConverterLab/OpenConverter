@@ -94,9 +94,10 @@ jobs:
         cp $BMF_ROOT_PATH/lib/libbmf_py_loader.so src/build/lib
         cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json src/build
         touch src/build/run.sh
-        echo export LD_LIBRARY_PATH="./lib" >> src/build/run.sh
+        echo export LD_LIBRARY_PATH="~/.local/share/OpenConverter/Python.framework/lib:./lib" >> src/build/run.sh
         echo ./AppRun >> src/build/run.sh
         cp src/resources/requirements.txt src/build/requirements.txt
+        cp -r $BMF_ROOT_PATH src/build/
 
     # Step to package the build directory
     - name: Create tar.gz package
@@ -106,7 +107,7 @@ jobs:
         OUTPUT_DIR="OpenConverter_Linux_${{ matrix.arch }}"
         mkdir -p $OUTPUT_DIR
         cp -r $BUILD_DIR/* $OUTPUT_DIR/
-        tar -czvf $PACKAGE_NAME -C $OUTPUT_DIR .
+        tar -czvf $PACKAGE_NAME $OUTPUT_DIR
         rm -rf $OUTPUT_DIR
 
     # Step to upload the tar.gz package as an artifact
