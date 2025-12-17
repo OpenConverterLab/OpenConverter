@@ -295,6 +295,20 @@ bool TranscoderBMF::setup_python_environment() {
 std::string TranscoderBMF::get_python_module_path() {
     std::string module_path;
 
+    // First check if BMF_MODULE_PATH environment variable is set
+    // This allows runtimes (AppImage, LingLong, Flatpak, etc.) to specify the module path
+    const char* env_module_path = getenv("BMF_MODULE_PATH");
+    if (env_module_path && strlen(env_module_path) > 0) {
+        std::filesystem::path env_path(env_module_path);
+        if (std::filesystem::exists(env_path)) {
+            module_path = env_path.string();
+            BMFLOG(BMF_INFO) << "Using BMF_MODULE_PATH from environment: " << module_path;
+            return module_path;
+        } else {
+            BMFLOG(BMF_WARNING) << "BMF_MODULE_PATH is set but path does not exist: " << env_module_path;
+        }
+    }
+
 #ifdef __APPLE__
     // For macOS app bundle
     char exe_path[1024];
