@@ -184,6 +184,10 @@ jobs:
         name: OpenConverter_Linglong_${{ matrix.arch }}
         path: ll-builder/*.uab
 
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
+
     - name: Finish
       run: echo "Linglong build complete"
 
