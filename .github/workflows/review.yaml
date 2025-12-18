@@ -152,7 +152,7 @@ jobs:
       run: |
         echo "deb [trusted=yes] https://ci.deepin.com/repo/obs/linglong:/CI:/release/xUbuntu_24.04/ ./" | sudo tee /etc/apt/sources.list.d/linglong.list
         sudo apt update
-        sudo apt install -y linglong-bin linglong-builder
+        sudo apt install -y linglong-bin linglong-builder linglong-box
 
     - name: Prepare Linglong build directory
       run: |
