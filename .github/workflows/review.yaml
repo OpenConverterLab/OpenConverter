@@ -123,7 +123,69 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
 
     - name: Finish
-      run: echo "Release upload complete"
+      run: echo "Build complete"
+
+  build-linglong:
+    needs: build-linux
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    concurrency:
+      group: "review-linglong-${{ matrix.arch }}-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Linux build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: OpenConverter_Linux_${{ matrix.arch }}
+
+    - name: Install Linglong tools
+      run: |
+        echo "deb [trusted=yes] https://ci.deepin.com/repo/obs/linglong:/CI:/release/xUbuntu_24.04/ ./" | sudo tee /etc/apt/sources.list.d/linglong.list
+        sudo apt update
+        sudo apt install -y linglong-bin linglong-builder
+
+    - name: Prepare Linglong build directory
+      run: |
+        # Extract the artifact
+        tar -xzvf OpenConverter_Linux_${{ matrix.arch }}.tar.gz
+
+        # Create ll-builder directory structure
+        mkdir -p ll-builder/binary
+        mkdir -p ll-builder/template_app/applications
+
+        # Copy binary files from artifact
+        cp -r OpenConverter_Linux_${{ matrix.arch }}/* ll-builder/binary/
+
+        # Copy linglong.yaml
+        cp src/resources/linglong.yaml ll-builder/
+
+        # Copy desktop file
+        cp src/resources/default.desktop ll-builder/template_app/applications/
+
+    - name: Build Linglong package
+      run: |
+        cd ll-builder
+        ll-builder build
+        ll-builder export
+
+    - name: Upload Linglong package
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenConverter_Linglong_${{ matrix.arch }}
+        path: ll-builder/*.uab
+
+    - name: Finish
+      run: echo "Linglong build complete"
 
   build-macos-arm:
     runs-on: macos-14

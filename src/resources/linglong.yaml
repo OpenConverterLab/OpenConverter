@@ -1,0 +1,31 @@
+version: "1"
+
+package:
+  id: org.deepin.openconverter
+  name: "OpenConverter"
+  version: 1.5.2.0
+  kind: app
+  description: |
+    OpenConverter
+
+base: org.deepin.base/23.1.0
+
+command:
+  - /opt/apps/org.deepin.openconverter/files/bin/run.sh
+
+source:
+  - kind: local
+    name: "OpenConveter"
+
+build: |
+  mkdir -p ${PREFIX}/bin ${PREFIX}/lib ${PREFIX}/share
+  rm -rf binary/bmf/bin
+  cp -rf binary/* ${PREFIX}/bin
+  cp -rf binary/lib/* ${PREFIX}/lib
+  cp -rf template_app/* ${PREFIX}/bin
+  echo "#!/usr/bin/env bash" > $PREFIX/bin/run.sh
+  echo "export LD_LIBRARY_PATH=~/.local/share/OpenConverter/Python.framework/lib" >> ${PREFIX}/bin/run.sh
+  echo "export BMF_MODULE_PATH=${PREFIX}/bin/modules" >> ${PREFIX}/bin/run.sh
+  echo "export PYTHONPATH=${PREFIX}/bin/bmf:${PREFIX}/bin/bmf/lib" >> ${PREFIX}/bin/run.sh
+  echo "${PREFIX}/bin/OpenConverter" >> ${PREFIX}/bin/run.sh
+  chmod +x ${PREFIX}/bin/run.sh
