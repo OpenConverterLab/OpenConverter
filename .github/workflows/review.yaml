@@ -148,6 +148,13 @@ jobs:
       with:
         name: OpenConverter_Linux_${{ matrix.arch }}
 
+    - name: Download linglong-builder cache
+      run: |
+        docker run --rm -v ~/.cache/:/target ghcr.io/jacklau1222/ll-cache-${{ matrix.arch }}:latest \
+          bash -c "cp -r /root/.cache/linglong-builder /target/"
+
+        du -sh ~/.cache/linglong-builder
+
     - name: Install Linglong tools
       run: |
         echo "deb [trusted=yes] https://ci.deepin.com/repo/obs/linglong:/CI:/release/xUbuntu_24.04/ ./" | sudo tee /etc/apt/sources.list.d/linglong.list
