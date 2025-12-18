@@ -153,6 +153,7 @@ jobs:
         docker run --rm -v ~/.cache/:/target ghcr.io/jacklau1222/ll-cache-${{ matrix.arch }}:latest \
           bash -c "cp -r /root/.cache/linglong-builder /target/"
 
+        sudo chown -R "$USER:$USER" ~/.cache/linglong-builder
         du -sh ~/.cache/linglong-builder
 
     - name: Install Linglong tools
