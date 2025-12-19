@@ -82,6 +82,8 @@ jobs:
         sudo wget -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/${{ matrix.appimagetool }}" -O /usr/local/bin/appimagetool
         sudo chmod a+x /usr/local/bin/appimagetool
         (linuxdeployqt/bin/linuxdeployqt ./src/build/OpenConverter -appimage)
+        # clean up
+        rm -rf CMake* Makefile cmake_install.cmake OpenConverter_autogen/ doc/
       continue-on-error: true
 
 
@@ -142,6 +144,15 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Remove unnecessary directories to free up space
+      run: |
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
 
     - name: Download Linux build artifact
       uses: actions/download-artifact@v4
