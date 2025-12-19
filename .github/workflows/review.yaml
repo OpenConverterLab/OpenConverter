@@ -165,6 +165,7 @@ jobs:
           bash -c "cp -r /root/.cache/linglong-builder /target/"
 
         sudo chown -R "$USER:$USER" ~/.cache/linglong-builder
+        sudo chmod -R 755 ~/.cache/linglong-builder
         du -sh ~/.cache/linglong-builder
 
     - name: Install Linglong tools
