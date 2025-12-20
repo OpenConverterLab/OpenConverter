@@ -473,6 +473,11 @@ void PythonManager::InstallPackages() {
 
     installProcess->start(pythonPath, QStringList()
                          << "-m" << "pip" << "install"
+#if defined(__linux__)
+                         // Linux: Use default PyPI indexes avoid installing CUDA packages
+                         << "--index-url" << "https://download.pytorch.org/whl/cpu"
+                         << "--extra-index-url" << "https://pypi.org/simple"
+#endif
                          << "-r" << requirementsPath
                          << "--no-cache-dir"
                          << "--progress-bar" << "on");
