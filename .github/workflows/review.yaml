@@ -101,6 +101,9 @@ jobs:
         echo ./OpenConverter >> src/build/run.sh
         cp src/resources/requirements.txt src/build/requirements.txt
         cp -r $BMF_ROOT_PATH src/build/
+        (mkdir -p src/build/modules/weights &&
+        cd src/build/modules/weights &&
+        wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth)
 
     # Step to package the build directory
     - name: Create tar.gz package
