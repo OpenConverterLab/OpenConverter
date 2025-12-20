@@ -201,15 +201,15 @@ jobs:
         ll-builder build
         ll-builder export
 
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
+
     - name: Upload Linglong package
       uses: actions/upload-artifact@v4
       with:
         name: OpenConverter_Linglong_${{ matrix.arch }}
         path: ll-builder/*.uab
-
-    - name: Setup tmate session
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
 
     - name: Finish
       run: echo "Linglong build complete"
