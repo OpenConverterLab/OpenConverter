@@ -479,6 +479,14 @@ void PythonManager::InstallPackages() {
                          << "--extra-index-url" << "https://pypi.org/simple"
 #endif
                          << "-r" << requirementsPath
+#if defined(__linux__)
+                         // Linux: Install BMF from GitHub release
+#if defined(__aarch64__)
+                         << "https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.5/BabitMF-0.2.0-cp39-cp39-manylinux_2_28_aarch64.whl"
+#else
+                         << "https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.5/BabitMF-0.2.0-cp39-cp39-manylinux_2_28_x86_64.whl"
+#endif
+#endif
                          << "--no-cache-dir"
                          << "--progress-bar" << "on");
 }
