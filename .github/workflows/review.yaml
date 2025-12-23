@@ -199,7 +199,7 @@ jobs:
       run: |
         cd ll-builder
         ll-builder build
-        ll-builder export
+        ll-builder export --layer --no-develop
 
     - name: Setup tmate session
       if: ${{ failure() }}
@@ -209,7 +209,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: OpenConverter_Linglong_${{ matrix.arch }}
-        path: ll-builder/*.uab
+        path: ll-builder/*.layer
 
     - name: Finish
       run: echo "Linglong build complete"

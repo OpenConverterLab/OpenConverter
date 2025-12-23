@@ -1,7 +1,7 @@
 version: "1"
 
 package:
-  id: org.deepin.openconverter
+  id: io.github.openconverterlab
   name: "OpenConverter"
   version: 1.5.2.0
   kind: app
@@ -11,7 +11,7 @@ package:
 base: org.deepin.base/23.1.0
 
 command:
-  - /opt/apps/org.deepin.openconverter/files/bin/run.sh
+  - /opt/apps/io.github.openconverterlab/files/bin/run.sh
 
 source:
   - kind: local
