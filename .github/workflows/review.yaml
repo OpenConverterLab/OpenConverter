@@ -185,7 +185,7 @@ jobs:
         echo "Type=Application" >> default.desktop
         echo "Name=OpenConverter" >> default.desktop
         echo "Exec=/opt/apps/io.github.openconverterlab/files/bin/run.sh" >> default.desktop
-        echo "Icon=/opt/apps/io.github.openconverterlab/files/share/icons/hicolor/256x256/apps/OpenConverter-logo.png" >> default.desktop
+        echo "Icon=/opt/apps/io.github.openconverterlab/files/share/icons/hicolor/500x500/apps/OpenConverter-logo.png" >> default.desktop
         echo "Categories=Media;Video;Audio;Converter;" >> default.desktop
         echo "Comment=OpenConverter Application" >> default.desktop
         echo "Terminal=false" >> default.desktop
