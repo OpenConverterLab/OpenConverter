@@ -17,6 +17,8 @@
 
 #include "python_install_dialog.h"
 #include <QMessageBox>
+#include <QProcess>
+#include <QCoreApplication>
 
 PythonInstallDialog::PythonInstallDialog(QWidget *parent)
     : QDialog(parent)
@@ -187,12 +189,30 @@ void PythonInstallDialog::OnPackagesInstalled() {
     progressBar->setValue(100);
     statusLabel->setText(tr("Installation complete! AI Processing is now ready."));
 
-    QMessageBox::information(
-        this,
-        tr("Success"),
-        tr("Python and all required packages have been installed successfully.\n\n"
-           "You can now use AI Processing features.")
-    );
+    QMessageBox msgBox(this);
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setWindowTitle(tr("Installation Complete"));
+    msgBox.setText(tr(
+        "Python and all required packages have been installed successfully.\n\n"
+        "A restart is required to enable AI Processing features."
+    ));
+
+    QPushButton *restartButton =
+        msgBox.addButton(tr("Restart Now"), QMessageBox::AcceptRole);
+    QPushButton *laterButton =
+        msgBox.addButton(tr("Restart Later"), QMessageBox::RejectRole);
+
+    msgBox.exec();
+
+    if (msgBox.clickedButton() == restartButton) {
+        // Relaunch the application
+        const QString program = QCoreApplication::applicationFilePath();
+        const QStringList arguments = QCoreApplication::arguments();
+
+        QProcess::startDetached(program, arguments);
+        QCoreApplication::quit();
+        return;
+    }
 
     accept();
 }
