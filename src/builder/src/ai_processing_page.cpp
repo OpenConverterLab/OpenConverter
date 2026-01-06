@@ -409,21 +409,43 @@ EncodeParameter* AIProcessingPage::CreateEncodeParameter() {
 }
 
 void AIProcessingPage::RetranslateUi() {
-    // Update all translatable strings
+    // Update input file selector
+    inputFileSelector->setTitle(tr("Input File"));
+    inputFileSelector->SetPlaceholder(tr("Select a media file or click Batch for multiple files..."));
+    inputFileSelector->RetranslateUi();
+
+    // Update algorithm section
     algorithmGroupBox->setTitle(tr("Algorithm"));
     algorithmLabel->setText(tr("Select Algorithm:"));
     algorithmComboBox->setItemText(0, tr("Upscaler"));
 
+    // Update algorithm settings section
     algoSettingsGroupBox->setTitle(tr("Algorithm Settings"));
     upscaleFactorLabel->setText(tr("Upscale Factor:"));
 
+    // Update video settings section
     videoGroupBox->setTitle(tr("Video Settings"));
     videoCodecLabel->setText(tr("Codec:"));
     videoBitrateLabel->setText(tr("Bitrate:"));
+    videoBitrateWidget->RetranslateUi();
 
+    // Update audio settings section
     audioGroupBox->setTitle(tr("Audio Settings"));
     audioCodecLabel->setText(tr("Codec:"));
     audioBitrateLabel->setText(tr("Bitrate:"));
+    audioBitrateWidget->RetranslateUi();
+
+    // Update format section
+    formatGroupBox->setTitle(tr("File Format"));
+    formatLabel->setText(tr("Format:"));
+
+    // Update output file selector
+    outputFileSelector->setTitle(tr("Output File"));
+    outputFileSelector->SetPlaceholder(tr("Output file path..."));
+    outputFileSelector->RetranslateUi();
+
+    // Update batch output widget
+    batchOutputWidget->RetranslateUi();
 
     // Update button text based on batch mode
     if (batchModeHelper) {
@@ -432,5 +454,7 @@ void AIProcessingPage::RetranslateUi() {
         } else {
             processButton->setText(tr("Process / Add to Queue"));
         }
+    } else {
+        processButton->setText(tr("Process"));
     }
 }
