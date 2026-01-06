@@ -22,7 +22,7 @@ build: |
   rm -rf binary/bmf/bin
   cp -rf binary/* ${PREFIX}/bin
   cp -rf binary/lib/* ${PREFIX}/lib
-  cp -rf template_app/* ${PREFIX}/bin
+  cp -rf template_app/* ${PREFIX}/share
   echo "#!/usr/bin/env bash" > $PREFIX/bin/run.sh
   echo "export LD_LIBRARY_PATH=~/.local/share/OpenConverter/Python.framework/lib" >> ${PREFIX}/bin/run.sh
   echo "export BMF_MODULE_PATH=${PREFIX}/bin/modules" >> ${PREFIX}/bin/run.sh
