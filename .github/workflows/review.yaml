@@ -185,6 +185,7 @@ jobs:
         # Create ll-builder directory structure
         mkdir -p ll-builder/binary
         mkdir -p ll-builder/template_app/applications
+        mkdir -p ll-builder/template_app/icons/hicolor/500x500/apps
 
         # Copy binary files from artifact
         cp -r OpenConverter_Linux_${{ matrix.arch }}/* ll-builder/binary/
@@ -194,6 +195,9 @@ jobs:
 
         # Copy desktop file
         cp src/resources/default.desktop ll-builder/template_app/applications/
+
+        # Copy icon file
+        cp src/resources/OpenConverter-logo.png ll-builder/template_app/icons/hicolor/500x500/apps/
 
     - name: Build Linglong package
       run: |
