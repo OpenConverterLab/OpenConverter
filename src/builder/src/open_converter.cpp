@@ -41,6 +41,7 @@
 #include <QToolButton>
 #include <QTranslator>
 #include <QUrl>
+#include <QVBoxLayout>
 
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
@@ -167,16 +168,9 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // Initialize navigation button group
     navButtonGroup = new QButtonGroup(this);
-    navButtonGroup->addButton(ui->btnInfoView, 0);
-    navButtonGroup->addButton(ui->btnCompressPicture, 1);
-    navButtonGroup->addButton(ui->btnExtractAudio, 2);
-    navButtonGroup->addButton(ui->btnCutVideo, 3);
-    navButtonGroup->addButton(ui->btnCreateGif, 4);
-    navButtonGroup->addButton(ui->btnRemux, 5);
-    navButtonGroup->addButton(ui->btnTranscode, 6);
-#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
-    navButtonGroup->addButton(ui->btnAIProcessing, 7);
-#endif
+
+    // Setup navigation buttons dynamically
+    SetupNavigationButtons();
 
     // Connect navigation button group
     connect(navButtonGroup, QOverload<int>::of(&QButtonGroup::idClicked),
@@ -186,8 +180,8 @@ OpenConverter::OpenConverter(QWidget *parent)
     InitializePages();
 
     // Set first page as active
-    if (!pages.isEmpty()) {
-        ui->btnInfoView->setChecked(true);
+    if (!pages.isEmpty() && !navButtons.isEmpty()) {
+        navButtons.first()->setChecked(true);
         SwitchToPage(0);
     }
 
@@ -199,9 +193,6 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     connect(ui->menuPython, SIGNAL(triggered(QAction *)), this,
             SLOT(SlotPythonChanged(QAction *)));
-
-    // Connect Queue button
-    connect(ui->queueButton, &QPushButton::clicked, this, &OpenConverter::OnQueueButtonClicked);
 }
 
 void OpenConverter::dragEnterEvent(QDragEnterEvent *event) {
@@ -350,6 +341,35 @@ void OpenConverter::changeEvent(QEvent *event) {
     if (event->type() == QEvent::LanguageChange) {
         ui->retranslateUi(this);
 
+        // Update navigation labels and buttons
+        if (labelCommonSection) {
+            labelCommonSection->setText(tr("COMMON"));
+        }
+        if (labelAdvancedSection) {
+            labelAdvancedSection->setText(tr("ADVANCED"));
+        }
+        if (queueButton) {
+            queueButton->setText(tr("📋 Queue"));
+            queueButton->setToolTip(tr("View batch processing queue"));
+        }
+
+        // Update navigation button texts
+        QStringList buttonTexts = {
+            tr("Info View"),
+            tr("Compress Picture"),
+            tr("Extract Audio"),
+            tr("Cut Video"),
+            tr("Create GIF"),
+            tr("Remux"),
+            tr("Transcode")
+        };
+#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
+        buttonTexts.append(tr("AI Processing"));
+#endif
+        for (int i = 0; i < navButtons.size() && i < buttonTexts.size(); ++i) {
+            navButtons[i]->setText(buttonTexts[i]);
+        }
+
         // Update language in all pages
         for (BasePage *page : pages) {
             if (page) {
@@ -400,6 +420,57 @@ QString OpenConverter::FormatFrequency(int64_t hertz) {
 
 void OpenConverter::InfoDisplay(QuickInfo *quickInfo) {
     // This can be implemented later for displaying info in pages
+}
+
+void OpenConverter::SetupNavigationButtons() {
+    QVBoxLayout *navLayout = ui->navVerticalLayout;
+
+    // Helper lambda to create navigation buttons
+    auto createNavButton = [this](const QString &text, int index) -> QPushButton* {
+        QPushButton *btn = new QPushButton(text, ui->leftNavWidget);
+        btn->setCheckable(true);
+        navButtonGroup->addButton(btn, index);
+        navButtons.append(btn);
+        return btn;
+    };
+
+    int pageIndex = 0;
+
+    // COMMON section label
+    labelCommonSection = new QLabel(tr("COMMON"), ui->leftNavWidget);
+    navLayout->addWidget(labelCommonSection);
+
+    // Common pages - always visible
+    navLayout->addWidget(createNavButton(tr("Info View"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Compress Picture"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Extract Audio"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Cut Video"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Create GIF"), pageIndex++));
+
+    // ADVANCED section label
+    labelAdvancedSection = new QLabel(tr("ADVANCED"), ui->leftNavWidget);
+    navLayout->addWidget(labelAdvancedSection);
+
+    // Advanced pages
+    navLayout->addWidget(createNavButton(tr("Remux"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Transcode"), pageIndex++));
+
+#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
+    // AI Processing page - only when BMF is enabled
+    navLayout->addWidget(createNavButton(tr("AI Processing"), pageIndex++));
+#endif
+
+    // Add spacer to push queue button to bottom
+    navLayout->addStretch();
+
+    // Queue button (not part of navigation group)
+    queueButton = new QPushButton(tr("📋 Queue"), ui->leftNavWidget);
+    queueButton->setCheckable(false);
+    queueButton->setToolTip(tr("View batch processing queue"));
+    navLayout->addWidget(queueButton);
+
+    // Connect Queue button
+    connect(queueButton, &QPushButton::clicked, this, &OpenConverter::OnQueueButtonClicked);
 }
 
 void OpenConverter::InitializePages() {

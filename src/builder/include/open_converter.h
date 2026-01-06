@@ -115,6 +115,10 @@ private:
     // Navigation and page management
     QButtonGroup *navButtonGroup;
     QList<BasePage *> pages;
+    QList<QPushButton *> navButtons;
+    QLabel *labelCommonSection;
+    QLabel *labelAdvancedSection;
+    QPushButton *queueButton;
     SharedData *sharedData;
     BatchQueueDialog *batchQueueDialog;
 
@@ -125,6 +129,7 @@ private:
     QString FormatFrequency(int64_t hertz);
 
     // Page management methods
+    void SetupNavigationButtons();
     void InitializePages();
     void SwitchToPage(int pageIndex);
 
