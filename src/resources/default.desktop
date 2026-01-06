@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=OpenConverter
-Exec=/opt/apps/io.github.openconverterlab/files/bin/run.sh %U
-Icon=default
-Comment=Edit this default file
-Terminal=true
