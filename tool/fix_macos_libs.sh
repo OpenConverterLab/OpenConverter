@@ -14,14 +14,25 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}=== OpenConverter macOS Library Fixer ===${NC}"
 
-# Check if app bundle exists
-if [ ! -d "build/OpenConverter.app" ]; then
-    echo -e "${RED}Error: OpenConverter.app not found in build/ directory${NC}"
+# Auto-detect build directory
+BUILD_DIR=""
+if [ -d "build-release/OpenConverter.app" ]; then
+    BUILD_DIR="build-release"
+elif [ -d "build/OpenConverter.app" ]; then
+    BUILD_DIR="build"
+elif [ -d "../build-release/OpenConverter.app" ]; then
+    BUILD_DIR="../build-release"
+elif [ -d "../build/OpenConverter.app" ]; then
+    BUILD_DIR="../build"
+else
+    echo -e "${RED}Error: OpenConverter.app not found${NC}"
+    echo "Searched in: build-release/, build/, ../build-release/, ../build/"
     echo "Please build the app first with: cd src && cmake -B build && cd build && make"
     exit 1
 fi
 
-cd build
+echo -e "${GREEN}Found app bundle in: $BUILD_DIR${NC}"
+cd "$BUILD_DIR"
 
 APP_DIR="OpenConverter.app"
 APP_FRAMEWORKS="$APP_DIR/Contents/Frameworks"
@@ -47,6 +58,66 @@ else
 fi
 
 FFMPEG_LIB_DIR="$FFMPEG_PREFIX/lib"
+
+echo -e "${YELLOW}Step 2.5: Bundling BMF libraries (if available)...${NC}"
+# Check if BMF_ROOT_PATH is set
+if [ -n "$BMF_ROOT_PATH" ]; then
+    # If BMF_ROOT_PATH doesn't end with /output/bmf, append it (same logic as CMake)
+    if [[ ! "$BMF_ROOT_PATH" =~ output/bmf$ ]]; then
+        BMF_ROOT_PATH="$BMF_ROOT_PATH/output/bmf"
+    fi
+
+    if [ -d "$BMF_ROOT_PATH" ]; then
+        echo -e "${GREEN}Found BMF at: $BMF_ROOT_PATH${NC}"
+
+        # Create lib/ subdirectory for builtin modules (BMF hardcoded path)
+        mkdir -p "$APP_FRAMEWORKS/lib"
+    else
+        echo -e "${YELLOW}BMF_ROOT_PATH set but directory not found: $BMF_ROOT_PATH${NC}"
+        echo "  Skipping BMF bundling"
+        BMF_ROOT_PATH=""
+    fi
+else
+    echo -e "${YELLOW}BMF_ROOT_PATH not set, skipping BMF bundling${NC}"
+    echo "  To bundle BMF libraries, set: export BMF_ROOT_PATH=/path/to/bmf"
+fi
+
+if [ -n "$BMF_ROOT_PATH" ] && [ -d "$BMF_ROOT_PATH" ]; then
+
+    # Copy builtin modules to lib/ subdirectory
+    echo "  Copying BMF builtin modules to Frameworks/lib/..."
+    for module in libbuiltin_modules.dylib libcopy_module.dylib libcvtcolor.dylib; do
+        if [ -f "$BMF_ROOT_PATH/lib/$module" ]; then
+            cp "$BMF_ROOT_PATH/lib/$module" "$APP_FRAMEWORKS/lib/" 2>/dev/null || true
+            chmod +w "$APP_FRAMEWORKS/lib/$module" 2>/dev/null || true
+            echo "    Copied: $module"
+        fi
+    done
+
+    # Copy other BMF libraries to Frameworks/
+    echo "  Copying BMF core libraries to Frameworks/..."
+    for lib in libbmf_py_loader.dylib libbmf_module_sdk.dylib libengine.dylib libhmp.dylib _bmf.cpython-39-darwin.so _hmp.cpython-39-darwin.so; do
+        if [ -f "$BMF_ROOT_PATH/lib/$lib" ]; then
+            cp "$BMF_ROOT_PATH/lib/$lib" "$APP_FRAMEWORKS/" 2>/dev/null || true
+            chmod +w "$APP_FRAMEWORKS/$lib" 2>/dev/null || true
+            echo "    Copied: $lib"
+        fi
+    done
+
+    # Copy BMF config
+    if [ -f "$BMF_ROOT_PATH/BUILTIN_CONFIG.json" ]; then
+        cp "$BMF_ROOT_PATH/BUILTIN_CONFIG.json" "$APP_FRAMEWORKS/" 2>/dev/null || true
+        echo "    Copied: BUILTIN_CONFIG.json"
+    fi
+
+    # Bundle BMF Python package to Resources/bmf/ (named 'bmf' for Python import)
+    echo "  Copying BMF Python package to Resources/bmf/..."
+    rm -rf "$APP_DIR/Contents/Resources/bmf"
+    cp -R "$BMF_ROOT_PATH" "$APP_DIR/Contents/Resources/bmf" 2>/dev/null || true
+    echo "    Copied BMF Python package as 'bmf'"
+
+    echo -e "${GREEN}BMF libraries bundled successfully${NC}"
+fi
 
 echo -e "${YELLOW}Step 3: Checking if dylibbundler is available...${NC}"
 if ! command -v dylibbundler &> /dev/null; then
@@ -75,8 +146,8 @@ copy_lib_if_needed() {
 for iteration in 1 2 3; do
     echo "Pass $iteration: Scanning for missing dependencies..."
 
-    # Get all dylib files in Frameworks folder
-    ALL_LIBS=$(find "$APP_FRAMEWORKS" -name "*.dylib" -type f)
+    # Get all dylib and .so files in Frameworks folder (including BMF Python modules)
+    ALL_LIBS=$(find "$APP_FRAMEWORKS" -type f \( -name "*.dylib" -o -name "*.so" \))
 
     new_libs_copied=0
 
@@ -129,9 +200,9 @@ for iteration in 1 2 3; do
                         new_libs_copied=$((new_libs_copied + 1))
                     fi
                 elif [[ "$dep" == @rpath/* ]]; then
-                    # @rpath - try Homebrew locations
+                    # @rpath - try Homebrew and BMF locations
                     dep_basename=$(basename "$dep")
-                    # Search in multiple Homebrew locations
+                    # Search in multiple Homebrew and BMF locations
                     search_dirs=(
                         "$FFMPEG_LIB_DIR"
                         "$(brew --prefix)/lib"
@@ -141,6 +212,10 @@ for iteration in 1 2 3; do
                         "$(brew --prefix x264 2>/dev/null)/lib"
                         "$(brew --prefix x265 2>/dev/null)/lib"
                     )
+                    # Add BMF library directories if BMF_ROOT_PATH is set
+                    if [ -n "$BMF_ROOT_PATH" ]; then
+                        search_dirs+=("$BMF_ROOT_PATH/lib")
+                    fi
                     for search_dir in "${search_dirs[@]}"; do
                         if [ -z "$search_dir" ]; then
                             continue

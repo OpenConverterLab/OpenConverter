@@ -9,3 +9,8 @@ src/build-*
 build
 .idea
 workload_output.txt
+
+# AI model weights (downloaded during build)
+src/modules/weights/*.pth
+src/modules/weights/*.onnx
+src/modules/weights/*.pt

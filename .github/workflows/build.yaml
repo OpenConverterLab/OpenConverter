@@ -1,0 +1,516 @@
+name: Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    tags:
+      - "v*.*.*"
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+            ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
+            ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1
+            bmf_url: https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-linux-x86_64-cp39.tar.gz
+            appimagetool: appimagetool-x86_64.AppImage
+          - arch: aarch64
+            runner: ubuntu-22.04-arm
+            ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1.tar.xz
+            ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1
+            bmf_url: https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-linux-aarch64-cp39.tar.gz
+            appimagetool: appimagetool-aarch64.AppImage
+    runs-on: ${{ matrix.runner }}
+    concurrency:
+      group: "review-linux-${{ matrix.arch }}-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Print current branch and commit hash
+      run: |
+        echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+        echo "Current commit hash: $(git rev-parse HEAD)"
+        echo "Architecture: ${{ matrix.arch }}"
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y make git pkg-config cmake gcc g++ wget libgl1
+
+    - name: Get FFmpeg
+      run: |
+        wget ${{ matrix.ffmpeg_url }}
+        tar xJvf ${{ matrix.ffmpeg_dir }}.tar.xz
+        ls ${{ matrix.ffmpeg_dir }}
+        echo "FFMPEG_ROOT_PATH=$(pwd)/${{ matrix.ffmpeg_dir }}" >> $GITHUB_ENV
+
+    - name: Get BMF
+      run: |
+        wget ${{ matrix.bmf_url }}
+        tar xzvf bmf-bin-linux-${{ matrix.arch }}-cp39.tar.gz
+        echo "BMF_ROOT_PATH=$(pwd)/output/bmf" >> $GITHUB_ENV
+
+    - name: Set up Qt
+      run: |
+        sudo apt-get install -y qt5-qmake qtbase5-dev qtchooser qtbase5-dev-tools cmake build-essential
+
+    - name: Build with CMake
+      run: |
+        export PATH=$PATH:$FFMPEG_ROOT_PATH/bin
+        (cd src && cmake -B build && cd build && make -j$(nproc))
+
+    - name: Copy libs
+      run: |
+        export LD_LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib/:$BMF_ROOT_PATH/lib
+        export LIBRARY_PATH=$FFMPEG_ROOT_PATH/lib/:$BMF_ROOT_PATH/lib
+        # linuxdeployqt
+        sudo apt-get -y install git g++ libgl1-mesa-dev
+        git clone https://github.com/probonopd/linuxdeployqt.git
+        # Then build in Qt Creator, or use
+        export PATH=$(readlink -f /tmp/.mount_QtCreator-*-${{ matrix.arch }}/*/gcc_64/bin/):$PATH
+        (cd linuxdeployqt && qmake && make && sudo make install)
+        # patchelf
+        wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.bz2
+        tar xf patchelf-0.9.tar.bz2
+        ( cd patchelf-0.9/ && ./configure  && make && sudo make install )
+        # appimage
+        sudo wget -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/${{ matrix.appimagetool }}" -O /usr/local/bin/appimagetool
+        sudo chmod a+x /usr/local/bin/appimagetool
+        (linuxdeployqt/bin/linuxdeployqt ./src/build/OpenConverter -appimage)
+        # clean up
+        rm -rf CMake* Makefile cmake_install.cmake OpenConverter_autogen/ doc/
+      continue-on-error: true
+
+
+    - name: Copy runtime
+      run: |
+        cp $FFMPEG_ROOT_PATH/lib/libswscale.so.6 src/build/lib
+        cp $FFMPEG_ROOT_PATH/lib/libavfilter.so.8 src/build/lib
+        cp $FFMPEG_ROOT_PATH/lib/libpostproc.so.56 src/build/lib
+        cp $FFMPEG_ROOT_PATH/lib/libavdevice.so.59 src/build/lib
+        cp $BMF_ROOT_PATH/lib/libbuiltin_modules.so src/build/lib
+        cp $BMF_ROOT_PATH/lib/libbmf_py_loader.so src/build/lib
+        cp $BMF_ROOT_PATH/BUILTIN_CONFIG.json src/build
+        touch src/build/run.sh
+        echo export LD_LIBRARY_PATH="~/.local/share/OpenConverter/Python.framework/lib:./lib" >> src/build/run.sh
+        echo ./OpenConverter >> src/build/run.sh
+        cp src/resources/requirements.txt src/build/requirements.txt
+        cp -r $BMF_ROOT_PATH src/build/
+        (mkdir -p src/build/modules/weights &&
+        cd src/build/modules/weights &&
+        wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth)
+
+    # Step to package the build directory
+    - name: Create tar.gz package
+      run: |
+        BUILD_DIR="src/build"
+        PACKAGE_NAME="OpenConverter_Linux_${{ matrix.arch }}.tar.gz"
+        OUTPUT_DIR="OpenConverter_Linux_${{ matrix.arch }}"
+        mkdir -p $OUTPUT_DIR
+        cp -r $BUILD_DIR/* $OUTPUT_DIR/
+        tar -czvf $PACKAGE_NAME $OUTPUT_DIR
+        rm -rf $OUTPUT_DIR
+
+    # Step to upload the tar.gz package as an artifact
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenConverter_Linux_${{ matrix.arch }}
+        path: OpenConverter_Linux_${{ matrix.arch }}.tar.gz
+
+    # - name: Setup tmate session
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+
+    - name: Finish
+      run: echo "Build complete"
+
+  build-linglong:
+    needs: build-linux
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    concurrency:
+      group: "review-linglong-${{ matrix.arch }}-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Remove unnecessary directories to free up space
+      run: |
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+
+    - name: Download Linux build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: OpenConverter_Linux_${{ matrix.arch }}
+
+    - name: Download linglong-builder cache
+      run: |
+        docker run --rm -v ~/.cache/:/target ghcr.io/jacklau1222/ll-cache-${{ matrix.arch }}:latest \
+          bash -c "cp -r /root/.cache/linglong-builder /target/"
+
+        sudo chown -R "$USER:$USER" ~/.cache/linglong-builder
+        sudo chmod -R 755 ~/.cache/linglong-builder
+        du -sh ~/.cache/linglong-builder
+
+    - name: Install Linglong tools
+      run: |
+        echo "deb [trusted=yes] https://ci.deepin.com/repo/obs/linglong:/CI:/release/xUbuntu_24.04/ ./" | sudo tee /etc/apt/sources.list.d/linglong.list
+        sudo apt update
+        sudo apt install -y linglong-bin linglong-builder linglong-box
+
+    - name: build the desktop file
+      run: |
+        cd src/resources
+        touch default.desktop
+        echo "[Desktop Entry]" >> default.desktop
+        echo "Type=Application" >> default.desktop
+        echo "Name=OpenConverter" >> default.desktop
+        echo "Exec=/opt/apps/io.github.openconverterlab/files/bin/run.sh" >> default.desktop
+        echo "Icon=default" >> default.desktop
+        echo "Categories=Media;Video;Audio;Converter;" >> default.desktop
+        echo "Comment=OpenConverter Application" >> default.desktop
+        echo "Terminal=false" >> default.desktop
+        cat default.desktop
+
+    - name: Prepare Linglong build directory
+      run: |
+        # Extract the artifact
+        tar -xzvf OpenConverter_Linux_${{ matrix.arch }}.tar.gz
+
+        # Create ll-builder directory structure
+        mkdir -p ll-builder/binary
+        mkdir -p ll-builder/template_app/applications
+        mkdir -p ll-builder/template_app/icons/hicolor/500x500/apps
+
+        # Copy binary files from artifact
+        cp -r OpenConverter_Linux_${{ matrix.arch }}/* ll-builder/binary/
+
+        # Copy linglong.yaml
+        cp src/resources/linglong.yaml ll-builder/
+
+        # Copy desktop file
+        cp src/resources/default.desktop ll-builder/template_app/applications/
+
+        # Copy icon file
+        cp src/resources/OpenConverter-logo.png ll-builder/template_app/icons/hicolor/500x500/apps/
+
+    - name: Build Linglong package
+      run: |
+        cd ll-builder
+        ll-builder build
+        ll-builder export --layer --no-develop
+
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
+
+    - name: Upload Linglong package
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenConverter_Linglong_${{ matrix.arch }}
+        path: ll-builder/*.layer
+
+    - name: Finish
+      run: echo "Linglong build complete"
+
+  build-macos-arm:
+    runs-on: macos-14
+    concurrency:
+      group: "review-macos-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout target branch code (using pull_request)
+      uses: actions/checkout@v2
+
+    - name: Print current branch and commit hash
+      run: |
+        echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+        echo "Current commit hash: $(git rev-parse HEAD)"
+
+    - name: Install FFmpeg and Qt via Homebrew
+      run: |
+        # Install FFmpeg 5 with x264, x265 support (pre-built from Homebrew)
+        brew install ffmpeg@5 qt@5 python@3.9
+
+        # Set FFmpeg path
+        export FFMPEG_ROOT_PATH=$(brew --prefix ffmpeg@5)
+        echo "FFMPEG_ROOT_PATH=$FFMPEG_ROOT_PATH" >> $GITHUB_ENV
+
+        # Verify FFmpeg has x264 and x265
+        echo "FFmpeg configuration:"
+        $FFMPEG_ROOT_PATH/bin/ffmpeg -version | head -n 1
+        $FFMPEG_ROOT_PATH/bin/ffmpeg -encoders 2>/dev/null | grep -E "libx264|libx265" || echo "Warning: x264/x265 not found"
+
+    - name: Checkout BMF repository(specific branch)
+      run: |
+        git clone https://github.com/OpenConverterLab/bmf.git
+
+        # wget https://invisible-island.net/archives/ncurses/ncurses-6.5.tar.gz
+        # wget https://ftp.gnu.org/gnu/binutils/binutils-2.43.1.tar.bz2
+
+    # - name: Cache ncurses build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: opt/ncurses
+    #     key: ${{ runner.os }}-ncurses-${{ hashFiles('ncurses-6.5.tar.gz') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-ncurses-
+
+    # - name: Cache binutils build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: opt/binutils
+    #     key: ${{ runner.os }}-binutils-${{ hashFiles('binutils-2.43.1.tar.bz2') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-binutils-
+
+    # - name: compile dependencies
+    #   run: |
+    #     if [ ! -d "$(pwd)/opt/ncurses" ]; then
+    #       tar -xzvf ncurses-6.5.tar.gz
+    #       (cd ncurses-6.5 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/ncurses && make -j$(sysctl -n hw.ncpu) && sudo make install)
+    #     else
+    #       echo "ncurses is already installed, skipping build."
+    #     fi
+
+    #     if [ ! -d "$(pwd)/opt/binutils" ]; then
+    #       tar xvf binutils-2.43.1.tar.bz2
+    #       (cd binutils-2.43.1 && ./configure --prefix=/Users/runner/work/OpenConverter/OpenConverter/opt/binutils --enable-install-libiberty && make -j$(sysctl -n hw.ncpu) && sudo make install)
+    #     else
+    #       echo "binutils is already installed, skipping build."
+    #     fi
+
+    # - name: Cache BMF build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: bmf/output/
+    #     key: ${{ runner.os }}-bmf-${{ hashFiles('bmf/build.sh') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-bmf-macos-arm-
+
+    - name: Set up BMF if not cached
+      run: |
+        if [ ! -d "$(pwd)/bmf/output/" ]; then
+          # export LIBRARY_PATH=$(pwd)/opt/binutils/lib:$LIBRARY_PATH
+          # export CMAKE_PREFIX_PATH=$(pwd)/opt/binutils:$CMAKE_PREFIX_PATH
+          brew link --force python@3.9
+          export BMF_PYTHON_VERSION="3.9"
+          pip install setuptools
+          (cd bmf && git checkout oc && git submodule update --init --recursive && ./build_osx.sh)
+        else
+          echo "BMF is already installed, skipping build."
+        fi
+        echo "BMF_ROOT_PATH=$(pwd)/bmf/output/bmf" >> $GITHUB_ENV
+
+    - name: Build and Deploy
+      run: |
+        export PATH="$(brew --prefix ffmpeg@5)/bin:$PATH"
+        export CMAKE_PREFIX_PATH="$(brew --prefix qt@5):$CMAKE_PREFIX_PATH"
+        export QT_DIR="$(brew --prefix qt@5)/lib/cmake/Qt5"
+        export PATH="$(brew --prefix qt@5)/bin:$PATH"
+
+        cd src
+        cmake -B build -DCMAKE_BUILD_TYPE=Release \
+          -DFFMPEG_ROOT_PATH="$(brew --prefix ffmpeg@5)" \
+          -DBMF_TRANSCODER=ON
+
+        cd build
+        make -j$(sysctl -n hw.ncpu)
+
+        # Use the fix_macos_libs.sh script to handle deployment
+        cd ..
+        chmod +x ../tool/fix_macos_libs.sh
+        ../tool/fix_macos_libs.sh
+
+        cd build
+
+        # Create DMG using simple shell script
+        echo "Creating DMG..."
+        chmod +x ../../tool/create_dmg_simple.sh
+        ../../tool/create_dmg_simple.sh OpenConverter.app
+
+        cd ../..
+        mv src/build/OpenConverter.dmg OpenConverter_macOS_aarch64.dmg
+
+    # Step to upload the dmg package as an artifact
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenConverter_macOS_aarch64
+        path: OpenConverter_macOS_aarch64.dmg
+
+    # - name: Setup tmate session
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+
+    - name: Finish
+      run: echo "Release upload complete"
+
+  build-windows-x64:
+    runs-on: windows-latest
+    concurrency:
+      group: "review-win-${{ github.event.pull_request.number }}"
+      cancel-in-progress: true
+
+    steps:
+      # Check out the repository code.
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up the Qt environment.
+      - name: (2) Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      6.4.3
+          host:         windows
+          target:       desktop
+          arch:         win64_msvc2019_64
+          dir:          ${{ runner.temp }}
+          setup-python: false
+
+      # Download FFmpeg from the specified release URL.
+      - name: Download FFmpeg
+        shell: powershell
+        run: |
+          $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1.zip"
+          $outputZip = "ffmpeg.zip"
+          Invoke-WebRequest -Uri $ffmpegUrl -OutFile $outputZip
+          Expand-Archive -Path $outputZip -DestinationPath ffmpeg
+          echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" >> $GITHUB_ENV
+
+      # Create a build directory, run qmake, and build the project.
+      - name: Build Qt project
+        run: |
+          (cd src &&
+          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" -DFFTOOL_TRANSCODER=OFF -DBMF_TRANSCODER=OFF &&
+          cmake --build build --config Release --parallel)
+
+      - name : Deploy project
+        run: |
+          # 1) Create the deploy folder under the repo workspace
+          New-Item -ItemType Directory -Force -Path OpenConverter_win64
+
+          # 2) Copy your built exe into OpenConverter_win64/
+          Copy-Item -Path "src\build\Release\OpenConverter.exe" -Destination "OpenConverter_win64"
+
+          # 3) Bundle Qt runtime into OpenConverter_win64/
+          & "D:\a\_temp\Qt\6.4.3\msvc2019_64\bin\windeployqt.exe" `
+            "--qmldir=src" `
+            "OpenConverter_win64\OpenConverter.exe"
+
+          # 4) Copy FFmpeg DLLs into OpenConverter_win64/
+          Copy-Item `
+            -Path "ffmpeg\ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1\bin\*.dll" `
+            -Destination "OpenConverter_win64"
+
+      # Upload the build artifacts (upload-artifact will automatically zip the folder)
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenConverter_win64
+          path: OpenConverter_win64
+
+      # - name: Setup tmate session
+      #   if: ${{ failure() }}
+      #   uses: mxschmitt/action-tmate@v3
+
+      - name: Finish
+        run: echo "Windows x64 build complete"
+
+  # Upload all artifacts to GitHub Release (only runs on tag push or release creation)
+  upload-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-linux, build-linglong, build-macos-arm, build-windows-x64]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          ls -la artifacts/
+          find artifacts -type f
+
+      - name: Prepare release packages
+        run: |
+          cd artifacts
+
+          # Linux x86_64 - already a tar.gz
+          if [ -f "OpenConverter_Linux_x86_64/OpenConverter_Linux_x86_64.tar.gz" ]; then
+            cp OpenConverter_Linux_x86_64/OpenConverter_Linux_x86_64.tar.gz ../OpenConverter_Linux_x86_64.tar.gz
+          fi
+
+          # Linux aarch64 - already a tar.gz
+          if [ -f "OpenConverter_Linux_aarch64/OpenConverter_Linux_aarch64.tar.gz" ]; then
+            cp OpenConverter_Linux_aarch64/OpenConverter_Linux_aarch64.tar.gz ../OpenConverter_Linux_aarch64.tar.gz
+          fi
+
+          # Linglong x86_64 - layer file
+          if [ -d "OpenConverter_Linglong_x86_64" ]; then
+            cp OpenConverter_Linglong_x86_64/*.layer ../OpenConverter_Linglong_x86_64.layer || true
+          fi
+
+          # Linglong aarch64 - layer file
+          if [ -d "OpenConverter_Linglong_aarch64" ]; then
+            cp OpenConverter_Linglong_aarch64/*.layer ../OpenConverter_Linglong_aarch64.layer || true
+          fi
+
+          # macOS aarch64 - already a dmg
+          if [ -f "OpenConverter_macOS_aarch64/OpenConverter_macOS_aarch64.dmg" ]; then
+            cp OpenConverter_macOS_aarch64/OpenConverter_macOS_aarch64.dmg ../OpenConverter_macOS_aarch64.dmg
+          fi
+
+          # Windows x64 - create zip from folder
+          if [ -d "OpenConverter_win64" ]; then
+            cd OpenConverter_win64
+            zip -r ../../OpenConverter_win64.zip .
+            cd ..
+          fi
+
+          cd ..
+          echo "Release packages:"
+          ls -la *.tar.gz *.dmg *.zip *.layer 2>/dev/null || echo "Some packages may be missing"
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            OpenConverter_Linux_x86_64.tar.gz
+            OpenConverter_Linux_aarch64.tar.gz
+            OpenConverter_Linglong_x86_64.layer
+            OpenConverter_Linglong_aarch64.layer
+            OpenConverter_macOS_aarch64.dmg
+            OpenConverter_win64.zip
+
+      - name: Finish
+        run: echo "Release upload complete"

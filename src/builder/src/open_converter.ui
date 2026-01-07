@@ -91,116 +91,7 @@ QLabel {
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item>
-        <widget class="QLabel" name="labelCommonSection">
-         <property name="text">
-          <string>COMMON</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnInfoView">
-         <property name="text">
-          <string>Info View</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnCompressPicture">
-         <property name="text">
-          <string>Compress Picture</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnExtractAudio">
-         <property name="text">
-          <string>Extract Audio</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnCutVideo">
-         <property name="text">
-          <string>Cut Video</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnCreateGif">
-         <property name="text">
-          <string>Create GIF</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="labelAdvancedSection">
-         <property name="text">
-          <string>ADVANCED</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnRemux">
-         <property name="text">
-          <string>Remux</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnTranscode">
-         <property name="text">
-          <string>Transcode</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="queueButton">
-         <property name="text">
-          <string>📋 Queue</string>
-         </property>
-         <property name="checkable">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>View batch processing queue</string>
-         </property>
-        </widget>
-       </item>
+       <!-- Navigation buttons are created dynamically in C++ code -->
       </layout>
      </widget>
     </item>
@@ -255,8 +146,16 @@ QLabel {
      <string>Transcoder</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuPython">
+    <property name="title">
+     <string>Python</string>
+    </property>
+    <addaction name="pythonAppSupport"/>
+    <addaction name="pythonCustom"/>
+   </widget>
    <addaction name="menuLanguage"/>
    <addaction name="menuTranscoder"/>
+   <addaction name="menuPython"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="english">
@@ -273,6 +172,23 @@ QLabel {
    </property>
    <property name="text">
     <string>Chinese</string>
+   </property>
+  </action>
+
+  <action name="pythonAppSupport">
+   <property name="objectName">
+    <string>pythonAppSupport</string>
+   </property>
+   <property name="text">
+    <string>App Python</string>
+   </property>
+  </action>
+  <action name="pythonCustom">
+   <property name="objectName">
+    <string>pythonCustom</string>
+   </property>
+   <property name="text">
+    <string>Custom Path...</string>
    </property>
   </action>
  </widget>

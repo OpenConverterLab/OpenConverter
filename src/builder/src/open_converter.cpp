@@ -19,6 +19,7 @@
 #include <QApplication>
 #include <QByteArray>
 #include <QDebug>
+#include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QEvent>
@@ -40,6 +41,7 @@
 #include <QToolButton>
 #include <QTranslator>
 #include <QUrl>
+#include <QVBoxLayout>
 
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
@@ -58,6 +60,7 @@
 #include "../include/remux_page.h"
 #include "../include/shared_data.h"
 #include "../include/transcode_page.h"
+#include "../include/ai_processing_page.h"
 #include "ui_open_converter.h"
 
 #include <iostream>
@@ -130,6 +133,27 @@ OpenConverter::OpenConverter(QWidget *parent)
         languageGroup->addAction(action);
     }
 
+    // Setup Python menu
+    pythonGroup = new QActionGroup(this);
+    pythonGroup->setExclusive(true);
+    QList<QAction*> pythonActions = ui->menuPython->actions();
+    for (QAction* action : pythonActions) {
+        action->setCheckable(true);
+        pythonGroup->addAction(action);
+    }
+
+    // Load saved Python setting or default to App Python
+    QSettings settings("OpenConverter", "OpenConverter");
+    QString savedPython = settings.value("python/mode", "pythonAppSupport").toString();
+    customPythonPath = settings.value("python/customPath", "").toString();
+
+    for (QAction* action : pythonActions) {
+        if (action->objectName() == savedPython) {
+            action->setChecked(true);
+            break;
+        }
+    }
+
     // Initialize language - default to English (no translation file needed)
     m_currLang = "english";
     m_langPath = ":/";
@@ -144,13 +168,9 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // Initialize navigation button group
     navButtonGroup = new QButtonGroup(this);
-    navButtonGroup->addButton(ui->btnInfoView, 0);
-    navButtonGroup->addButton(ui->btnCompressPicture, 1);
-    navButtonGroup->addButton(ui->btnExtractAudio, 2);
-    navButtonGroup->addButton(ui->btnCutVideo, 3);
-    navButtonGroup->addButton(ui->btnCreateGif, 4);
-    navButtonGroup->addButton(ui->btnRemux, 5);
-    navButtonGroup->addButton(ui->btnTranscode, 6);
+
+    // Setup navigation buttons dynamically
+    SetupNavigationButtons();
 
     // Connect navigation button group
     connect(navButtonGroup, QOverload<int>::of(&QButtonGroup::idClicked),
@@ -160,8 +180,8 @@ OpenConverter::OpenConverter(QWidget *parent)
     InitializePages();
 
     // Set first page as active
-    if (!pages.isEmpty()) {
-        ui->btnInfoView->setChecked(true);
+    if (!pages.isEmpty() && !navButtons.isEmpty()) {
+        navButtons.first()->setChecked(true);
         SwitchToPage(0);
     }
 
@@ -171,8 +191,8 @@ OpenConverter::OpenConverter(QWidget *parent)
     connect(ui->menuTranscoder, SIGNAL(triggered(QAction *)), this,
             SLOT(SlotTranscoderChanged(QAction *)));
 
-    // Connect Queue button
-    connect(ui->queueButton, &QPushButton::clicked, this, &OpenConverter::OnQueueButtonClicked);
+    connect(ui->menuPython, SIGNAL(triggered(QAction *)), this,
+            SLOT(SlotPythonChanged(QAction *)));
 }
 
 void OpenConverter::dragEnterEvent(QDragEnterEvent *event) {
@@ -235,6 +255,48 @@ void OpenConverter::SlotTranscoderChanged(QAction *action) {
     }
 }
 
+// Called every time, when a menu entry of the Python menu is called
+void OpenConverter::SlotPythonChanged(QAction *action) {
+    if (!action) return;
+
+    QString pythonMode = action->objectName();
+    QSettings settings("OpenConverter", "OpenConverter");
+
+    if (pythonMode == "pythonCustom") {
+        // Show file dialog to select site-packages path
+        QString dir = QFileDialog::getExistingDirectory(
+            this,
+            tr("Select Python site-packages Directory"),
+            customPythonPath.isEmpty() ? "/opt/homebrew/lib/python3.9/site-packages" : customPythonPath,
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+        );
+
+        if (!dir.isEmpty()) {
+            customPythonPath = dir;
+            settings.setValue("python/mode", pythonMode);
+            settings.setValue("python/customPath", customPythonPath);
+            ui->statusBar->showMessage(
+                tr("Python path set to: %1").arg(customPythonPath));
+        } else {
+            // User cancelled, revert to previous selection
+            QString savedPython = settings.value("python/mode", "pythonAppSupport").toString();
+            QList<QAction*> pythonActions = ui->menuPython->actions();
+            for (QAction* act : pythonActions) {
+                if (act->objectName() == savedPython) {
+                    act->setChecked(true);
+                    break;
+                }
+            }
+            return;
+        }
+    } else {
+        settings.setValue("python/mode", pythonMode);
+        if (pythonMode == "pythonAppSupport") {
+            ui->statusBar->showMessage(tr("Using App Python"));
+        }
+    }
+}
+
 // Called every time, when a menu entry of the language menu is called
 void OpenConverter::SlotLanguageChanged(QAction *action) {
     if (0 != action) {
@@ -278,6 +340,35 @@ void OpenConverter::LoadLanguage(const QString &rLanguage) {
 void OpenConverter::changeEvent(QEvent *event) {
     if (event->type() == QEvent::LanguageChange) {
         ui->retranslateUi(this);
+
+        // Update navigation labels and buttons
+        if (labelCommonSection) {
+            labelCommonSection->setText(tr("COMMON"));
+        }
+        if (labelAdvancedSection) {
+            labelAdvancedSection->setText(tr("ADVANCED"));
+        }
+        if (queueButton) {
+            queueButton->setText(tr("📋 Queue"));
+            queueButton->setToolTip(tr("View batch processing queue"));
+        }
+
+        // Update navigation button texts
+        QStringList buttonTexts = {
+            tr("Info View"),
+            tr("Compress Picture"),
+            tr("Extract Audio"),
+            tr("Cut Video"),
+            tr("Create GIF"),
+            tr("Remux"),
+            tr("Transcode")
+        };
+#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
+        buttonTexts.append(tr("AI Processing"));
+#endif
+        for (int i = 0; i < navButtons.size() && i < buttonTexts.size(); ++i) {
+            navButtons[i]->setText(buttonTexts[i]);
+        }
 
         // Update language in all pages
         for (BasePage *page : pages) {
@@ -331,6 +422,57 @@ void OpenConverter::InfoDisplay(QuickInfo *quickInfo) {
     // This can be implemented later for displaying info in pages
 }
 
+void OpenConverter::SetupNavigationButtons() {
+    QVBoxLayout *navLayout = ui->navVerticalLayout;
+
+    // Helper lambda to create navigation buttons
+    auto createNavButton = [this](const QString &text, int index) -> QPushButton* {
+        QPushButton *btn = new QPushButton(text, ui->leftNavWidget);
+        btn->setCheckable(true);
+        navButtonGroup->addButton(btn, index);
+        navButtons.append(btn);
+        return btn;
+    };
+
+    int pageIndex = 0;
+
+    // COMMON section label
+    labelCommonSection = new QLabel(tr("COMMON"), ui->leftNavWidget);
+    navLayout->addWidget(labelCommonSection);
+
+    // Common pages - always visible
+    navLayout->addWidget(createNavButton(tr("Info View"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Compress Picture"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Extract Audio"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Cut Video"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Create GIF"), pageIndex++));
+
+    // ADVANCED section label
+    labelAdvancedSection = new QLabel(tr("ADVANCED"), ui->leftNavWidget);
+    navLayout->addWidget(labelAdvancedSection);
+
+    // Advanced pages
+    navLayout->addWidget(createNavButton(tr("Remux"), pageIndex++));
+    navLayout->addWidget(createNavButton(tr("Transcode"), pageIndex++));
+
+#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
+    // AI Processing page - only when BMF is enabled
+    navLayout->addWidget(createNavButton(tr("AI Processing"), pageIndex++));
+#endif
+
+    // Add spacer to push queue button to bottom
+    navLayout->addStretch();
+
+    // Queue button (not part of navigation group)
+    queueButton = new QPushButton(tr("📋 Queue"), ui->leftNavWidget);
+    queueButton->setCheckable(false);
+    queueButton->setToolTip(tr("View batch processing queue"));
+    navLayout->addWidget(queueButton);
+
+    // Connect Queue button
+    connect(queueButton, &QPushButton::clicked, this, &OpenConverter::OnQueueButtonClicked);
+}
+
 void OpenConverter::InitializePages() {
     // Create pages for each navigation item
     // Common section
@@ -342,6 +484,9 @@ void OpenConverter::InitializePages() {
     // Advanced section
     pages.append(new RemuxPage(this));
     pages.append(new TranscodePage(this));
+#if defined(ENABLE_BMF) && defined(ENABLE_GUI)
+    pages.append(new AIProcessingPage(this));
+#endif
 
     // Add all pages to the stacked widget
     for (BasePage *page : pages) {
@@ -420,6 +565,37 @@ QString OpenConverter::GetCurrentTranscoderName() const {
     }
     // Default to FFMPEG if no transcoder is selected
     return "FFMPEG";
+}
+
+QString OpenConverter::GetPythonSitePackagesPath() const {
+    QAction *checkedAction = pythonGroup->checkedAction();
+    if (checkedAction) {
+        QString mode = checkedAction->objectName();
+        if (mode == "pythonCustom" && !customPythonPath.isEmpty()) {
+            return customPythonPath;
+        } else if (mode == "pythonAppSupport") {
+            // Python installed in ~/Library/Application Support/OpenConverter/
+            QString appSupportPath = QDir::homePath() +
+                "/Library/Application Support/OpenConverter/Python.framework/lib/python3.9/site-packages";
+            return appSupportPath;
+        }
+    }
+    // Default: Bundled or empty (transcoder will use bundled)
+    return QString();
+}
+
+QString OpenConverter::GetStoredPythonPath() {
+    // Static method that can be called from transcoder_bmf without GUI instance
+    QSettings settings("OpenConverter", "OpenConverter");
+    QString pythonMode = settings.value("python/mode", "pythonAppSupport").toString();
+
+    if (pythonMode == "pythonCustom") {
+        return settings.value("python/customPath", "").toString();
+    }
+    // Default to App Python (~/Library/Application Support/OpenConverter/)
+    QString appSupportPath = QDir::homePath() +
+        "/Library/Application Support/OpenConverter/Python.framework/lib/python3.9/site-packages";
+    return appSupportPath;
 }
 
 #include "open_converter.moc"

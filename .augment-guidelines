@@ -254,20 +254,109 @@ All source files (doesn't inlcude FFmpeg code) should include Apache 2.0 license
 
 ### Building the Project
 
+OpenConverter supports two build modes:
+
+#### **Debug Mode (Development)**
+Fast builds for development, uses system libraries:
+
 ```bash
 # Create build directory
 mkdir build && cd build
 
-# Configure with CMake
-cmake ../src -DENABLE_GUI=ON
+# Configure (Debug is default)
+cmake ../src -DENABLE_GUI=ON -DBMF_TRANSCODER=ON
 
 # Build
 make -j4
 
 # Run
-./OpenConverter              # GUI mode
-./OpenConverter --help       # CLI mode
+./OpenConverter.app/Contents/MacOS/OpenConverter  # macOS
+./OpenConverter                                    # Linux
 ```
+
+**What's bundled:**
+- ✅ Python modules (`enhance_module.py`)
+- ✅ AI model weights (2.4 MB)
+- ❌ BMF libraries (uses system BMF from CMake path)
+- ❌ Qt frameworks (uses system Qt)
+- ❌ Python runtime (uses system Python)
+
+**Requirements:**
+- Python 3.9+ with PyTorch, Real-ESRGAN, OpenCV, NumPy
+- BMF framework (path configured in CMake)
+- Qt 5.15+ (for GUI)
+
+**Environment:** No environment variables needed! BMF path is detected from CMake configuration.
+
+#### **Release Mode (Distribution)**
+Standalone builds for distribution, bundles everything:
+
+```bash
+# Create separate build directory
+mkdir build-release && cd build-release
+
+# Configure with Release mode
+cmake ../src -DCMAKE_BUILD_TYPE=Release -DENABLE_GUI=ON -DBMF_TRANSCODER=ON
+
+# Build (takes longer due to bundling)
+make -j4
+
+# Run - NO environment variables needed!
+open OpenConverter.app  # macOS
+./OpenConverter         # Linux
+```
+
+**What's bundled:**
+- ✅ Python modules
+- ✅ AI model weights (2.4 MB)
+- ✅ BMF libraries (25+ libraries, ~30 MB)
+- ✅ Qt frameworks (10+ frameworks, ~150 MB)
+- ✅ Python runtime with PyTorch, Real-ESRGAN, OpenCV, NumPy (~30 MB)
+- ✅ FFmpeg libraries (~25 MB)
+
+**Total Size:** ~800 MB - 1.2 GB (fully standalone)
+
+**Advantages:**
+- ✅ Fully standalone (no dependencies)
+- ✅ Works on any Mac (macOS 11+)
+- ✅ No environment variables needed
+- ✅ Ready for distribution (zip/DMG)
+
+### Library Bundling (macOS Release Mode)
+
+**Important:** All library bundling (Qt, FFmpeg, BMF) is handled by **`tool/fix_macos_libs.sh`**, NOT by CMake.
+
+#### **Workflow**
+
+1. **Build**: `cmake -B build-release -DCMAKE_BUILD_TYPE=Release && cd build-release && make -j4`
+2. **Bundle**: `cd .. && tool/fix_macos_libs.sh`
+
+The script auto-detects build directory, bundles Qt/FFmpeg/BMF libraries, fixes paths, and code signs.
+
+#### **BMF Library Structure**
+
+```
+OpenConverter.app/Contents/
+├── Frameworks/
+│   ├── lib/                      # Builtin modules (BMF hardcoded path)
+│   │   ├── libbuiltin_modules.dylib
+│   │   ├── libcopy_module.dylib
+│   │   └── libcvtcolor.dylib
+│   ├── libbmf_module_sdk.dylib   # Core BMF libraries
+│   ├── libhmp.dylib
+│   ├── _bmf.cpython-39-darwin.so
+│   └── BUILTIN_CONFIG.json
+└── Resources/bmf_python/         # BMF Python package
+```
+
+**Why `Frameworks/lib/`?** BMF expects builtin modules in `lib/` subdirectory relative to `BMF_MODULE_CONFIG_PATH`.
+
+**Script Logic:**
+- Auto-appends `/output/bmf` to `$BMF_ROOT_PATH` if needed (same as CMake)
+- Copies builtin modules to `Frameworks/lib/`
+- Copies core libraries to `Frameworks/`
+- Processes both `.dylib` and `.so` files
+- Fixes all paths to use `@executable_path`
 
 ### Translation Workflow
 

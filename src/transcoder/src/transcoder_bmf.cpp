@@ -14,12 +14,365 @@
  */
 
 #include "../include/transcoder_bmf.h"
+#include <filesystem>
+#include <fstream>
+
+#ifdef ENABLE_GUI
+#include <QDir>
+#include <QSettings>
+#include <QString>
+#include <QStandardPaths>
+#endif
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include <libgen.h>
+#endif
 
 /* Receive pointers from converter */
 TranscoderBMF::TranscoderBMF(ProcessParameter *process_parameter,
                              EncodeParameter *encode_parameter)
     : Transcoder(process_parameter, encode_parameter) {
     frame_total_number = 0;
+}
+
+bool TranscoderBMF::setup_python_environment() {
+    // In Debug mode, use system PYTHONPATH from environment (set by developer/CMake)
+    // In Release mode, set up PYTHONPATH for bundled BMF and external Python (App Support or Custom)
+#ifndef NDEBUG
+    // Debug mode: Set PYTHONPATH based on BMF_ROOT_PATH from environment or CMake
+    BMFLOG(BMF_INFO) << "Debug mode: Setting PYTHONPATH from BMF_ROOT_PATH";
+
+    // Get BMF_ROOT_PATH from environment or CMake
+    const char* bmf_root_env = std::getenv("BMF_ROOT_PATH");
+    std::string bmf_root;
+
+    if (bmf_root_env) {
+        bmf_root = std::string(bmf_root_env);
+        BMFLOG(BMF_INFO) << "Using BMF_ROOT_PATH from environment: " << bmf_root;
+    }
+#ifdef BMF_ROOT_PATH_STR
+    else {
+        bmf_root = BMF_ROOT_PATH_STR;
+        BMFLOG(BMF_INFO) << "Using BMF_ROOT_PATH from CMake: " << bmf_root;
+    }
+#endif
+
+    if (!bmf_root.empty()) {
+        // Normalize BMF_ROOT_PATH to include /output/bmf if needed
+        if (bmf_root.find("output/bmf") == std::string::npos) {
+            bmf_root += "/output/bmf";
+        }
+
+        // Set PYTHONPATH: BMF_ROOT_PATH/lib:BMF_ROOT_PATH (parent of /output/bmf)
+        std::string bmf_lib_path = bmf_root + "/lib";
+        size_t output_pos = bmf_root.find("/output/bmf");
+        std::string bmf_output_path;
+        if (output_pos != std::string::npos) {
+            bmf_output_path = bmf_root.substr(0, output_pos) + "/output";
+        } else {
+            bmf_output_path = bmf_root;
+        }
+
+        // Get existing PYTHONPATH
+        std::string current_pythonpath;
+        const char* existing_pythonpath = std::getenv("PYTHONPATH");
+        if (existing_pythonpath) {
+            current_pythonpath = existing_pythonpath;
+        }
+
+        // Set PYTHONPATH: bmf/lib:bmf/output:existing
+        std::string new_pythonpath = bmf_lib_path + ":" + bmf_output_path;
+        if (!current_pythonpath.empty()) {
+            new_pythonpath += ":" + current_pythonpath;
+        }
+
+        setenv("PYTHONPATH", new_pythonpath.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set PYTHONPATH: " << new_pythonpath;
+
+        // Set BMF_MODULE_CONFIG_PATH
+        setenv("BMF_MODULE_CONFIG_PATH", bmf_root.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set BMF_MODULE_CONFIG_PATH: " << bmf_root;
+    } else {
+        BMFLOG(BMF_WARNING) << "BMF_ROOT_PATH not set. Please set it in environment or CMake.";
+        BMFLOG(BMF_WARNING) << "Example: export BMF_ROOT_PATH=/path/to/bmf";
+    }
+#ifndef __linux__
+    return true;  // Debug mode always succeeds (uses system Python)
+#endif
+#endif
+
+    // Release mode: Set up PYTHONPATH for bundled BMF libraries and external Python
+    std::string bmf_lib_path;
+    std::string bmf_output_path;
+    std::string bmf_config_path;
+    std::string python_site_packages;
+
+#ifdef ENABLE_GUI
+    // Get Python path from QSettings (default to App Python in Application Support)
+    QSettings settings("OpenConverter", "OpenConverter");
+    QString pythonMode = settings.value("python/mode", "pythonAppSupport").toString();
+    std::string python_bin_path;
+    std::string python_lib_path;
+
+    if (pythonMode == "pythonCustom") {
+        QString customPath = settings.value("python/customPath", "").toString();
+        if (!customPath.isEmpty()) {
+            python_site_packages = customPath.toStdString();
+            BMFLOG(BMF_INFO) << "Using custom Python site-packages: " << python_site_packages;
+
+            // Derive bin and lib paths from custom site-packages path
+            // site-packages is typically at: /path/to/python/lib/python3.x/site-packages
+            // We need: bin at /path/to/python/bin, lib at /path/to/python/lib
+            std::filesystem::path site_pkg_path(python_site_packages);
+            // Go up: site-packages -> python3.x -> lib -> python_root
+            std::filesystem::path python_root = site_pkg_path.parent_path().parent_path().parent_path();
+            python_bin_path = (python_root / "bin").string();
+            python_lib_path = (python_root / "lib").string();
+            BMFLOG(BMF_INFO) << "Custom Python bin path: " << python_bin_path;
+            BMFLOG(BMF_INFO) << "Custom Python lib path: " << python_lib_path;
+        }
+    }
+
+    // Default to App Python if not custom
+    if (python_site_packages.empty()) {
+        // Use QStandardPaths for cross-platform app data location
+        // macOS: ~/Library/Application Support/OpenConverter
+        // Linux: ~/.local/share/OpenConverter
+        // Windows: C:/Users/<USER>/AppData/Local/OpenConverter
+        QString appSupportDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QString pythonFramework = appSupportDir + "/Python.framework";
+        QString sitePackages = pythonFramework + "/lib/python3.9/site-packages";
+
+        // Check if App Python exists - NO FALLBACK, App Python is required
+        if (QDir(sitePackages).exists()) {
+            python_site_packages = sitePackages.toStdString();
+            python_bin_path = (pythonFramework + "/bin").toStdString();
+            python_lib_path = (pythonFramework + "/lib").toStdString();
+            BMFLOG(BMF_INFO) << "Using App Python site-packages: " << python_site_packages;
+            BMFLOG(BMF_INFO) << "App Python bin path: " << python_bin_path;
+            BMFLOG(BMF_INFO) << "App Python lib path: " << python_lib_path;
+        } else {
+            BMFLOG(BMF_ERROR) << "App Python not found at: " << sitePackages.toStdString();
+            BMFLOG(BMF_ERROR) << "Please install App Python via Python menu -> Install Python";
+            return false;  // Don't continue without App Python - no fallback to system Python
+        }
+    }
+
+    // Set PATH and LD_LIBRARY_PATH/DYLD_LIBRARY_PATH for Python
+    if (!python_bin_path.empty()) {
+        // Prepend Python bin to PATH
+        std::string current_path;
+        const char* existing_path = std::getenv("PATH");
+        if (existing_path) {
+            current_path = existing_path;
+        }
+        std::string new_path = python_bin_path;
+        if (!current_path.empty()) {
+            new_path += ":" + current_path;
+        }
+        setenv("PATH", new_path.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set PATH: " << new_path;
+    }
+
+    if (!python_lib_path.empty()) {
+#ifdef __APPLE__
+        // On macOS, set DYLD_LIBRARY_PATH
+        std::string current_dyld;
+        const char* existing_dyld = std::getenv("DYLD_LIBRARY_PATH");
+        if (existing_dyld) {
+            current_dyld = existing_dyld;
+        }
+        std::string new_dyld = python_lib_path;
+        if (!current_dyld.empty()) {
+            new_dyld += ":" + current_dyld;
+        }
+        setenv("DYLD_LIBRARY_PATH", new_dyld.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set DYLD_LIBRARY_PATH: " << new_dyld;
+#else
+        // On Linux, set LD_LIBRARY_PATH
+        std::string current_ld;
+        const char* existing_ld = std::getenv("LD_LIBRARY_PATH");
+        if (existing_ld) {
+            current_ld = existing_ld;
+        }
+        std::string new_ld = python_lib_path;
+        if (!current_ld.empty()) {
+            new_ld += ":" + current_ld;
+        }
+        setenv("LD_LIBRARY_PATH", new_ld.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set LD_LIBRARY_PATH: " << new_ld;
+#endif
+    }
+#endif
+
+#ifdef __APPLE__
+    // Check if running from app bundle
+    char exe_path[1024];
+    uint32_t size = sizeof(exe_path);
+    if (_NSGetExecutablePath(exe_path, &size) == 0) {
+        std::string exe_dir = std::string(exe_path);
+        size_t last_slash = exe_dir.find_last_of('/');
+        if (last_slash != std::string::npos) {
+            exe_dir = exe_dir.substr(0, last_slash);
+
+            // Check if we're in an app bundle (path contains .app/Contents/MacOS)
+            if (exe_dir.find(".app/Contents/MacOS") != std::string::npos) {
+                size_t app_pos = exe_dir.find(".app/Contents/MacOS");
+                std::string app_bundle = exe_dir.substr(0, app_pos + 4);  // Include .app
+
+                // Check if BMF libraries are bundled (Release build)
+                std::string bundled_bmf_lib = app_bundle + "/Contents/Frameworks/lib";
+                std::string bundled_config = app_bundle + "/Contents/Frameworks/BUILTIN_CONFIG.json";
+                std::ifstream bmf_check(bundled_config);
+
+                if (bmf_check.good()) {
+                    // BMF libraries are bundled (Release build)
+                    bmf_lib_path = bundled_bmf_lib;
+                    bmf_output_path = app_bundle + "/Contents/Frameworks";
+                    bmf_config_path = app_bundle + "/Contents/Frameworks";
+                    BMFLOG(BMF_INFO) << "Using bundled BMF libraries from: " << bmf_lib_path;
+                } else {
+                    // App bundle exists but BMF not bundled (should not happen in Release)
+                    BMFLOG(BMF_WARNING) << "App bundle detected but BMF not bundled";
+                }
+                bmf_check.close();
+
+                // Check for bundled BMF Python package in Resources/bmf/
+                // The bmf package is at Resources/bmf/, so we add Resources/ to PYTHONPATH
+                std::string bundled_bmf_python = app_bundle + "/Contents/Resources/bmf";
+                std::string resources_dir = app_bundle + "/Contents/Resources";
+                std::ifstream bmf_python_check(bundled_bmf_python + "/__init__.py");
+                if (bmf_python_check.good()) {
+                    // Add Resources directory to bmf_output_path so 'import bmf' finds Resources/bmf/
+                    if (!bmf_output_path.empty()) {
+                        bmf_output_path = resources_dir + ":" + bmf_output_path;
+                    } else {
+                        bmf_output_path = resources_dir;
+                    }
+                    BMFLOG(BMF_INFO) << "Found bundled BMF Python package at: " << bundled_bmf_python;
+                    BMFLOG(BMF_INFO) << "Added to PYTHONPATH: " << resources_dir;
+                }
+                bmf_python_check.close();
+            }
+        }
+    }
+#endif
+
+    // Add Python site-packages to PYTHONPATH (App Python or Custom)
+    if (!python_site_packages.empty()) {
+        if (!bmf_output_path.empty()) {
+            bmf_output_path = python_site_packages + ":" + bmf_output_path;
+        } else {
+            bmf_output_path = python_site_packages;
+        }
+    }
+
+    // Get current PYTHONPATH
+    std::string current_pythonpath;
+    const char* existing_pythonpath = std::getenv("PYTHONPATH");
+    if (existing_pythonpath) {
+        current_pythonpath = existing_pythonpath;
+    }
+
+    // Append BMF paths to PYTHONPATH
+    std::string new_pythonpath = bmf_lib_path + ":" + bmf_output_path;
+    if (!current_pythonpath.empty()) {
+        new_pythonpath += ":" + current_pythonpath;
+    }
+
+    // Set PYTHONPATH environment variable
+    setenv("PYTHONPATH", new_pythonpath.c_str(), 1);
+    BMFLOG(BMF_INFO) << "Set PYTHONPATH: " << new_pythonpath;
+
+    // Set BMF_MODULE_CONFIG_PATH to point to BUILTIN_CONFIG.json
+    setenv("BMF_MODULE_CONFIG_PATH", bmf_config_path.c_str(), 1);
+    BMFLOG(BMF_INFO) << "Set BMF_MODULE_CONFIG_PATH: " << bmf_config_path;
+
+    return true;  // Environment setup succeeded
+}
+
+std::string TranscoderBMF::get_python_module_path() {
+    std::string module_path;
+
+    // First check if BMF_MODULE_PATH environment variable is set
+    // This allows runtimes (AppImage, LingLong, Flatpak, etc.) to specify the module path
+    const char* env_module_path = getenv("BMF_MODULE_PATH");
+    if (env_module_path && strlen(env_module_path) > 0) {
+        std::filesystem::path env_path(env_module_path);
+        if (std::filesystem::exists(env_path)) {
+            module_path = env_path.string();
+            BMFLOG(BMF_INFO) << "Using BMF_MODULE_PATH from environment: " << module_path;
+            return module_path;
+        } else {
+            BMFLOG(BMF_WARNING) << "BMF_MODULE_PATH is set but path does not exist: " << env_module_path;
+        }
+    }
+
+#ifdef __APPLE__
+    // For macOS app bundle
+    char exe_path[1024];
+    uint32_t size = sizeof(exe_path);
+    if (_NSGetExecutablePath(exe_path, &size) == 0) {
+        char *real_path = realpath(exe_path, nullptr);
+        if (real_path) {
+            std::filesystem::path exe_dir = std::filesystem::path(real_path).parent_path();
+            free(real_path);
+
+            // Check if running from app bundle
+            // Path structure: OpenConverter.app/Contents/MacOS/OpenConverter
+            if (exe_dir.filename() == "MacOS") {
+                std::filesystem::path resources_dir = exe_dir.parent_path() / "Resources" / "modules";
+                if (std::filesystem::exists(resources_dir)) {
+                    module_path = resources_dir.string();
+                    BMFLOG(BMF_INFO) << "Using app bundle module path: " << module_path;
+                    return module_path;
+                }
+            }
+
+            // Check build directory (for development)
+            std::filesystem::path build_modules = exe_dir / "modules";
+            if (std::filesystem::exists(build_modules)) {
+                module_path = build_modules.string();
+                BMFLOG(BMF_INFO) << "Using build directory module path: " << module_path;
+                return module_path;
+            }
+
+            // Check parent directory (for CLI build)
+            std::filesystem::path parent_modules = exe_dir.parent_path() / "modules";
+            if (std::filesystem::exists(parent_modules)) {
+                module_path = parent_modules.string();
+                BMFLOG(BMF_INFO) << "Using parent directory module path: " << module_path;
+                return module_path;
+            }
+        }
+    }
+#else
+    // For Linux/Windows
+    // Try current directory first
+    try {
+        std::filesystem::path current_modules = std::filesystem::current_path() / "modules";
+        if (std::filesystem::exists(current_modules)) {
+            module_path = current_modules.string();
+            BMFLOG(BMF_INFO) << "Using current directory module path: " << module_path;
+            return module_path;
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        BMFLOG(BMF_WARNING) << "Failed to get current directory: " << e.what();
+    }
+#endif
+
+    // Fallback: use a safe default path
+    try {
+        module_path = std::filesystem::current_path().string();
+        BMFLOG(BMF_WARNING) << "Module path not found, using current directory: " << module_path;
+    } catch (const std::filesystem::filesystem_error& e) {
+        // If we can't get current directory, use /tmp as last resort
+        module_path = "/tmp";
+        BMFLOG(BMF_ERROR) << "Failed to get current directory: " << e.what();
+        BMFLOG(BMF_ERROR) << "Using fallback path: " << module_path;
+    }
+    return module_path;
 }
 
 bmf_sdk::CBytes TranscoderBMF::decoder_callback(bmf_sdk::CBytes input) {
@@ -60,7 +413,7 @@ bmf_sdk::CBytes TranscoderBMF::encoder_callback(bmf_sdk::CBytes input) {
         }
 
     } else {
-        BMFLOG(BMF_WARNING) << "Failed to extract frame number";
+        BMFLOG(BMF_WARNING) << "Failed to extract frame number from: " << str_info;
     }
 
     uint8_t bytes[] = {97, 98, 99, 100, 101, 0};
@@ -70,13 +423,13 @@ bmf_sdk::CBytes TranscoderBMF::encoder_callback(bmf_sdk::CBytes input) {
 bool TranscoderBMF::prepare_info(std::string input_path,
                                  std::string output_path) {
     // decoder init
-    if (encode_parameter->get_video_codec_name() == "") {
+    if (encode_parameter->get_video_codec_name() == "copy") {
         copy_video = true;
     } else {
         copy_video = false;
     }
 
-    if (encode_parameter->get_audio_codec_name() == "") {
+    if (encode_parameter->get_audio_codec_name() == "copy") {
         copy_audio = true;
     } else {
         copy_audio = false;
@@ -103,7 +456,11 @@ bool TranscoderBMF::prepare_info(std::string input_path,
     nlohmann::json video_params = nlohmann::json::object();
 
     // Always add codec and bitrate
-    video_params["codec"] = encode_parameter->get_video_codec_name();
+    std::string video_codec_name = encode_parameter->get_video_codec_name();
+    if (!video_codec_name.empty())
+        video_params["codec"] = video_codec_name;
+    else
+        video_params["codec"] = "libx264";
     video_params["bit_rate"] = encode_parameter->get_video_bit_rate();
 
     // Only add width if it's set (> 0)
@@ -132,7 +489,11 @@ bool TranscoderBMF::prepare_info(std::string input_path,
 
     // Build audio_params object
     nlohmann::json audio_params = nlohmann::json::object();
-    audio_params["codec"] = encode_parameter->get_audio_codec_name();
+    std::string audio_codec_name = encode_parameter->get_audio_codec_name();
+    if (!audio_codec_name.empty())
+        audio_params["codec"] = audio_codec_name;
+    else
+        audio_params["codec"] = "aac";
     audio_params["bit_rate"] = encode_parameter->get_audio_bit_rate();
 
     encoder_para = {{"output_path", output_path},
@@ -142,18 +503,93 @@ bool TranscoderBMF::prepare_info(std::string input_path,
 }
 
 bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
+    // Set up Python environment (PYTHONPATH) for BMF Python modules
+    // Returns false if App Python is not installed (no fallback to system Python)
+    if (!setup_python_environment()) {
+        BMFLOG(BMF_ERROR) << "Failed to set up Python environment. Transcoding aborted.";
+        return false;
+    }
+
+    // Set a valid working directory to prevent BMF's internal getcwd() calls from failing
+    // When app is launched from Finder, there's no valid current working directory
+    try {
+        std::filesystem::current_path();  // Test if current path is valid
+    } catch (const std::filesystem::filesystem_error& e) {
+        // Current directory is invalid, set to a safe location
+        try {
+#ifdef __APPLE__
+            // Try to use app bundle's Resources directory
+            char exe_path[1024];
+            uint32_t size = sizeof(exe_path);
+            if (_NSGetExecutablePath(exe_path, &size) == 0) {
+                char *real_path = realpath(exe_path, nullptr);
+                if (real_path) {
+                    std::filesystem::path exe_dir = std::filesystem::path(real_path).parent_path();
+                    free(real_path);
+
+                    // If in app bundle, use Resources directory
+                    if (exe_dir.filename() == "MacOS") {
+                        std::filesystem::path resources_dir = exe_dir.parent_path() / "Resources";
+                        if (std::filesystem::exists(resources_dir)) {
+                            std::filesystem::current_path(resources_dir);
+                            BMFLOG(BMF_INFO) << "Set working directory to: " << resources_dir.string();
+                        } else {
+                            // Fallback to /tmp
+                            std::filesystem::current_path("/tmp");
+                            BMFLOG(BMF_INFO) << "Set working directory to: /tmp";
+                        }
+                    } else {
+                        // Not in app bundle, use executable directory
+                        std::filesystem::current_path(exe_dir);
+                        BMFLOG(BMF_INFO) << "Set working directory to: " << exe_dir.string();
+                    }
+                }
+            }
+#else
+            // For Linux/Windows, use /tmp or C:\Temp
+            std::filesystem::current_path("/tmp");
+            BMFLOG(BMF_INFO) << "Set working directory to: /tmp";
+#endif
+        } catch (const std::filesystem::filesystem_error& e2) {
+            BMFLOG(BMF_ERROR) << "Failed to set working directory: " << e2.what();
+            // Continue anyway, BMF might still work
+        }
+    }
 
     prepare_info(input_path, output_path);
     int scheduler_cnt = 0;
+    AlgoMode algo_mode = encode_parameter->get_algo_mode();
+    bmf::builder::Node *algo_node = nullptr;
 
     auto graph = bmf::builder::Graph(bmf::builder::NormalMode);
 
     auto decoder =
-        graph.Decode(bmf_sdk::JsonParam(decoder_para), "", scheduler_cnt++);
+        graph.Decode(bmf_sdk::JsonParam(decoder_para), "", scheduler_cnt);
+
+    if (algo_mode == AlgoMode::Upscale) {
+        int upscale_factor = encode_parameter->get_upscale_factor();
+        std::string module_path = get_python_module_path();
+
+        nlohmann::json enhance_option = {
+            {"fp32", true},
+            {"output_scale", upscale_factor},
+        };
+
+        BMFLOG(BMF_INFO) << "Loading enhance module from: " << module_path;
+
+        algo_node = new bmf::builder::Node(
+            graph.Module({decoder["video"]}, "", bmf::builder::Python,
+                         bmf_sdk::JsonParam(enhance_option), "",
+                         module_path,
+                         "enhance_module.EnhanceModule",
+                         bmf::builder::Immediate,
+                         scheduler_cnt));
+    }
 
     auto encoder =
-        graph.Encode(decoder["video"], decoder["audio"],
-                     bmf_sdk::JsonParam(encoder_para), "", scheduler_cnt++);
+        graph.Encode(algo_mode == AlgoMode::Upscale ? *algo_node : decoder["video"],
+                     decoder["audio"],
+                     bmf_sdk::JsonParam(encoder_para), "", scheduler_cnt);
 
     auto de_callback = std::bind(&TranscoderBMF::decoder_callback, this,
                                  std::placeholders::_1);
@@ -162,15 +598,23 @@ bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
 
     decoder.AddCallback(
         0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(de_callback));
-    encoder.AddCallback(
-        0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(en_callback));
+    if (algo_mode != AlgoMode::None) {
+        algo_node->AddCallback(
+            0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(en_callback));
+    } else {
+        encoder.AddCallback(
+            0, std::function<bmf_sdk::CBytes(bmf_sdk::CBytes)>(en_callback));
+    }
 
     nlohmann::json graph_para = {{"dump_graph", 1}};
     graph.SetOption(bmf_sdk::JsonParam(graph_para));
 
-    if (graph.Run() == 0) {
-        return true;
-    } else {
-        return false;
+    int result = graph.Run();
+
+    // Clean up allocated memory
+    if (algo_node != nullptr) {
+        delete algo_node;
     }
+
+    return (result == 0);
 }

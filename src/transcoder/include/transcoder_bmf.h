@@ -46,6 +46,13 @@ private:
 
     nlohmann::json decoder_para;
     nlohmann::json encoder_para;
+
+    // Helper function to set up Python environment (PYTHONPATH)
+    // Returns true if setup succeeded, false if App Python is not installed
+    bool setup_python_environment();
+
+    // Helper function to get the Python module path
+    std::string get_python_module_path();
 };
 
 #endif // TRANSCODER_BMF_H

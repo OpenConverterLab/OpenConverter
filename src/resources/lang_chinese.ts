@@ -1226,6 +1226,34 @@
         <source>FFTOOL</source>
         <translation>FFTOOL</translation>
     </message>
+    <message>
+        <source>AI Processing</source>
+        <translation>AI 处理</translation>
+    </message>
+    <message>
+        <source>Select Python site-packages Directory</source>
+        <translation>选择 Python site-packages 目录</translation>
+    </message>
+    <message>
+        <source>Python path set to: %1</source>
+        <translation>Python 路径设置为：%1</translation>
+    </message>
+    <message>
+        <source>Using App Python</source>
+        <translation>使用应用内置 Python</translation>
+    </message>
+    <message>
+        <source>App Python</source>
+        <translation>应用内置 Python</translation>
+    </message>
+    <message>
+        <source>Custom Path...</source>
+        <translation>自定义路径...</translation>
+    </message>
+    <message>
+        <source>Python</source>
+        <translation>Python</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -1567,6 +1595,147 @@
         <location filename="../builder/src/transcode_page.cpp" line="394"/>
         <source>Transcode</source>
         <translation>转码</translation>
+    </message>
+</context>
+<context>
+    <name>AIProcessingPage</name>
+    <message>
+        <source>Python Required</source>
+        <translation>需要 Python</translation>
+    </message>
+    <message>
+        <source>AI Processing requires Python 3.9 and additional packages.
+
+Would you like to download and install them now?
+(Download size: ~550 MB, completely isolated from system Python)</source>
+        <translation>AI 处理需要 Python 3.9 及其他依赖包。
+
+是否现在下载并安装？
+（下载大小：约 550 MB，与系统 Python 完全隔离）</translation>
+    </message>
+    <message>
+        <source>AI Processing Unavailable</source>
+        <translation>AI 处理不可用</translation>
+    </message>
+    <message>
+        <source>AI Processing features require Python to be installed.
+
+You can install it later by returning to this page.</source>
+        <translation>AI 处理功能需要安装 Python。
+
+您可以稍后返回此页面进行安装。</translation>
+    </message>
+    <message>
+        <source>Input File</source>
+        <translation>输入文件</translation>
+    </message>
+    <message>
+        <source>Select a media file or click Batch for multiple files...</source>
+        <translation>选择媒体文件或点击批量处理多个文件...</translation>
+    </message>
+    <message>
+        <source>All Files (*.*)</source>
+        <translation>所有文件 (*.*)</translation>
+    </message>
+    <message>
+        <source>Select Media File</source>
+        <translation>选择媒体文件</translation>
+    </message>
+    <message>
+        <source>Algorithm</source>
+        <translation>算法</translation>
+    </message>
+    <message>
+        <source>Select Algorithm:</source>
+        <translation>选择算法：</translation>
+    </message>
+    <message>
+        <source>Upscaler</source>
+        <translation>超分辨率</translation>
+    </message>
+    <message>
+        <source>Algorithm Settings</source>
+        <translation>算法设置</translation>
+    </message>
+    <message>
+        <source>Upscale Factor:</source>
+        <translation>放大倍数：</translation>
+    </message>
+    <message>
+        <source>Video Settings</source>
+        <translation>视频设置</translation>
+    </message>
+    <message>
+        <source>Audio Settings</source>
+        <translation>音频设置</translation>
+    </message>
+    <message>
+        <source>Codec:</source>
+        <translation>编解码器：</translation>
+    </message>
+    <message>
+        <source>Bitrate:</source>
+        <translation>比特率：</translation>
+    </message>
+    <message>
+        <source>File Format</source>
+        <translation>文件格式</translation>
+    </message>
+    <message>
+        <source>Format:</source>
+        <translation>格式：</translation>
+    </message>
+    <message>
+        <source>Output File</source>
+        <translation>输出文件</translation>
+    </message>
+    <message>
+        <source>Output file path...</source>
+        <translation>输出文件路径...</translation>
+    </message>
+    <message>
+        <source>Process / Add to Queue</source>
+        <translation>处理 / 添加到队列</translation>
+    </message>
+    <message>
+        <source>Add to Queue</source>
+        <translation>添加到队列</translation>
+    </message>
+    <message>
+        <source>Process</source>
+        <translation>处理</translation>
+    </message>
+    <message>
+        <source>Processing...</source>
+        <translation>处理中...</translation>
+    </message>
+    <message>
+        <source>Success</source>
+        <translation>成功</translation>
+    </message>
+    <message>
+        <source>AI processing completed successfully!</source>
+        <translation>AI 处理成功完成！</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>错误</translation>
+    </message>
+    <message>
+        <source>Failed to process file.</source>
+        <translation>文件处理失败。</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>Please select an input file.</source>
+        <translation>请选择输入文件。</translation>
+    </message>
+    <message>
+        <source>Please select an output file.</source>
+        <translation>请选择输出文件。</translation>
     </message>
 </context>
 </TS>
