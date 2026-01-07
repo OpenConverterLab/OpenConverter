@@ -191,7 +191,7 @@ jobs:
         echo "Type=Application" >> default.desktop
         echo "Name=OpenConverter" >> default.desktop
         echo "Exec=/opt/apps/io.github.openconverterlab/files/bin/run.sh" >> default.desktop
-        echo "Icon=default" >> default.desktop
+        echo "Icon=openconverter-256" >> default.desktop
         echo "Categories=Media;Video;Audio;Converter;" >> default.desktop
         echo "Comment=OpenConverter Application" >> default.desktop
         echo "Terminal=false" >> default.desktop
@@ -205,7 +205,7 @@ jobs:
         # Create ll-builder directory structure
         mkdir -p ll-builder/binary
         mkdir -p ll-builder/template_app/applications
-        mkdir -p ll-builder/template_app/icons/hicolor/500x500/apps
+        mkdir -p ll-builder/template_app/icons/hicolor/256x256/apps
 
         # Copy binary files from artifact
         cp -r OpenConverter_Linux_${{ matrix.arch }}/* ll-builder/binary/
@@ -217,7 +217,7 @@ jobs:
         cp src/resources/default.desktop ll-builder/template_app/applications/
 
         # Copy icon file
-        cp src/resources/OpenConverter-logo.png ll-builder/template_app/icons/hicolor/500x500/apps/
+        cp src/resources/openconverter-256.png ll-builder/template_app/icons/hicolor/256x256/apps/
 
     - name: Build Linglong package
       run: |
@@ -477,12 +477,12 @@ jobs:
 
           # Linglong x86_64 - layer file
           if [ -d "OpenConverter_Linglong_x86_64" ]; then
-            cp OpenConverter_Linglong_x86_64/*.layer ../OpenConverter_Linglong_x86_64.layer || true
+            cp OpenConverter_Linglong_x86_64/*.layer ../ || true
           fi
 
           # Linglong aarch64 - layer file
           if [ -d "OpenConverter_Linglong_aarch64" ]; then
-            cp OpenConverter_Linglong_aarch64/*.layer ../OpenConverter_Linglong_aarch64.layer || true
+            cp OpenConverter_Linglong_aarch64/*.layer ../ || true
           fi
 
           # macOS aarch64 - already a dmg
