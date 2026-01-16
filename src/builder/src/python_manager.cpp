@@ -117,12 +117,14 @@ QString PythonManager::GetAppBundlePath() {
 
 QString PythonManager::GetPythonFrameworkPath() {
     // Install embedded Python into Application Support directory so
-    // the app bundle/installation remains immutable. Use QStandardPaths to get
-    // the per-user Application Support directory for the app.
+    // the app bundle/installation remains immutable.
+    // Use explicit app name "OpenConverter" to avoid issues with wrapper launchers
+    // (e.g., OpenConverter.real on macOS) affecting the path.
     // macOS: ~/Library/Application Support/OpenConverter/Python.framework
     // Linux: ~/.local/share/OpenConverter/Python.framework
     // Windows: C:/Users/<USER>/AppData/Local/OpenConverter/Python.framework
-    QString appSupportBase = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QString genericDataLocation = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    QString appSupportBase = genericDataLocation + "/OpenConverter";
     // Ensure directory exists
     QDir().mkpath(appSupportBase);
     return appSupportBase + "/Python.framework";

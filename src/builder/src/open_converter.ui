@@ -146,16 +146,8 @@ QLabel {
      <string>Transcoder</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuPython">
-    <property name="title">
-     <string>Python</string>
-    </property>
-    <addaction name="pythonAppSupport"/>
-    <addaction name="pythonCustom"/>
-   </widget>
    <addaction name="menuLanguage"/>
    <addaction name="menuTranscoder"/>
-   <addaction name="menuPython"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="english">
@@ -172,23 +164,6 @@ QLabel {
    </property>
    <property name="text">
     <string>Chinese</string>
-   </property>
-  </action>
-
-  <action name="pythonAppSupport">
-   <property name="objectName">
-    <string>pythonAppSupport</string>
-   </property>
-   <property name="text">
-    <string>App Python</string>
-   </property>
-  </action>
-  <action name="pythonCustom">
-   <property name="objectName">
-    <string>pythonCustom</string>
-   </property>
-   <property name="text">
-    <string>Custom Path...</string>
    </property>
   </action>
  </widget>
