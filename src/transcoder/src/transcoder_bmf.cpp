@@ -588,7 +588,12 @@ bool TranscoderBMF::transcode(std::string input_path, std::string output_path) {
     nlohmann::json graph_para = {{"dump_graph", 1}};
     graph.SetOption(bmf_sdk::JsonParam(graph_para));
 
-    int result = graph.Run();
+    int result = -1;
+    try {
+        result = graph.Run();
+    } catch (const std::exception& e) {
+        BMFLOG(BMF_ERROR) << "BMF graph execution error: " << e.what();
+    }
 
     // Clean up allocated memory
     if (algo_node != nullptr) {
