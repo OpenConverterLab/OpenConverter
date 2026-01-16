@@ -37,6 +37,16 @@ TranscoderBMF::TranscoderBMF(ProcessParameter *process_parameter,
 }
 
 bool TranscoderBMF::setup_python_environment() {
+#ifdef __APPLE__
+    // Set PYTHONHOME for macOS (both debug and release use App Python from Application Support)
+    const char* home_env = std::getenv("HOME");
+    if (home_env) {
+        std::string python_home = std::string(home_env) + "/Library/Application Support/OpenConverter/Python.framework";
+        setenv("PYTHONHOME", python_home.c_str(), 1);
+        BMFLOG(BMF_INFO) << "Set PYTHONHOME: " << python_home;
+    }
+#endif
+
     // In Debug mode, use system PYTHONPATH from environment (set by developer/CMake)
     // In Release mode, set up PYTHONPATH for bundled BMF and external Python (App Support or Custom)
 #ifndef NDEBUG
