@@ -110,12 +110,6 @@ if [ -n "$BMF_ROOT_PATH" ] && [ -d "$BMF_ROOT_PATH" ]; then
         echo "    Copied: BUILTIN_CONFIG.json"
     fi
 
-    # Bundle BMF Python package to Resources/bmf/ (named 'bmf' for Python import)
-    echo "  Copying BMF Python package to Resources/bmf/..."
-    rm -rf "$APP_DIR/Contents/Resources/bmf"
-    cp -R "$BMF_ROOT_PATH" "$APP_DIR/Contents/Resources/bmf" 2>/dev/null || true
-    echo "    Copied BMF Python package as 'bmf'"
-
     echo -e "${GREEN}BMF libraries bundled successfully${NC}"
 fi
 
@@ -259,9 +253,86 @@ codesign --force --deep --sign - "$APP_DIR" 2>&1 || {
 }
 
 echo ""
-echo -e "${YELLOW}Step 6: Verifying library paths...${NC}"
+echo -e "${YELLOW}Step 6: Copying BMF Python package to Resources...${NC}"
+if [ -n "$BMF_ROOT_PATH" ] && [ -d "$BMF_ROOT_PATH" ]; then
+    # Bundle BMF Python package to Resources/bmf/ (named 'bmf' for Python import)
+    echo "  Copying BMF Python package to Resources/bmf/..."
+    rm -rf "$APP_DIR/Contents/Resources/bmf"
+    cp -R "$BMF_ROOT_PATH" "$APP_DIR/Contents/Resources/bmf" 2>/dev/null || true
+    echo "    Copied BMF Python package as 'bmf'"
+
+    # Override libs in Resources/bmf/lib with already-fixed libs from Frameworks
+    echo "  Overriding libraries with fixed versions from Frameworks/..."
+    BMF_RESOURCES_LIB="$APP_DIR/Contents/Resources/bmf/lib"
+    if [ -d "$BMF_RESOURCES_LIB" ]; then
+        for lib_path in "$BMF_RESOURCES_LIB"/*.dylib "$BMF_RESOURCES_LIB"/*.so; do
+            [ -f "$lib_path" ] || continue
+            lib_name=$(basename "$lib_path")
+
+            # Check if this library exists in Frameworks (already fixed)
+            if [ -f "$APP_FRAMEWORKS/$lib_name" ]; then
+                echo "    Overriding: $lib_name"
+                cp "$APP_FRAMEWORKS/$lib_name" "$lib_path"
+            fi
+        done
+        cp "$APP_FRAMEWORKS/lib/*" $BMF_RESOURCES_LIB/ 2>/dev/null || true
+    fi
+
+    echo -e "${GREEN}BMF Python package copied successfully${NC}"
+else
+    echo -e "${YELLOW}BMF_ROOT_PATH not set, skipping BMF Python package${NC}"
+fi
+
+echo ""
+echo -e "${YELLOW}Step 7: Creating wrapper launcher...${NC}"
+APP_MACOS_DIR="$APP_DIR/Contents/MacOS"
+REAL_EXECUTABLE="$APP_MACOS_DIR/OpenConverter.real"
+
+# Find the launcher template script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LAUNCHER_TEMPLATE=""
+for path in "$SCRIPT_DIR/../src/resources/macos_launcher.sh" \
+            "$SCRIPT_DIR/src/resources/macos_launcher.sh" \
+            "../src/resources/macos_launcher.sh" \
+            "src/resources/macos_launcher.sh"; do
+    if [ -f "$path" ]; then
+        LAUNCHER_TEMPLATE="$path"
+        break
+    fi
+done
+
+# Rename the original executable and install wrapper
+if [ -f "$APP_EXECUTABLE" ] && [ ! -f "$REAL_EXECUTABLE" ]; then
+    echo "  Renaming OpenConverter -> OpenConverter.real"
+    mv "$APP_EXECUTABLE" "$REAL_EXECUTABLE"
+
+    # Copy wrapper script from template
+    if [ -n "$LAUNCHER_TEMPLATE" ] && [ -f "$LAUNCHER_TEMPLATE" ]; then
+        echo "  Copying wrapper launcher from: $LAUNCHER_TEMPLATE"
+        cp "$LAUNCHER_TEMPLATE" "$APP_EXECUTABLE"
+    else
+        echo "  Creating wrapper launcher script..."
+        cat > "$APP_EXECUTABLE" << 'EOF'
+#!/bin/sh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export DYLD_LIBRARY_PATH="$HOME/Library/Application Support/OpenConverter/Python.framework/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+exec "$SCRIPT_DIR/OpenConverter.real" "$@"
+EOF
+    fi
+    chmod +x "$APP_EXECUTABLE"
+    echo -e "${GREEN}Wrapper launcher created successfully${NC}"
+else
+    if [ -f "$REAL_EXECUTABLE" ]; then
+        echo -e "${YELLOW}Wrapper already exists (OpenConverter.real found)${NC}"
+    else
+        echo -e "${RED}Error: Executable not found at $APP_EXECUTABLE${NC}"
+    fi
+fi
+
+echo ""
+echo -e "${YELLOW}Step 8: Verifying library paths...${NC}"
 echo -e "${GREEN}Main executable dependencies:${NC}"
-otool -L "$APP_EXECUTABLE" | grep -E "libav|libsw|libx264|libx265|libvpx|libopus" || echo "  (No FFmpeg/codec libraries directly linked)"
+otool -L "$REAL_EXECUTABLE" | grep -E "libav|libsw|libx264|libx265|libvpx|libopus" || echo "  (No FFmpeg/codec libraries directly linked)"
 
 echo ""
 echo -e "${GREEN}Sample FFmpeg library dependencies (libavcodec):${NC}"
@@ -280,5 +351,5 @@ echo "  macdeployqt OpenConverter.app -dmg"
 echo "  # DMG will be created as OpenConverter.dmg"
 echo ""
 echo -e "${YELLOW}To verify all dependencies are bundled:${NC}"
-echo "  otool -L OpenConverter.app/Contents/MacOS/OpenConverter"
+echo "  otool -L OpenConverter.app/Contents/MacOS/OpenConverter.real"
 echo "  # All paths should start with @executable_path or @rpath"
