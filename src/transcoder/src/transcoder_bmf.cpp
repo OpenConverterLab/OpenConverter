@@ -14,6 +14,7 @@
  */
 
 #include "../include/transcoder_bmf.h"
+#include "../../common/include/info.h"
 #include <filesystem>
 #include <fstream>
 
@@ -21,6 +22,51 @@
 #include <mach-o/dyld.h>
 #include <libgen.h>
 #endif
+
+// Helper function to map decoder codec name to encoder name
+static std::string map_video_codec_to_encoder(const std::string& codec_name) {
+    if (codec_name == "h264" || codec_name == "avc")
+        return "libx264";
+    if (codec_name == "hevc" || codec_name == "h265")
+        return "libx265";
+    if (codec_name == "vp8")
+        return "libvpx";
+    if (codec_name == "vp9")
+        return "libvpx-vp9";
+    if (codec_name == "av1")
+        return "libaom-av1";
+    if (codec_name == "mpeg4")
+        return "mpeg4";
+    if (codec_name == "mpeg2video")
+        return "mpeg2video";
+    if (codec_name == "mjpeg")
+        return "mjpeg";
+    if (codec_name == "png")
+        return "png";
+    // Default to libx264 for unknown codecs
+    return "libx264";
+}
+
+static std::string map_audio_codec_to_encoder(const std::string& codec_name) {
+    if (codec_name == "aac")
+        return "aac";
+    if (codec_name == "mp3")
+        return "libmp3lame";
+    if (codec_name == "vorbis")
+        return "libvorbis";
+    if (codec_name == "opus")
+        return "libopus";
+    if (codec_name == "flac")
+        return "flac";
+    if (codec_name == "ac3")
+        return "ac3";
+    if (codec_name == "eac3")
+        return "eac3";
+    if (codec_name.find("pcm_") == 0)
+        return "pcm_s16le";
+    // Default to aac for unknown codecs
+    return "aac";
+}
 
 /* Receive pointers from converter */
 TranscoderBMF::TranscoderBMF(ProcessParameter *process_parameter,
@@ -362,12 +408,34 @@ bool TranscoderBMF::prepare_info(std::string input_path,
     // Build video_params object with only valid parameters
     nlohmann::json video_params = nlohmann::json::object();
 
-    // Always add codec and bitrate
+    // Probe input file for codec and pixel format info if needed
+    std::string input_video_codec;
+    std::string input_audio_codec;
+    std::string input_pixel_format;
     std::string video_codec_name = encode_parameter->get_video_codec_name();
-    if (!video_codec_name.empty())
+    std::string audio_codec_name = encode_parameter->get_audio_codec_name();
+    std::string pixel_format = encode_parameter->get_pixel_format();
+
+    if (video_codec_name.empty() || audio_codec_name.empty() || pixel_format.empty()) {
+        // Use Info class to probe input file
+        Info info;
+        info.send_info(const_cast<char*>(input_path.c_str()));
+        QuickInfo *quick_info = info.get_quick_info();
+        if (quick_info) {
+            input_video_codec = quick_info->videoCodec;
+            input_audio_codec = quick_info->audioCodec;
+            input_pixel_format = quick_info->pixelFormat;
+        }
+    }
+
+    // Add video codec - use input codec if not specified (same as input)
+    if (!video_codec_name.empty()) {
         video_params["codec"] = video_codec_name;
-    else
-        video_params["codec"] = "libx264";
+    } else {
+        std::string encoder = map_video_codec_to_encoder(input_video_codec);
+        video_params["codec"] = encoder;
+        BMFLOG(BMF_INFO) << "Using input video codec: " << input_video_codec << " -> encoder: " << encoder;
+    }
     video_params["bit_rate"] = encode_parameter->get_video_bit_rate();
 
     // Only add width if it's set (> 0)
@@ -388,19 +456,23 @@ bool TranscoderBMF::prepare_info(std::string input_path,
         video_params["qscale"] = qscale;
     }
 
-    // Only add pixel format if it's set (not empty)
-    std::string pixel_format = encode_parameter->get_pixel_format();
+    // Add pixel format - use input pixel format if not specified (same as input)
     if (!pixel_format.empty()) {
         video_params["pixel_format"] = pixel_format;
+    } else if (!input_pixel_format.empty()) {
+        video_params["pixel_format"] = input_pixel_format;
+        BMFLOG(BMF_INFO) << "Using input pixel format: " << input_pixel_format;
     }
 
     // Build audio_params object
     nlohmann::json audio_params = nlohmann::json::object();
-    std::string audio_codec_name = encode_parameter->get_audio_codec_name();
-    if (!audio_codec_name.empty())
+    if (!audio_codec_name.empty()) {
         audio_params["codec"] = audio_codec_name;
-    else
-        audio_params["codec"] = "aac";
+    } else {
+        std::string encoder = map_audio_codec_to_encoder(input_audio_codec);
+        audio_params["codec"] = encoder;
+        BMFLOG(BMF_INFO) << "Using input audio codec: " << input_audio_codec << " -> encoder: " << encoder;
+    }
     audio_params["bit_rate"] = encode_parameter->get_audio_bit_rate();
 
     encoder_para = {{"output_path", output_path},

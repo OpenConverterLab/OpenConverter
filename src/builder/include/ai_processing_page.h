@@ -24,7 +24,6 @@
 #include "progress_widget.h"
 #include "batch_output_widget.h"
 #include "batch_mode_helper.h"
-#include "bitrate_widget.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
@@ -56,7 +55,6 @@ private slots:
     void OnInputFileSelected(const QString &filePath);
     void OnOutputFileSelected(const QString &filePath);
     void OnAlgorithmChanged(int index);
-    void OnFormatChanged(int index);
     void OnProcessClicked();
     void OnProcessFinished(bool success);
 
@@ -89,25 +87,6 @@ private:
     QWidget *upscalerSettingsWidget;
     QLabel *upscaleFactorLabel;
     QSpinBox *upscaleFactorSpinBox;
-
-    // Video settings section
-    QGroupBox *videoGroupBox;
-    QLabel *videoCodecLabel;
-    QComboBox *videoCodecComboBox;
-    QLabel *videoBitrateLabel;
-    BitrateWidget *videoBitrateWidget;
-
-    // Audio settings section
-    QGroupBox *audioGroupBox;
-    QLabel *audioCodecLabel;
-    QComboBox *audioCodecComboBox;
-    QLabel *audioBitrateLabel;
-    BitrateWidget *audioBitrateWidget;
-
-    // Format section
-    QGroupBox *formatGroupBox;
-    QLabel *formatLabel;
-    QComboBox *formatComboBox;
 
     // Progress section
     ProgressWidget *progressWidget;

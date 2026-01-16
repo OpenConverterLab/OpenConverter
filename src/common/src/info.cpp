@@ -30,6 +30,7 @@ void Info::init() {
     quickInfo->height = 0;
     quickInfo->colorSpace = "";
     quickInfo->videoCodec = "";
+    quickInfo->pixelFormat = "";
     quickInfo->videoBitRate = 0;
     quickInfo->frameRate = 0;
 
@@ -82,6 +83,13 @@ void Info::send_info(char *src) {
         if (avCtx->streams[quickInfo->videoIdx]->codecpar->codec_id != AV_CODEC_ID_NONE)
             quickInfo->videoCodec = avcodec_get_name(
                 avCtx->streams[quickInfo->videoIdx]->codecpar->codec_id);
+        // Get pixel format
+        AVPixelFormat pix_fmt = (AVPixelFormat)avCtx->streams[quickInfo->videoIdx]->codecpar->format;
+        if (pix_fmt != AV_PIX_FMT_NONE) {
+            const char *pix_fmt_name = av_get_pix_fmt_name(pix_fmt);
+            if (pix_fmt_name)
+                quickInfo->pixelFormat = pix_fmt_name;
+        }
         quickInfo->videoBitRate =
             avCtx->streams[quickInfo->videoIdx]->codecpar->bit_rate;
         quickInfo->frameRate =

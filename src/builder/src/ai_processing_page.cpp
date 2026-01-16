@@ -84,13 +84,7 @@ void AIProcessingPage::OnPageActivated() {
 }
 
 void AIProcessingPage::OnInputFileChanged(const QString &newPath) {
-    QString ext = GetFileExtension(newPath);
-    if (!ext.isEmpty()) {
-        int index = formatComboBox->findText(ext);
-        if (index >= 0) {
-            formatComboBox->setCurrentIndex(index);
-        }
-    }
+    Q_UNUSED(newPath);
     // Update output path when input changes
     UpdateOutputPath();
 }
@@ -102,7 +96,7 @@ void AIProcessingPage::OnOutputPathUpdate() {
 void AIProcessingPage::OnPageDeactivated() {
     BasePage::OnPageDeactivated();
     HandleSharedDataUpdate(inputFileSelector->GetLineEdit(), outputFileSelector->GetLineEdit(),
-                           formatComboBox->currentText());
+                           GetFileExtension(inputFileSelector->GetFilePath()));
 }
 
 void AIProcessingPage::SetupUI() {
@@ -168,63 +162,6 @@ void AIProcessingPage::SetupUI() {
     algoSettingsLayout->addWidget(algoSettingsStack, 0, 0, 1, 2);
     mainLayout->addWidget(algoSettingsGroupBox);
 
-    // Video Settings Section
-    videoGroupBox = new QGroupBox(tr("Video Settings"), this);
-    QGridLayout *videoLayout = new QGridLayout(videoGroupBox);
-    videoLayout->setSpacing(10);
-
-    videoCodecLabel = new QLabel(tr("Codec:"), videoGroupBox);
-    videoCodecComboBox = new QComboBox(videoGroupBox);
-    videoCodecComboBox->addItems({"auto", "libx264", "libx265", "libvpx-vp9", "copy"});
-    videoCodecComboBox->setCurrentText("auto");
-
-    videoBitrateLabel = new QLabel(tr("Bitrate:"), videoGroupBox);
-    videoBitrateWidget = new BitrateWidget(BitrateWidget::Video, videoGroupBox);
-
-    videoLayout->addWidget(videoCodecLabel, 0, 0);
-    videoLayout->addWidget(videoCodecComboBox, 0, 1);
-    videoLayout->addWidget(videoBitrateLabel, 1, 0);
-    videoLayout->addWidget(videoBitrateWidget, 1, 1);
-
-    mainLayout->addWidget(videoGroupBox);
-
-    // Audio Settings Section
-    audioGroupBox = new QGroupBox(tr("Audio Settings"), this);
-    QGridLayout *audioLayout = new QGridLayout(audioGroupBox);
-    audioLayout->setSpacing(10);
-
-    audioCodecLabel = new QLabel(tr("Codec:"), audioGroupBox);
-    audioCodecComboBox = new QComboBox(audioGroupBox);
-    audioCodecComboBox->addItems({"auto", "aac", "libmp3lame", "libopus", "copy"});
-    audioCodecComboBox->setCurrentText("auto");
-
-    audioBitrateLabel = new QLabel(tr("Bitrate:"), audioGroupBox);
-    audioBitrateWidget = new BitrateWidget(BitrateWidget::Audio, audioGroupBox);
-
-    audioLayout->addWidget(audioCodecLabel, 0, 0);
-    audioLayout->addWidget(audioCodecComboBox, 0, 1);
-    audioLayout->addWidget(audioBitrateLabel, 1, 0);
-    audioLayout->addWidget(audioBitrateWidget, 1, 1);
-
-    mainLayout->addWidget(audioGroupBox);
-
-    // Format Section
-    formatGroupBox = new QGroupBox(tr("File Format"), this);
-    QHBoxLayout *formatLayout = new QHBoxLayout(formatGroupBox);
-
-    formatLabel = new QLabel(tr("Format:"), formatGroupBox);
-    formatComboBox = new QComboBox(formatGroupBox);
-    formatComboBox->addItems({"mp4", "mkv", "avi", "mov", "flv", "webm", "ts", "jpg", "png"});
-    formatComboBox->setCurrentText("mp4");
-    connect(formatComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &AIProcessingPage::OnFormatChanged);
-
-    formatLayout->addWidget(formatLabel);
-    formatLayout->addWidget(formatComboBox);
-    formatLayout->addStretch();
-
-    mainLayout->addWidget(formatGroupBox);
-
     // Output File Selector
     outputFileSelector = new FileSelectorWidget(
         tr("Output File"),
@@ -285,15 +222,6 @@ void AIProcessingPage::OnInputFileSelected(const QString &filePath) {
         mainWindow->GetSharedData()->SetInputFilePath(filePath);
     }
 
-    // Set default format to same as input file
-    QString ext = GetFileExtension(filePath);
-    if (!ext.isEmpty()) {
-        int index = formatComboBox->findText(ext);
-        if (index >= 0) {
-            formatComboBox->setCurrentIndex(index);
-        }
-    }
-
     // Update output path
     UpdateOutputPath();
 }
@@ -311,16 +239,11 @@ void AIProcessingPage::OnAlgorithmChanged(int index) {
     algoSettingsStack->setCurrentIndex(index);
 }
 
-void AIProcessingPage::OnFormatChanged(int index) {
-    Q_UNUSED(index);
-    UpdateOutputPath();
-}
-
 void AIProcessingPage::OnProcessClicked() {
     // Check if batch mode is active
     if (batchModeHelper->IsBatchMode()) {
         // Batch mode: Add to queue
-        QString format = formatComboBox->currentText();
+        QString format = GetFileExtension(inputFileSelector->GetFilePath());
         batchModeHelper->AddToQueue(format);
         return;
     }
@@ -362,7 +285,7 @@ void AIProcessingPage::UpdateOutputPath() {
     if (!inputPath.isEmpty()) {
         OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
         if (mainWindow && mainWindow->GetSharedData()) {
-            QString format = formatComboBox->currentText();
+            QString format = GetFileExtension(inputPath);
             QString outputPath = mainWindow->GetSharedData()->GenerateOutputPath(format);
             outputFileSelector->SetFilePath(outputPath);
             processButton->setEnabled(true);
@@ -385,25 +308,8 @@ EncodeParameter* AIProcessingPage::CreateEncodeParameter() {
         encodeParam->set_upscale_factor(upscaleFactorSpinBox->value());
     }
 
-    // Set video codec and bitrate
-    QString videoCodec = videoCodecComboBox->currentText();
-    if (videoCodec != "auto")
-        encodeParam->set_video_codec_name(videoCodec.toStdString());
-
-    int videoBitrate = videoBitrateWidget->GetBitrate();
-    if (videoBitrate > 0) {
-        encodeParam->set_video_bit_rate(videoBitrate);
-    }
-
-    // Set audio codec and bitrate
-    QString audioCodec = audioCodecComboBox->currentText();
-    if (audioCodec != "auto")
-        encodeParam->set_audio_codec_name(audioCodec.toStdString());
-
-    int audioBitrate = audioBitrateWidget->GetBitrate();
-    if (audioBitrate > 0) {
-        encodeParam->set_audio_bit_rate(audioBitrate);
-    }
+    // Video/audio codec and bitrate are auto-detected from input file
+    // No user configuration needed for AI processing
 
     return encodeParam;
 }
@@ -422,22 +328,6 @@ void AIProcessingPage::RetranslateUi() {
     // Update algorithm settings section
     algoSettingsGroupBox->setTitle(tr("Algorithm Settings"));
     upscaleFactorLabel->setText(tr("Upscale Factor:"));
-
-    // Update video settings section
-    videoGroupBox->setTitle(tr("Video Settings"));
-    videoCodecLabel->setText(tr("Codec:"));
-    videoBitrateLabel->setText(tr("Bitrate:"));
-    videoBitrateWidget->RetranslateUi();
-
-    // Update audio settings section
-    audioGroupBox->setTitle(tr("Audio Settings"));
-    audioCodecLabel->setText(tr("Codec:"));
-    audioBitrateLabel->setText(tr("Bitrate:"));
-    audioBitrateWidget->RetranslateUi();
-
-    // Update format section
-    formatGroupBox->setTitle(tr("File Format"));
-    formatLabel->setText(tr("Format:"));
 
     // Update output file selector
     outputFileSelector->setTitle(tr("Output File"));

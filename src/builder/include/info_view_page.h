@@ -72,6 +72,8 @@ private:
     QLabel *colorSpaceValue;
     QLabel *videoCodecLabel;
     QLabel *videoCodecValue;
+    QLabel *pixelFormatLabel;
+    QLabel *pixelFormatValue;
     QLabel *videoBitRateLabel;
     QLabel *videoBitRateValue;
     QLabel *frameRateLabel;
