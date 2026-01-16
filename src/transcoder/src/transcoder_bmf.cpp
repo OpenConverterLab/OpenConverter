@@ -23,6 +23,8 @@
 #include <libgen.h>
 #endif
 
+#define MAX_STR_SIZE 256
+
 // Helper function to map decoder codec name to encoder name
 static std::string map_video_codec_to_encoder(const std::string& codec_name) {
     if (codec_name == "h264" || codec_name == "avc")
@@ -251,7 +253,7 @@ std::string TranscoderBMF::get_python_module_path() {
     // First check if BMF_MODULE_PATH environment variable is set
     // This allows runtimes (AppImage, LingLong, Flatpak, etc.) to specify the module path
     const char* env_module_path = getenv("BMF_MODULE_PATH");
-    if (env_module_path && strlen(env_module_path) > 0) {
+    if (env_module_path && strnlen(env_module_path, MAX_STR_SIZE) > 0) {
         std::filesystem::path env_path(env_module_path);
         if (std::filesystem::exists(env_path)) {
             module_path = env_path.string();
