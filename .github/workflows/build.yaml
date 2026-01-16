@@ -267,9 +267,17 @@ jobs:
         $FFMPEG_ROOT_PATH/bin/ffmpeg -version | head -n 1
         $FFMPEG_ROOT_PATH/bin/ffmpeg -encoders 2>/dev/null | grep -E "libx264|libx265" || echo "Warning: x264/x265 not found"
 
-    - name: Checkout BMF repository(specific branch)
+    - name: Checkout BMF repository and prepare python support
       run: |
         git clone https://github.com/OpenConverterLab/bmf.git
+        sed -i '' '77 i\
+        -DPython_ROOT_DIR="$HOME/Library/Application Support/OpenConverter/Python.framework" \\\
+        -DPython_FIND_FRAMEWORK=ONLY \\\
+        ' ./bmf/build_osx.sh
+
+        mkdir -p "$HOME/Library/Application Support/OpenConverter/Python.framework"
+        wget https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.9.25+20251031-aarch64-apple-darwin-install_only.tar.gz
+        tar xzvf cpython-3.9.25+20251031-aarch64-apple-darwin-install_only.tar.gz --strip-components=1 -C "$HOME/Library/Application Support/OpenConverter/Python.framework"
 
         # wget https://invisible-island.net/archives/ncurses/ncurses-6.5.tar.gz
         # wget https://ftp.gnu.org/gnu/binutils/binutils-2.43.1.tar.bz2
