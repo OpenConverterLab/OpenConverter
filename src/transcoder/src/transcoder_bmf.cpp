@@ -17,13 +17,6 @@
 #include <filesystem>
 #include <fstream>
 
-#ifdef ENABLE_GUI
-#include <QDir>
-#include <QSettings>
-#include <QString>
-#include <QStandardPaths>
-#endif
-
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #include <libgen.h>
@@ -112,109 +105,13 @@ bool TranscoderBMF::setup_python_environment() {
 #endif
 #endif
 
-    // Release mode: Set up PYTHONPATH for bundled BMF libraries and external Python
+    // Release mode: Set up PYTHONPATH for bundled BMF libraries and App Python
     std::string bmf_lib_path;
     std::string bmf_output_path;
     std::string bmf_config_path;
     std::string python_site_packages;
-
-#ifdef ENABLE_GUI
-    // Get Python path from QSettings (default to App Python in Application Support)
-    QSettings settings("OpenConverter", "OpenConverter");
-    QString pythonMode = settings.value("python/mode", "pythonAppSupport").toString();
     std::string python_bin_path;
     std::string python_lib_path;
-
-    if (pythonMode == "pythonCustom") {
-        QString customPath = settings.value("python/customPath", "").toString();
-        if (!customPath.isEmpty()) {
-            python_site_packages = customPath.toStdString();
-            BMFLOG(BMF_INFO) << "Using custom Python site-packages: " << python_site_packages;
-
-            // Derive bin and lib paths from custom site-packages path
-            // site-packages is typically at: /path/to/python/lib/python3.x/site-packages
-            // We need: bin at /path/to/python/bin, lib at /path/to/python/lib
-            std::filesystem::path site_pkg_path(python_site_packages);
-            // Go up: site-packages -> python3.x -> lib -> python_root
-            std::filesystem::path python_root = site_pkg_path.parent_path().parent_path().parent_path();
-            python_bin_path = (python_root / "bin").string();
-            python_lib_path = (python_root / "lib").string();
-            BMFLOG(BMF_INFO) << "Custom Python bin path: " << python_bin_path;
-            BMFLOG(BMF_INFO) << "Custom Python lib path: " << python_lib_path;
-        }
-    }
-
-    // Default to App Python if not custom
-    if (python_site_packages.empty()) {
-        // Use QStandardPaths for cross-platform app data location
-        // macOS: ~/Library/Application Support/OpenConverter
-        // Linux: ~/.local/share/OpenConverter
-        // Windows: C:/Users/<USER>/AppData/Local/OpenConverter
-        QString appSupportDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-        QString pythonFramework = appSupportDir + "/Python.framework";
-        QString sitePackages = pythonFramework + "/lib/python3.9/site-packages";
-
-        // Check if App Python exists - NO FALLBACK, App Python is required
-        if (QDir(sitePackages).exists()) {
-            python_site_packages = sitePackages.toStdString();
-            python_bin_path = (pythonFramework + "/bin").toStdString();
-            python_lib_path = (pythonFramework + "/lib").toStdString();
-            BMFLOG(BMF_INFO) << "Using App Python site-packages: " << python_site_packages;
-            BMFLOG(BMF_INFO) << "App Python bin path: " << python_bin_path;
-            BMFLOG(BMF_INFO) << "App Python lib path: " << python_lib_path;
-        } else {
-            BMFLOG(BMF_ERROR) << "App Python not found at: " << sitePackages.toStdString();
-            BMFLOG(BMF_ERROR) << "Please install App Python via Python menu -> Install Python";
-            return false;  // Don't continue without App Python - no fallback to system Python
-        }
-    }
-
-    // Set PATH and LD_LIBRARY_PATH/DYLD_LIBRARY_PATH for Python
-    if (!python_bin_path.empty()) {
-        // Prepend Python bin to PATH
-        std::string current_path;
-        const char* existing_path = std::getenv("PATH");
-        if (existing_path) {
-            current_path = existing_path;
-        }
-        std::string new_path = python_bin_path;
-        if (!current_path.empty()) {
-            new_path += ":" + current_path;
-        }
-        setenv("PATH", new_path.c_str(), 1);
-        BMFLOG(BMF_INFO) << "Set PATH: " << new_path;
-    }
-
-    if (!python_lib_path.empty()) {
-#ifdef __APPLE__
-        // On macOS, set DYLD_LIBRARY_PATH
-        std::string current_dyld;
-        const char* existing_dyld = std::getenv("DYLD_LIBRARY_PATH");
-        if (existing_dyld) {
-            current_dyld = existing_dyld;
-        }
-        std::string new_dyld = python_lib_path;
-        if (!current_dyld.empty()) {
-            new_dyld += ":" + current_dyld;
-        }
-        setenv("DYLD_LIBRARY_PATH", new_dyld.c_str(), 1);
-        BMFLOG(BMF_INFO) << "Set DYLD_LIBRARY_PATH: " << new_dyld;
-#else
-        // On Linux, set LD_LIBRARY_PATH
-        std::string current_ld;
-        const char* existing_ld = std::getenv("LD_LIBRARY_PATH");
-        if (existing_ld) {
-            current_ld = existing_ld;
-        }
-        std::string new_ld = python_lib_path;
-        if (!current_ld.empty()) {
-            new_ld += ":" + current_ld;
-        }
-        setenv("LD_LIBRARY_PATH", new_ld.c_str(), 1);
-        BMFLOG(BMF_INFO) << "Set LD_LIBRARY_PATH: " << new_ld;
-#endif
-    }
-#endif
 
 #ifdef __APPLE__
     // Check if running from app bundle

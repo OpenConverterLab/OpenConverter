@@ -1230,30 +1230,6 @@
         <source>AI Processing</source>
         <translation>AI 处理</translation>
     </message>
-    <message>
-        <source>Select Python site-packages Directory</source>
-        <translation>选择 Python site-packages 目录</translation>
-    </message>
-    <message>
-        <source>Python path set to: %1</source>
-        <translation>Python 路径设置为：%1</translation>
-    </message>
-    <message>
-        <source>Using App Python</source>
-        <translation>使用应用内置 Python</translation>
-    </message>
-    <message>
-        <source>App Python</source>
-        <translation>应用内置 Python</translation>
-    </message>
-    <message>
-        <source>Custom Path...</source>
-        <translation>自定义路径...</translation>
-    </message>
-    <message>
-        <source>Python</source>
-        <translation>Python</translation>
-    </message>
 </context>
 <context>
     <name>QObject</name>
