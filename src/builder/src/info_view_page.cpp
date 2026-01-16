@@ -86,6 +86,8 @@ void InfoViewPage::SetupUI() {
     colorSpaceValue = new QLabel("-", this);
     videoCodecLabel = new QLabel(tr("Video Codec:"), this);
     videoCodecValue = new QLabel("-", this);
+    pixelFormatLabel = new QLabel(tr("Pixel Format:"), this);
+    pixelFormatValue = new QLabel("-", this);
     videoBitRateLabel = new QLabel(tr("Bit Rate:"), this);
     videoBitRateValue = new QLabel("-", this);
     frameRateLabel = new QLabel(tr("Frame Rate:"), this);
@@ -101,10 +103,12 @@ void InfoViewPage::SetupUI() {
     videoLayout->addWidget(colorSpaceValue, 3, 1);
     videoLayout->addWidget(videoCodecLabel, 4, 0);
     videoLayout->addWidget(videoCodecValue, 4, 1);
-    videoLayout->addWidget(videoBitRateLabel, 5, 0);
-    videoLayout->addWidget(videoBitRateValue, 5, 1);
-    videoLayout->addWidget(frameRateLabel, 6, 0);
-    videoLayout->addWidget(frameRateValue, 6, 1);
+    videoLayout->addWidget(pixelFormatLabel, 5, 0);
+    videoLayout->addWidget(pixelFormatValue, 5, 1);
+    videoLayout->addWidget(videoBitRateLabel, 6, 0);
+    videoLayout->addWidget(videoBitRateValue, 6, 1);
+    videoLayout->addWidget(frameRateLabel, 7, 0);
+    videoLayout->addWidget(frameRateValue, 7, 1);
 
     mainLayout->addWidget(videoGroupBox);
 
@@ -213,6 +217,7 @@ void InfoViewPage::DisplayInfo(QuickInfo *quickInfo) {
         heightValue->setText(QString("%1 px").arg(quickInfo->height));
         colorSpaceValue->setText(QString::fromStdString(quickInfo->colorSpace));
         videoCodecValue->setText(QString::fromStdString(quickInfo->videoCodec));
+        pixelFormatValue->setText(QString::fromStdString(quickInfo->pixelFormat));
         videoBitRateValue->setText(FormatBitrate(quickInfo->videoBitRate));
         frameRateValue->setText(QString("%1 fps").arg(quickInfo->frameRate, 0, 'f', 2));
     } else {
@@ -221,6 +226,7 @@ void InfoViewPage::DisplayInfo(QuickInfo *quickInfo) {
         heightValue->setText("-");
         colorSpaceValue->setText("-");
         videoCodecValue->setText("-");
+        pixelFormatValue->setText("-");
         videoBitRateValue->setText("-");
         frameRateValue->setText("-");
     }
@@ -249,6 +255,7 @@ void InfoViewPage::ClearInfo() {
     heightValue->setText("-");
     colorSpaceValue->setText("-");
     videoCodecValue->setText("-");
+    pixelFormatValue->setText("-");
     videoBitRateValue->setText("-");
     frameRateValue->setText("-");
 
@@ -295,6 +302,7 @@ void InfoViewPage::RetranslateUi() {
     heightLabel->setText(tr("Height:"));
     colorSpaceLabel->setText(tr("Color Space:"));
     videoCodecLabel->setText(tr("Video Codec:"));
+    pixelFormatLabel->setText(tr("Pixel Format:"));
     videoBitRateLabel->setText(tr("Bit Rate:"));
     frameRateLabel->setText(tr("Frame Rate:"));
 

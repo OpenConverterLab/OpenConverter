@@ -36,6 +36,7 @@ typedef struct QuickInfo {
 
     std::string colorSpace;
     std::string videoCodec;
+    std::string pixelFormat;
 
     int64_t videoBitRate;
     double frameRate;
