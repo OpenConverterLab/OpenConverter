@@ -515,8 +515,7 @@ jobs:
           files: |
             OpenConverter_Linux_x86_64.tar.gz
             OpenConverter_Linux_aarch64.tar.gz
-            OpenConverter_Linglong_x86_64.layer
-            OpenConverter_Linglong_aarch64.layer
+            *.layer
             OpenConverter_macOS_aarch64.dmg
             OpenConverter_win64.zip
 
