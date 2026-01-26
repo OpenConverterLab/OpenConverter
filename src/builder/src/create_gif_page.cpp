@@ -28,18 +28,11 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 
-CreateGifPage::CreateGifPage(QWidget *parent) : BasePage(parent) {
-    encodeParameter = new EncodeParameter();
-    processParameter = new ProcessParameter();
-    converter = new Converter(processParameter, encodeParameter);
-
+CreateGifPage::CreateGifPage(QWidget *parent) : BasePage(parent), converterRunner(nullptr) {
     SetupUI();
 }
 
 CreateGifPage::~CreateGifPage() {
-    delete converter;
-    delete encodeParameter;
-    delete processParameter;
 }
 
 QString CreateGifPage::GetPageTitle() const {
@@ -118,6 +111,20 @@ void CreateGifPage::SetupUI() {
     convertButton->setMinimumHeight(40);
     connect(convertButton, &QPushButton::clicked, this, &CreateGifPage::OnConvertClicked);
     mainLayout->addWidget(convertButton);
+
+    // Progress Section (placed after button to avoid blank space)
+    progressWidget = new ProgressWidget(this);
+    mainLayout->addWidget(progressWidget);
+
+    // Create conversion runner
+    converterRunner = new ConverterRunner(
+        progressWidget->GetProgressBar(), progressWidget->GetProgressLabel(), convertButton,
+        tr("Creating GIF..."), tr("Create GIF / Add to Queue"),
+        tr("Success"), tr("GIF created successfully!"),
+        tr("Error"), tr("Failed to create GIF."),
+        this
+    );
+    connect(converterRunner, &ConverterRunner::ConversionFinished, this, &CreateGifPage::OnConvertFinished);
 
     // Create batch mode helper
     batchModeHelper = new BatchModeHelper(
@@ -199,37 +206,21 @@ void CreateGifPage::OnConvertClicked() {
         return;
     }
 
-    // Get encode parameters
-    EncodeParameter *tempParam = CreateEncodeParameter();
-    if (tempParam->get_width() > 0)
-        encodeParameter->set_width(tempParam->get_width());
-    if (tempParam->get_height() > 0)
-        encodeParameter->set_height(tempParam->get_height());
-    delete tempParam;
+    // Create parameters
+    EncodeParameter *encodeParam = CreateEncodeParameter();
+    ProcessParameter *processParam = new ProcessParameter();
 
     // Get current transcoder from main window
     QString transcoderName = TranscoderHelper::GetCurrentTranscoderName(this);
 
-    // Set transcoder
-    if (!converter->set_transcoder(transcoderName.toStdString())) {
-        QMessageBox::critical(this, "Error", "Failed to initialize transcoder.");
-        return;
-    }
+    // Run conversion using ConverterRunner
+    converterRunner->RunConversion(inputPath, outputPath, encodeParam, processParam, transcoderName);
+}
 
-    // Perform conversion
-    convertButton->setEnabled(false);
-    convertButton->setText(tr("Creating GIF..."));
-
-    bool result = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
-
-    convertButton->setEnabled(true);
-    convertButton->setText(tr("Create GIF"));
-
-    if (result) {
-        QMessageBox::information(this, "Success", "GIF created successfully!");
-    } else {
-        QMessageBox::critical(this, "Error", "Failed to create GIF.");
-    }
+void CreateGifPage::OnConvertFinished(bool success) {
+    Q_UNUSED(success);
+    // ConverterRunner handles all UI updates and message boxes
+    // This slot is kept for potential custom post-processing
 }
 
 void CreateGifPage::OnFpsChanged(int value) {

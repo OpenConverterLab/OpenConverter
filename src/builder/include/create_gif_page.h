@@ -23,16 +23,14 @@
 #include "batch_output_widget.h"
 #include "batch_mode_helper.h"
 #include "resolution_widget.h"
+#include "progress_widget.h"
+#include "converter_runner.h"
 #include <QComboBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
-
-class Converter;
-class EncodeParameter;
-class ProcessParameter;
 
 class CreateGifPage : public BasePage {
     Q_OBJECT
@@ -52,6 +50,7 @@ private slots:
     void OnInputFileSelected(const QString &filePath);
     void OnOutputFileSelected(const QString &filePath);
     void OnConvertClicked();
+    void OnConvertFinished(bool success);
     void OnFpsChanged(int value);
 
 private:
@@ -76,11 +75,10 @@ private:
 
     // UI Components - Action Section
     QPushButton *convertButton;
+    ProgressWidget *progressWidget;
 
     // Backend
-    EncodeParameter *encodeParameter;
-    ProcessParameter *processParameter;
-    Converter *converter;
+    ConverterRunner *converterRunner;
 
     // Batch mode helper
     BatchModeHelper *batchModeHelper;
