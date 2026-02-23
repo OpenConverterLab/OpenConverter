@@ -525,6 +525,13 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     flag = true;
 // free memory
 end:
+    if (filters_ctx) {
+        for (int i = 0; i < (decoder ? decoder->fmtCtx->nb_streams : 0); i++) {
+            avfilter_graph_free(&filters_ctx[i].filter_graph);
+        }
+        av_free(filters_ctx);
+        filters_ctx = nullptr;
+    }
     if (decoder && decoder->fmtCtx) {
         avformat_close_input(&decoder->fmtCtx);
         decoder->fmtCtx = NULL;
@@ -593,6 +600,7 @@ int TranscoderFFmpeg::encode_video(AVStream *inStream, AVFrame *frame) {
         av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
         goto end;
     }
+    av_frame_unref(frame);// because we use AV_BUFFERSRC_FLAG_KEEP_REF
     /* pull filtered frames from the filtergraph */
     while (1) {
         if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, frame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
@@ -602,6 +610,7 @@ int TranscoderFFmpeg::encode_video(AVStream *inStream, AVFrame *frame) {
         if (ret < 0)
             goto end;
         ret = encode_write_video(frame);
+        av_frame_unref(frame);
         if (ret < 0)
             goto end;
     }
@@ -659,6 +668,7 @@ int TranscoderFFmpeg::encode_audio(AVStream *in_stream, AVFrame *frame) {
         av_log(NULL, AV_LOG_ERROR, "Error while feeding the filtergraph\n");
         goto end;
     }
+    av_frame_unref(frame);// because we use AV_BUFFERSRC_FLAG_KEEP_REF
     /* pull filtered frames from the filtergraph */
     while (1) {
         if ((ret = av_buffersink_get_frame(fc->buffersink_ctx, frame)) == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
@@ -668,6 +678,7 @@ int TranscoderFFmpeg::encode_audio(AVStream *in_stream, AVFrame *frame) {
         if (ret < 0)
             goto end;
         ret = encode_write_audio(frame);
+        av_frame_unref(frame);
         if (ret < 0)
             goto end;
     }
@@ -730,8 +741,6 @@ int TranscoderFFmpeg::transcode_video(bool skip_encode) {
         if (decoder->pkt) {
             av_packet_unref(decoder->pkt);
         }
-
-        av_frame_unref(decoder->frame);
     }
 
 end:
@@ -765,7 +774,6 @@ int TranscoderFFmpeg::transcode_audio(bool skip_encode) {
         if (decoder->pkt) {
             av_packet_unref(decoder->pkt);
         }
-        av_frame_unref(decoder->frame);
     }
     return ret;
 }
