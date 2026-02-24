@@ -195,7 +195,8 @@ int TranscoderFFmpeg::init_filter(AVCodecContext *dec_ctx, FilteringContext *fil
 end:
     avfilter_inout_free(&inputs);
     avfilter_inout_free(&outputs);
-
+    if (ret < 0)
+        avfilter_graph_free(&filter_graph);
     return ret;
 }
 
@@ -541,8 +542,11 @@ end:
         decoder = nullptr;
     }
 
-    if (encoder && encoder->fmtCtx && !(encoder->fmtCtx->oformat->flags & AVFMT_NOFILE)) {
-        avio_closep(&encoder->fmtCtx->pb);
+    if (encoder && encoder->fmtCtx) {
+        if (!(encoder->fmtCtx->oformat->flags & AVFMT_NOFILE))
+            avio_closep(&encoder->fmtCtx->pb);
+        avformat_free_context(encoder->fmtCtx);
+        encoder->fmtCtx = NULL;
     }
     if (encoder) {
         delete encoder;
