@@ -93,6 +93,7 @@ private slots:
     void OnNavigationButtonClicked(int pageIndex);
     void OnQueueButtonClicked();
     void SlotLogToggled(bool checked);
+    void SlotAbout();
 
 private:
     Ui::OpenConverter *ui;
