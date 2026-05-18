@@ -49,6 +49,7 @@
 
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
+#include "../../common/include/logger.h"
 #include "../../common/include/process_observer.h"
 #include "../../common/include/process_parameter.h"
 
@@ -91,6 +92,7 @@ private slots:
     void SlotTranscoderChanged(QAction *action);
     void OnNavigationButtonClicked(int pageIndex);
     void OnQueueButtonClicked();
+    void SlotLogToggled(bool checked);
 
 private:
     Ui::OpenConverter *ui;

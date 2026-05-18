@@ -42,6 +42,7 @@
 #include <QTranslator>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <QStandardPaths>
 
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
@@ -79,6 +80,22 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     ui->setupUi(this);
     setAcceptDrops(true);
+
+    // ── File logging ──────────────────────────────────────────────────────
+    QString logDir = QStandardPaths::writableLocation(
+                         QStandardPaths::GenericDataLocation)
+                     + "/OpenConverter";
+    QDir().mkpath(logDir);
+    Logger::Instance().SetLogPath((logDir + "/openconverter.log").toStdString());
+
+    QSettings settings;
+    bool loggingEnabled = settings.value("logging/fileLoggingEnabled", false).toBool();
+    ui->action_enableLog->setChecked(loggingEnabled);
+    Logger::Instance().SetEnabled(loggingEnabled);
+
+    connect(ui->action_enableLog, &QAction::toggled,
+            this, &OpenConverter::SlotLogToggled);
+
     setWindowTitle("OpenConverter");
     setWindowIcon(QIcon(":/OpenConverter-logo.png"));
 
@@ -499,6 +516,12 @@ QString OpenConverter::GetCurrentTranscoderName() const {
     }
     // Default to FFMPEG if no transcoder is selected
     return "FFMPEG";
+}
+
+void OpenConverter::SlotLogToggled(bool checked) {
+    QSettings settings;
+    settings.setValue("logging/fileLoggingEnabled", checked);
+    Logger::Instance().SetEnabled(checked);
 }
 
 #include "open_converter.moc"

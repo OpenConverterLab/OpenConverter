@@ -61,3 +61,17 @@ cmake ../src -DENABLE_TESTS=ON -DENABLE_GUI=OFF -DBMF_TRANSCODER=OFF
 cmake --build .
 ctest
 ```
+
+## Logger
+
+`common/include/logger.h` / `common/src/logger.cpp`
+
+- Singleton: `Logger::Instance()`
+- `SetLogPath(std::string)` — set before enabling; called from `open_converter.cpp` using Qt-computed path
+- `SetEnabled(bool)` — installs/restores `av_log` callback, opens/closes file in append mode
+- Log path: `QStandardPaths::GenericDataLocation + "/OpenConverter/openconverter.log"`
+  - macOS: `~/Library/Application Support/OpenConverter/openconverter.log`
+- Persisted via `QSettings` key `logging/fileLoggingEnabled` (default: false)
+- Toggle UI: **Settings → Enable Log File** in the menu bar
+- Future log level filter: add `SetMinLevel(int avLogLevel)`; check `level <= m_minLevel` in callback
+- Note: `av_log_get_default_callback()` not available in FFmpeg 5.1 — use `av_log_default_callback` directly
