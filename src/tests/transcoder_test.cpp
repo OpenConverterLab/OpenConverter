@@ -1,4 +1,5 @@
 #include "../common/include/encode_parameter.h"
+#include "../common/include/logger.h"
 #include "../engine/include/converter.h"
 #include <filesystem>
 #include <fstream>
@@ -6,6 +7,10 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
+extern "C" {
+#include <libavutil/log.h>
+}
 
 // Test fixture for transcoder tests
 class TranscoderTest : public ::testing::Test {
@@ -399,4 +404,56 @@ TEST_F(TranscoderTest, AudioVideoStreamOrder) {
     EXPECT_TRUE(result) << "Transcoding file with audio=stream0, video=stream1 should succeed";
     EXPECT_TRUE(std::filesystem::exists(outputFile));
     EXPECT_GT(std::filesystem::file_size(outputFile), 0);
+}
+
+// ── Logger Tests ──────────────────────────────────────────────────────────────
+
+class LoggerTest : public ::testing::Test {
+protected:
+    std::string logPath;
+
+    void SetUp() override {
+        logPath = (std::filesystem::temp_directory_path()
+                   / "oc_logger_test.log").string();
+        std::filesystem::remove(logPath);
+        Logger::Instance().SetLogPath(logPath);
+        Logger::Instance().SetEnabled(false);
+    }
+
+    void TearDown() override {
+        Logger::Instance().SetEnabled(false);
+        std::filesystem::remove(logPath);
+    }
+};
+
+TEST_F(LoggerTest, DisabledByDefault) {
+    EXPECT_FALSE(Logger::Instance().IsEnabled());
+}
+
+TEST_F(LoggerTest, EnableCreatesLogFile) {
+    Logger::Instance().SetEnabled(true);
+    EXPECT_TRUE(Logger::Instance().IsEnabled());
+    EXPECT_TRUE(std::filesystem::exists(logPath));
+}
+
+TEST_F(LoggerTest, DisableClosesFile) {
+    Logger::Instance().SetEnabled(true);
+    Logger::Instance().SetEnabled(false);
+    EXPECT_FALSE(Logger::Instance().IsEnabled());
+}
+
+TEST_F(LoggerTest, AvLogWritesToFile) {
+    Logger::Instance().SetEnabled(true);
+    av_log(nullptr, AV_LOG_ERROR, "unit test error line\n");
+    Logger::Instance().SetEnabled(false);
+
+    std::ifstream in(logPath);
+    std::string contents((std::istreambuf_iterator<char>(in)),
+                          std::istreambuf_iterator<char>());
+    EXPECT_NE(contents.find("unit test error line"), std::string::npos);
+    EXPECT_NE(contents.find("[ERROR]"), std::string::npos);
+}
+
+TEST_F(LoggerTest, GetLogPathReturnsSetPath) {
+    EXPECT_EQ(Logger::Instance().GetLogPath(), logPath);
 }

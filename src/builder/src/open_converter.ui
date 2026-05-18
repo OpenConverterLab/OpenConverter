@@ -146,8 +146,15 @@ QLabel {
      <string>Transcoder</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="action_enableLog"/>
+   </widget>
    <addaction name="menuLanguage"/>
    <addaction name="menuTranscoder"/>
+   <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="english">
@@ -164,6 +171,14 @@ QLabel {
    </property>
    <property name="text">
     <string>Chinese</string>
+   </property>
+  </action>
+  <action name="action_enableLog">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable Log File</string>
    </property>
   </action>
  </widget>

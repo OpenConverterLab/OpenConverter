@@ -25,6 +25,7 @@ set(COMMON_SOURCES
     ${CMAKE_SOURCE_DIR}/main.cpp
     ${CMAKE_SOURCE_DIR}/common/src/encode_parameter.cpp
     ${CMAKE_SOURCE_DIR}/common/src/info.cpp
+    ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
     ${CMAKE_SOURCE_DIR}/common/src/process_parameter.cpp
     ${CMAKE_SOURCE_DIR}/common/src/stream_context.cpp
     ${CMAKE_SOURCE_DIR}/engine/src/converter.cpp
@@ -34,6 +35,7 @@ set(COMMON_SOURCES
 set(COMMON_HEADERS
     ${CMAKE_SOURCE_DIR}/common/include/encode_parameter.h
     ${CMAKE_SOURCE_DIR}/common/include/info.h
+    ${CMAKE_SOURCE_DIR}/common/include/logger.h
     ${CMAKE_SOURCE_DIR}/common/include/process_parameter.h
     ${CMAKE_SOURCE_DIR}/common/include/process_observer.h
     ${CMAKE_SOURCE_DIR}/common/include/stream_context.h
