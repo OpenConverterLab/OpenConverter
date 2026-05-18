@@ -1,4 +1,59 @@
-# OC Project Compilation Guide for Windows
+# OC Project Compilation Guide
+
+## macOS
+
+### Prerequisites
+
+1. **Qt 6.5+** - Install from [qt.io](https://www.qt.io/download) (e.g., to `~/Qt`)
+2. **FFmpeg 5.x-7.x** - Install via Homebrew: `brew install ffmpeg`
+3. **CMake 3.10+** - Install via Homebrew: `brew install cmake`
+
+### Build Steps
+
+```bash
+cd OpenConverter
+mkdir build && cd build
+
+# Configure (adjust Qt path to your installation)
+cmake ../src \
+  -DCMAKE_PREFIX_PATH=~/Qt/6.5.1/macos \
+  -DBMF_TRANSCODER=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
+# Build
+cmake --build . -j$(sysctl -n hw.ncpu)
+```
+
+The output is `OpenConverter.app` in the build directory.
+
+### CMake Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ENABLE_GUI` | ON | Build with Qt GUI |
+| `ENABLE_TESTS` | OFF | Build unit tests |
+| `BMF_TRANSCODER` | ON | Enable BMF backend (requires BMF SDK) |
+| `FFTOOL_TRANSCODER` | ON | Enable FFmpeg CLI tool backend |
+| `FFMPEG_TRANSCODER` | ON | Enable FFmpeg API backend |
+| `FFMPEG_ROOT_PATH` | (auto via pkg-config) | Custom FFmpeg install path |
+
+### Release Build
+
+For release builds, after building run the library bundling script:
+
+```bash
+cmake ../src \
+  -DCMAKE_PREFIX_PATH=~/Qt/6.5.1/macos \
+  -DBMF_TRANSCODER=OFF \
+  -DCMAKE_BUILD_TYPE=Release
+
+cmake --build . -j$(sysctl -n hw.ncpu)
+../tool/fix_macos_libs.sh
+```
+
+---
+
+## Windows
 
 ## 1. Install Qt 5 or Qt 6
 
