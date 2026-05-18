@@ -147,7 +147,12 @@ OpenConverter::OpenConverter(QWidget *parent)
         settingsDialog->setLayout(layout);
         settingsDialog->exec();
     });
-    ui->menuSettings->addAction(prefAction);
+    // Add actions to a menu so macOS can move them to the app menu via roles.
+    // On Windows/Linux this menu stays visible as "Help" (placed before Language).
+    QMenu *helpMenu = new QMenu(tr("Help"), this);
+    helpMenu->addAction(prefAction);
+    helpMenu->addAction(ui->action_about);
+    menuBar()->insertMenu(ui->menuLanguage->menuAction(), helpMenu);
 
     setWindowTitle("OpenConverter");
     setWindowIcon(QIcon(":/OpenConverter-logo.png"));
