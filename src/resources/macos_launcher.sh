@@ -10,4 +10,3 @@ export DYLD_LIBRARY_PATH="$HOME/Library/Application Support/OpenConverter/Python
 
 # Execute the real binary
 exec "$SCRIPT_DIR/OpenConverter.real" "$@"
-
