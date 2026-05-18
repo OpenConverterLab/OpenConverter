@@ -99,6 +99,7 @@ private:
     Ui::OpenConverter *ui;
     QTranslator m_translator;
     QString m_currLang;
+    QString m_settingsPath;
     QString m_langPath;
     QString currentInputPath;
     QString currentOutputPath;

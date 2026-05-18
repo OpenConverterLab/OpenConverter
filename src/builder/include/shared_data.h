@@ -47,9 +47,14 @@ public:
     // Clear all data
     void Clear();
 
+    // Last browsed directory (for file dialog starting path only)
+    QString GetLastDirectory() const;
+    void SetLastDirectory(const QString &dir);
+
 private:
     QString inputFilePath;
     QString outputFilePath;
+    QString lastDirectory;
     bool outputPathManuallySet;
 };
 

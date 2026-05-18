@@ -155,10 +155,18 @@ void InfoViewPage::SetupUI() {
 }
 
 void InfoViewPage::OnBrowseButtonClicked() {
+    QString startDir;
+    if (!filePathLineEdit->text().isEmpty()) {
+        startDir = filePathLineEdit->text();
+    } else {
+        OpenConverter *mainWindow = qobject_cast<OpenConverter *>(window());
+        if (mainWindow && mainWindow->GetSharedData())
+            startDir = mainWindow->GetSharedData()->GetLastDirectory();
+    }
     QString fileName = QFileDialog::getOpenFileName(
         this,
         "Select Media File",
-        "",
+        startDir,
         "Media Files (*.mp4 *.mkv *.avi *.mov *.flv *.wmv *.mp3 *.wav *.aac *.flac *.jpg *.jpeg *.png *.bmp *.tiff *.webp *.gif);;All Files (*.*)"
     );
 

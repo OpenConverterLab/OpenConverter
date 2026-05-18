@@ -85,13 +85,15 @@ OpenConverter::OpenConverter(QWidget *parent)
     setAcceptDrops(true);
 
     // ── File logging ──────────────────────────────────────────────────────
-    QString logDir = QStandardPaths::writableLocation(
-                         QStandardPaths::GenericDataLocation)
-                     + "/OpenConverter";
-    QDir().mkpath(logDir);
-    Logger::Instance().SetLogPath((logDir + "/openconverter.log").toStdString());
+    QString appDataDir = QStandardPaths::writableLocation(
+                             QStandardPaths::GenericDataLocation)
+                         + "/OpenConverter";
+    QDir().mkpath(appDataDir);
+    m_settingsPath = appDataDir + "/settings.ini";
+    Logger::Instance().SetLogPath((appDataDir + "/openconverter.log").toStdString());
 
-    QSettings settings;
+    // ── Restore user settings ────────────────────────────────────────────
+    QSettings settings(m_settingsPath, QSettings::IniFormat);
     bool loggingEnabled = settings.value("logging/fileLoggingEnabled", false).toBool();
     ui->action_enableLog->setChecked(loggingEnabled);
     Logger::Instance().SetEnabled(loggingEnabled);
@@ -123,6 +125,25 @@ OpenConverter::OpenConverter(QWidget *parent)
             ui->action_enableLog->setChecked(checked);
         });
 
+        layout->addStretch();
+
+        QPushButton *clearButton = new QPushButton(tr("Reset All Settings"), settingsDialog);
+        layout->addWidget(clearButton);
+
+        connect(clearButton, &QPushButton::clicked, this, [this, settingsDialog]() {
+            QMessageBox::StandardButton reply = QMessageBox::question(
+                settingsDialog, tr("Reset Settings"),
+                tr("Reset all settings to defaults? The application will restart."),
+                QMessageBox::Yes | QMessageBox::No);
+            if (reply == QMessageBox::Yes) {
+                QSettings settings(m_settingsPath, QSettings::IniFormat);
+                settings.clear();
+                Logger::Instance().SetEnabled(false);
+                ui->action_enableLog->setChecked(false);
+                settingsDialog->close();
+            }
+        });
+
         settingsDialog->setLayout(layout);
         settingsDialog->exec();
     });
@@ -136,6 +157,11 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // Initialize shared data
     sharedData = new SharedData();
+
+    // Restore last browsed directory from settings
+    QString lastDir = settings.value("app/lastFilePath").toString();
+    if (!lastDir.isEmpty())
+        sharedData->SetLastDirectory(lastDir);
 
     // Initialize batch queue dialog
     batchQueueDialog = nullptr;
@@ -171,8 +197,22 @@ OpenConverter::OpenConverter(QWidget *parent)
     }
 
     if (!transcoderActions.isEmpty()) {
-        transcoderActions.first()->setChecked(true);
-        converter->set_transcoder(transcoderActions.first()->objectName().toStdString());
+        QString savedTranscoder = settings.value("app/transcoder").toString();
+        bool restored = false;
+        if (!savedTranscoder.isEmpty()) {
+            for (QAction* action : transcoderActions) {
+                if (action->objectName() == savedTranscoder) {
+                    action->setChecked(true);
+                    converter->set_transcoder(savedTranscoder.toStdString());
+                    restored = true;
+                    break;
+                }
+            }
+        }
+        if (!restored) {
+            transcoderActions.first()->setChecked(true);
+            converter->set_transcoder(transcoderActions.first()->objectName().toStdString());
+        }
     }
 
     languageGroup->setExclusive(true);
@@ -182,14 +222,17 @@ OpenConverter::OpenConverter(QWidget *parent)
         languageGroup->addAction(action);
     }
 
-    // Initialize language - default to English (no translation file needed)
-    m_currLang = "english";
+    // Initialize language - restore from settings or default to English
     m_langPath = ":/";
+    QString savedLang = settings.value("app/language", "english").toString();
 
-    // Set the English menu item as checked by default
     for (QAction* action : languageActions) {
-        if (action->objectName() == "english") {
+        if (action->objectName() == savedLang) {
             action->setChecked(true);
+            if (savedLang != "english")
+                LoadLanguage(savedLang);
+            else
+                m_currLang = savedLang;
             break;
         }
     }
@@ -270,6 +313,8 @@ void OpenConverter::SlotTranscoderChanged(QAction *action) {
 #endif
         // If the transcoder name is not valid, log an error
         if (isValid) {
+            QSettings settings(m_settingsPath, QSettings::IniFormat);
+            settings.setValue("app/transcoder", action->objectName());
             ui->statusBar->showMessage(
                 tr("Current Transcoder changed to %1")
                     .arg(QString::fromStdString(transcoderName)));
@@ -283,9 +328,10 @@ void OpenConverter::SlotTranscoderChanged(QAction *action) {
 // Called every time, when a menu entry of the language menu is called
 void OpenConverter::SlotLanguageChanged(QAction *action) {
     if (0 != action) {
-        // load the language dependent on the action content
         LoadLanguage(action->objectName());
         setWindowIcon(action->icon());
+        QSettings settings(m_settingsPath, QSettings::IniFormat);
+        settings.setValue("app/language", action->objectName());
     }
 }
 
@@ -505,6 +551,12 @@ void OpenConverter::OnNavigationButtonClicked(int pageIndex) {
 }
 
 OpenConverter::~OpenConverter() {
+    // Save last browsed directory
+    QSettings settings(m_settingsPath, QSettings::IniFormat);
+    QString lastDir = sharedData->GetLastDirectory();
+    if (!lastDir.isEmpty())
+        settings.setValue("app/lastFilePath", lastDir);
+
     // Remove observer before deleting processParameter
     if (processParameter) {
         processParameter->remove_observer(this);
@@ -551,7 +603,7 @@ QString OpenConverter::GetCurrentTranscoderName() const {
 }
 
 void OpenConverter::SlotLogToggled(bool checked) {
-    QSettings settings;
+    QSettings settings(m_settingsPath, QSettings::IniFormat);
     settings.setValue("logging/fileLoggingEnabled", checked);
     Logger::Instance().SetEnabled(checked);
 }

@@ -33,6 +33,9 @@ QString SharedData::GetInputFilePath() const {
 
 void SharedData::SetInputFilePath(const QString &filePath) {
     inputFilePath = filePath;
+    // Track last directory for file dialogs
+    if (!filePath.isEmpty())
+        lastDirectory = QFileInfo(filePath).absolutePath();
     // When input path changes, reset output path to auto-generate mode
     if (!outputPathManuallySet) {
         outputFilePath = "";
@@ -84,5 +87,14 @@ void SharedData::ResetOutputPath() {
 void SharedData::Clear() {
     inputFilePath = "";
     outputFilePath = "";
+    lastDirectory = "";
     outputPathManuallySet = false;
+}
+
+QString SharedData::GetLastDirectory() const {
+    return lastDirectory;
+}
+
+void SharedData::SetLastDirectory(const QString &dir) {
+    lastDirectory = dir;
 }
