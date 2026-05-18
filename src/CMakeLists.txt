@@ -191,6 +191,20 @@ list(GET FFMPEG_LIBRARY_DIRS 0 FFMPEG_LIBRARY_DIRS_FIRST)
 find_ffmpeg_version(${FFMPEG_INCLUDE_DIRS}/libavutil ${FFMPEG_LIBRARY_DIRS_FIRST} OC_FFMPEG_VERSION)
 add_definitions(-DOC_FFMPEG_VERSION=${OC_FFMPEG_VERSION})
 
+# Git commit hash
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT GIT_COMMIT_HASH)
+    set(GIT_COMMIT_HASH "unknown")
+endif()
+add_definitions(-DGIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+add_definitions(-DOC_VERSION="${PROJECT_VERSION}")
+
 # Add include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}

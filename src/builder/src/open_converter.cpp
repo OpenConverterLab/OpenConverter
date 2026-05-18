@@ -18,7 +18,9 @@
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
+#include <QCheckBox>
 #include <QDebug>
+#include <QDialog>
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -34,6 +36,7 @@
 #include <QMetaObject>
 #include <QMimeData>
 #include <QProgressBar>
+#include <QPixmap>
 #include <QPushButton>
 #include <QStatusBar>
 #include <QString>
@@ -95,6 +98,35 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     connect(ui->action_enableLog, &QAction::toggled,
             this, &OpenConverter::SlotLogToggled);
+
+    connect(ui->action_about, &QAction::triggered,
+            this, &OpenConverter::SlotAbout);
+
+    // macOS: move Settings and About into the application menu
+    ui->action_enableLog->setMenuRole(QAction::NoRole);
+    ui->action_about->setMenuRole(QAction::AboutRole);
+
+    // Create Preferences action for macOS app menu
+    QAction *prefAction = new QAction(tr("Settings"), this);
+    prefAction->setMenuRole(QAction::PreferencesRole);
+    connect(prefAction, &QAction::triggered, this, [this]() {
+        QDialog *settingsDialog = new QDialog(this);
+        settingsDialog->setWindowTitle(tr("Settings"));
+        settingsDialog->setAttribute(Qt::WA_DeleteOnClose);
+
+        QVBoxLayout *layout = new QVBoxLayout(settingsDialog);
+        QCheckBox *logCheckBox = new QCheckBox(tr("Enable Log File"), settingsDialog);
+        logCheckBox->setChecked(Logger::Instance().IsEnabled());
+        layout->addWidget(logCheckBox);
+
+        connect(logCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
+            ui->action_enableLog->setChecked(checked);
+        });
+
+        settingsDialog->setLayout(layout);
+        settingsDialog->exec();
+    });
+    ui->menuSettings->addAction(prefAction);
 
     setWindowTitle("OpenConverter");
     setWindowIcon(QIcon(":/OpenConverter-logo.png"));
@@ -522,6 +554,48 @@ void OpenConverter::SlotLogToggled(bool checked) {
     QSettings settings;
     settings.setValue("logging/fileLoggingEnabled", checked);
     Logger::Instance().SetEnabled(checked);
+}
+
+void OpenConverter::SlotAbout() {
+    QString ffmpegVer = QString("%1.%2")
+        .arg(OC_FFMPEG_VERSION / 10)
+        .arg(OC_FFMPEG_VERSION % 10);
+
+    QDialog *aboutDialog = new QDialog(this);
+    aboutDialog->setWindowTitle(tr("About OpenConverter"));
+    aboutDialog->setAttribute(Qt::WA_DeleteOnClose);
+
+    QVBoxLayout *layout = new QVBoxLayout(aboutDialog);
+
+    QLabel *iconLabel = new QLabel;
+    QPixmap logo(":/OpenConverter-logo.png");
+    if (!logo.isNull())
+        iconLabel->setPixmap(logo.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    iconLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(iconLabel);
+
+    QLabel *textLabel = new QLabel(QString(
+        "<h3>OpenConverter</h3>"
+        "<table>"
+        "<tr><td>Version:</td><td>&nbsp;%1</td></tr>"
+        "<tr><td>Commit:</td><td>&nbsp;%2</td></tr>"
+        "<tr><td>Qt:</td><td>&nbsp;%3</td></tr>"
+        "<tr><td>FFmpeg:</td><td>&nbsp;%4</td></tr>"
+        "</table>"
+        "<br>"
+        "<p>A media converter built on FFmpeg, Qt, and BMF.</p>"
+        "<p><a href=\"https://github.com/OpenConverterLab/OpenConverter\">"
+        "github.com/OpenConverterLab/OpenConverter</a></p>")
+        .arg(OC_VERSION)
+        .arg(GIT_COMMIT_HASH)
+        .arg(QT_VERSION_STR)
+        .arg(ffmpegVer));
+    textLabel->setOpenExternalLinks(true);
+    textLabel->setTextFormat(Qt::RichText);
+    layout->addWidget(textLabel);
+
+    aboutDialog->setLayout(layout);
+    aboutDialog->exec();
 }
 
 #include "open_converter.moc"
