@@ -395,10 +395,10 @@ jobs:
       - name: (2) Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version:      6.7.3
+          version:      5.15.2
           host:         windows
           target:       desktop
-          arch:         win64_msvc2022_64
+          arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
           setup-python: false
 
@@ -428,7 +428,7 @@ jobs:
           Copy-Item -Path "src\build\Release\OpenConverter.exe" -Destination "OpenConverter_win64"
 
           # 3) Bundle Qt runtime into OpenConverter_win64/
-          & "D:\a\_temp\Qt\6.7.3\msvc2022_64\bin\windeployqt.exe" `
+          & "D:\a\_temp\Qt\5.15.2\msvc2019_64\bin\windeployqt.exe" `
             "--qmldir=src" `
             "OpenConverter_win64\OpenConverter.exe"
 
