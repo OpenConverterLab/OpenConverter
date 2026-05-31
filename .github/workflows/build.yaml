@@ -451,9 +451,12 @@ jobs:
       - name: Finish
         run: echo "Windows x64 build complete"
 
-  # Upload all artifacts to GitHub Release (only runs on tag push or release creation)
+  # Upload all available artifacts to GitHub Release (only runs on tag push or release creation)
+  # Uses !cancelled() so the release is created even if some build jobs fail
   upload-release:
-    if: startsWith(github.ref, 'refs/tags/')
+    if: |
+      startsWith(github.ref, 'refs/tags/') &&
+      !cancelled()
     needs: [build-linux, build-linglong, build-macos-arm, build-windows-x64]
     runs-on: ubuntu-latest
 
@@ -462,14 +465,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+        continue-on-error: true
 
       - name: List downloaded artifacts
         run: |
           echo "Downloaded artifacts:"
-          ls -la artifacts/
-          find artifacts -type f
+          ls -la artifacts/ 2>/dev/null || echo "No artifacts directory"
+          find artifacts -type f 2>/dev/null || true
 
       - name: Prepare release packages
+        id: prepare
         run: |
           cd artifacts
 
@@ -509,15 +514,37 @@ jobs:
           echo "Release packages:"
           ls -la *.tar.gz *.dmg *.zip *.layer 2>/dev/null || echo "Some packages may be missing"
 
+          # Build dynamic file list for upload (only files that actually exist)
+          FILES=""
+          for f in OpenConverter_Linux_x86_64.tar.gz OpenConverter_Linux_aarch64.tar.gz \
+                   OpenConverter_macOS_aarch64.dmg OpenConverter_win64.zip; do
+            if [ -f "$f" ]; then
+              FILES="${FILES}${f}"$'\n'
+            fi
+          done
+          shopt -s nullglob
+          for f in *.layer; do
+            FILES="${FILES}${f}"$'\n'
+          done
+          shopt -u nullglob
+
+          if [ -z "$FILES" ]; then
+            echo "No release packages found. All builds may have failed."
+            echo "HAS_FILES=false" >> $GITHUB_OUTPUT
+          else
+            echo "Files to upload:"
+            echo "$FILES"
+            echo "FILES<<EOF" >> $GITHUB_OUTPUT
+            echo -n "$FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "HAS_FILES=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload Release Assets
+        if: steps.prepare.outputs.HAS_FILES == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            OpenConverter_Linux_x86_64.tar.gz
-            OpenConverter_Linux_aarch64.tar.gz
-            *.layer
-            OpenConverter_macOS_aarch64.dmg
-            OpenConverter_win64.zip
+          files: ${{ steps.prepare.outputs.FILES }}
 
       - name: Finish
         run: echo "Release upload complete"
