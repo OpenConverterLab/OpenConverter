@@ -430,6 +430,7 @@ jobs:
           # 3) Bundle Qt runtime into OpenConverter_win64/
           & "D:\a\_temp\Qt\6.4.3\msvc2019_64\bin\windeployqt.exe" `
             "--qmldir=src" `
+            "--compiler-runtime" `
             "OpenConverter_win64\OpenConverter.exe"
 
           # 4) Copy FFmpeg DLLs into OpenConverter_win64/
