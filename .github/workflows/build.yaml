@@ -395,10 +395,10 @@ jobs:
       - name: (2) Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version:      6.4.3
+          version:      6.8.3
           host:         windows
           target:       desktop
-          arch:         win64_msvc2019_64
+          arch:         win64_msvc2022_64
           dir:          ${{ runner.temp }}
           setup-python: false
 
@@ -428,8 +428,9 @@ jobs:
           Copy-Item -Path "src\build\Release\OpenConverter.exe" -Destination "OpenConverter_win64"
 
           # 3) Bundle Qt runtime into OpenConverter_win64/
-          & "D:\a\_temp\Qt\6.4.3\msvc2019_64\bin\windeployqt.exe" `
+          & "D:\a\_temp\Qt\6.8.3\msvc2022_64\bin\windeployqt.exe" `
             "--qmldir=src" `
+            "--compiler-runtime" `
             "OpenConverter_win64\OpenConverter.exe"
 
           # 4) Copy FFmpeg DLLs into OpenConverter_win64/
