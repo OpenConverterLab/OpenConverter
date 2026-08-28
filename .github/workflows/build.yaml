@@ -428,7 +428,7 @@ jobs:
           Copy-Item -Path "src\build\Release\OpenConverter.exe" -Destination "OpenConverter_win64"
 
           # 3) Bundle Qt runtime into OpenConverter_win64/
-          & "D:\a\_temp\Qt\6.4.3\msvc2019_64\bin\windeployqt.exe" `
+          & "D:\a\_temp\Qt\6.8.3\msvc2022_64\bin\windeployqt.exe" `
             "--qmldir=src" `
             "--compiler-runtime" `
             "OpenConverter_win64\OpenConverter.exe"
