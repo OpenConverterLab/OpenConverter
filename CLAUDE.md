@@ -125,7 +125,7 @@ Root-level files:
 
 | Class | Module | Role |
 |-------|--------|------|
-| `Converter` | engine | Orchestrates transcoding; creates/selecets transcoder backend |
+| `Converter` | engine | Orchestrates transcoding; creates/selects transcoder backend |
 | `Transcoder` | transcoder | Abstract base; virtual `transcode(input, output)` |
 | `TranscoderFFmpeg` | transcoder | FFmpeg C API backend (most flexible) |
 | `TranscoderFFTool` | transcoder | Wraps `ffmpeg` CLI binary |
