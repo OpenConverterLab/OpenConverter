@@ -428,7 +428,15 @@ jobs:
           Copy-Item -Path "src\build\Release\OpenConverter.exe" -Destination "OpenConverter_win64"
 
           # 3) Bundle Qt runtime into OpenConverter_win64/
-          & "D:\a\_temp\Qt\6.8.3\msvc2022_64\bin\windeployqt.exe" `
+          #    Resolve windeployqt through PATH instead of a hard-coded path, so
+          #    bumping the Qt version can't silently break deployment
+          #    (install-qt-action@v3 puts <Qt>/bin on PATH; QT_ROOT_DIR is v4+).
+          $windeployqt = (Get-Command windeployqt.exe -ErrorAction SilentlyContinue).Source
+          if (-not $windeployqt) {
+            throw "windeployqt.exe not found in PATH; check the 'Install Qt' step"
+          }
+          Write-Host "Using $windeployqt"
+          & $windeployqt `
             "--qmldir=src" `
             "OpenConverter_win64\OpenConverter.exe"
 
@@ -436,6 +444,32 @@ jobs:
           Copy-Item `
             -Path "ffmpeg\ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1\bin\*.dll" `
             -Destination "OpenConverter_win64"
+
+          # 5) Bundle the MSVC C++ runtime app-local. The app directory wins over
+          #    System32, so the package also runs on machines whose VC++
+          #    Redistributable is older than the toolset used here (a 14.20
+          #    msvcp140.dll from VS2019 crashes this build with 0xc0000005).
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) { throw "vswhere not found at '$vswhere'" }
+          $vsPath = & $vswhere -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          $crtDir = Get-ChildItem "$vsPath\VC\Redist\MSVC\*\x64\Microsoft.VC143.CRT" `
+            -Directory -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $crtDir) {
+            throw "MSVC runtime redist directory not found under '$vsPath\VC\Redist\MSVC'"
+          }
+          Copy-Item "$($crtDir.FullName)\*.dll" -Destination "OpenConverter_win64"
+          Write-Host "Bundled MSVC runtime from $($crtDir.FullName)"
+
+          # 6) Fail the build when the runtime is incomplete: a missing DLL here
+          #    means the shipped package crashes on clean machines.
+          foreach ($dll in 'vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll') {
+            if (-not (Test-Path "OpenConverter_win64\$dll")) {
+              throw "missing $dll in OpenConverter_win64"
+            }
+          }
 
       # Upload the build artifacts (upload-artifact will automatically zip the folder)
       - name: Upload build artifacts
