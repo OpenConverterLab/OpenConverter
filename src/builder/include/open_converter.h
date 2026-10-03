@@ -52,6 +52,7 @@
 #include "../../common/include/logger.h"
 #include "../../common/include/process_observer.h"
 #include "../../common/include/process_parameter.h"
+#include "../../common/include/updater.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -94,6 +95,11 @@ private slots:
     void OnQueueButtonClicked();
     void SlotLogToggled(bool checked);
     void SlotAbout();
+    void SlotCheckForUpdates();
+    void OnUpdateAvailable(const QString &currentVer, const QString &latestVer,
+                           const QString &downloadUrl, const QString &releaseNotes);
+    void OnNoUpdateAvailable();
+    void OnUpdateCheckFailed(const QString &errorMsg);
 
 private:
     Ui::OpenConverter *ui;
@@ -122,6 +128,7 @@ private:
     QPushButton *queueButton;
     SharedData *sharedData;
     BatchQueueDialog *batchQueueDialog;
+    Updater *updater;
 
     void LoadLanguage(const QString &rLanguage);
     void HandleConverterResult(bool flag);
