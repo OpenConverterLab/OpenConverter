@@ -167,7 +167,7 @@ OpenConverter/
 
 ### File Headers
 
-All source files (doesn't inlcude FFmpeg code) should include Apache 2.0 license header:
+All source files should include the Apache 2.0 license header:
 ```cpp
 /*
  * Copyright 2025 Jack Lau
@@ -187,7 +187,7 @@ All source files (doesn't inlcude FFmpeg code) should include Apache 2.0 license
  */
 ```
 
-**Note**: `src/transcoder/` (use FFmpeg code) should include LGPL 2.1 license (check existing files for header format)
+**Note**: Using the FFmpeg API does not make a file a derivative work of FFmpeg, so no file needs an LGPL header — every file uses the Apache 2.0 header above. The *pre-built binaries* are distributed under GPL-3.0 (see [README.md](README.md)), because they link against a GPL-enabled FFmpeg build (libx264/libx265) and the LGPLv3 build of Qt.
 
 ### Qt-Specific Guidelines
 
@@ -683,7 +683,7 @@ All transcoders implement the same interface, allowing runtime switching.
 
 - Author: Jack Lau
 - Email: jacklau1222gm@gmail.com
-- License: Apache 2.0 (most files), LGPL 2.1 (transcoder directory)
+- License: Apache 2.0 (source code); pre-built binaries are distributed under GPL-3.0
 
 ---
 
