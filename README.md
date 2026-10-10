@@ -144,4 +144,8 @@ If you are interested in contributing to the project or have found any bugs, ple
 
 ## ☘️ License
 
-OpenConverter is open-source software licensed under the Apache 2.0 License. Please read the [LICENSE](./LICENSE) file before use.
+OpenConverter's **source code** is licensed under the [Apache License 2.0](./LICENSE).
+
+The **pre-built binaries** published on the [Releases](https://github.com/OpenConverterLab/OpenConverter/releases) page are distributed under the **GNU General Public License v3.0**, because they link against a GPL-enabled FFmpeg build (libx264/libx265) and the LGPLv3 build of Qt. The full license text is in [licenses/GPL-3.0.txt](./licenses/GPL-3.0.txt), and the bundled third-party components are listed in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
+Please read the [LICENSE](./LICENSE) file before use.

@@ -28,6 +28,10 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}=== OpenConverter macOS Library Fixer ===${NC}"
 
+# Repository root — this script lives in <repo>/tool/. Resolved here, before we
+# cd into the build directory.
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
 # Auto-detect build directory
 BUILD_DIR=""
 if [ -d "build-release/OpenConverter.app" ]; then
@@ -259,6 +263,23 @@ for iteration in 1 2 3; do
         echo "Copied $new_libs_copied new libraries in pass $iteration, continuing..."
     fi
 done
+
+echo ""
+echo -e "${YELLOW}Step 4.5: Bundling license files...${NC}"
+# The source code is Apache-2.0; each package is distributed as a whole under
+# GPL-3.0 (see THIRD_PARTY_NOTICES.md). This runs before Step 5, which re-signs
+# the bundle, so the added files are covered by the signature.
+APP_RESOURCES="$APP_DIR/Contents/Resources"
+if [ -f "$REPO_ROOT/LICENSE" ] && [ -f "$REPO_ROOT/THIRD_PARTY_NOTICES.md" ] && [ -d "$REPO_ROOT/licenses" ]; then
+    mkdir -p "$APP_RESOURCES"
+    cp "$REPO_ROOT/LICENSE" "$APP_RESOURCES/"
+    cp "$REPO_ROOT/THIRD_PARTY_NOTICES.md" "$APP_RESOURCES/"
+    rm -rf "$APP_RESOURCES/licenses"
+    cp -R "$REPO_ROOT/licenses" "$APP_RESOURCES/licenses"
+    echo -e "${GREEN}  License files bundled in Contents/Resources/${NC}"
+else
+    echo -e "${YELLOW}  ⚠ License files not found under $REPO_ROOT, skipping${NC}"
+fi
 
 echo ""
 echo -e "${YELLOW}Step 5: Re-signing the app bundle...${NC}"
