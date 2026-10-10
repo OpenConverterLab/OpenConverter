@@ -84,6 +84,17 @@ Supported versions are 5.x to 7.x. The following example uses version 5.1.6.
 
 [Download Link](https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-02-02-12-58/ffmpeg-n5.1.6-16-g6e63e49496-win64-lgpl-shared-5.1.zip)
 
+> **Which build should you pick?** The link above is the **LGPL** build. It does
+> not contain the GPL-only `libx264` / `libx265` encoders, so H.264 and H.265
+> software encoding will not be available in the binary you build. BtbN also
+> publishes a `gpl-shared` build, which includes them.
+>
+> The choice also decides the license of your build: a binary linked against the
+> LGPL build contains no GPL code and stays under the same Apache-2.0 terms as
+> the source, while a binary linked against the `gpl-shared` build has to be
+> distributed under the GPL. The packages on the Releases page are built against
+> `gpl-shared` — see [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
+
 ### 2.2 Configure FFmpeg Environment
 
 Extract the downloaded ZIP file to a suitable location. Then, add the FFmpeg directory to your system’s environment variables.
