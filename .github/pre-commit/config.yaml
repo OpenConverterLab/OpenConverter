@@ -23,3 +23,10 @@ repos:
         - --ignore-words=.github/pre-commit/ignored-words.txt
         - --ignore-multiline-regex=codespell:off.*?(codespell:on|\Z)
       exclude: ^tools/(patcheck|clean-diff)$
+- repo: local
+  hooks:
+    - id: check-license-header
+      name: check Apache-2.0 license header
+      entry: python3 .github/pre-commit/check_license_header.py
+      language: system
+      files: \.(cpp|h|py|sh)$
