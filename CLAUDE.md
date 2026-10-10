@@ -189,7 +189,7 @@ Root-level files:
 - **FFmpeg error style**: Combine assignment and check: `if ((ret = avcodec_open2(...)) < 0)`
 - **FFmpeg cleanup**: Use `goto end` pattern for error-path cleanup
 - **Threading**: Long operations in `QThread::create()`; UI updates via `QMetaObject::invokeMethod(Qt::QueuedConnection)`
-- **License headers**: Apache 2.0 for most files; LGPL 2.1 for `src/transcoder/`
+- **License headers**: Apache 2.0 for all source files, including `src/transcoder/` (using the FFmpeg API does not make a file a derivative work of FFmpeg). Pre-built binaries are distributed under GPL-3.0 due to the GPL-enabled FFmpeg and LGPLv3 Qt linkage
 - **File endings**: No trailing whitespace, single newline at EOF (enforced by pre-commit)
 
 ## Key Patterns

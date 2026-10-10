@@ -1,4 +1,18 @@
 #!/bin/bash
+# Copyright 2025 Jack Lau
+# Email: jacklau1222gm@gmail.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # Script to fix library paths in OpenConverter.app for macOS distribution
 # This script does what dylibbundler does: copies libraries and fixes their paths
@@ -13,6 +27,10 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}=== OpenConverter macOS Library Fixer ===${NC}"
+
+# Repository root — this script lives in <repo>/tool/. Resolved here, before we
+# cd into the build directory.
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Auto-detect build directory
 BUILD_DIR=""
@@ -245,6 +263,23 @@ for iteration in 1 2 3; do
         echo "Copied $new_libs_copied new libraries in pass $iteration, continuing..."
     fi
 done
+
+echo ""
+echo -e "${YELLOW}Step 4.5: Bundling license files...${NC}"
+# The source code is Apache-2.0; each package is distributed as a whole under
+# GPL-3.0 (see THIRD_PARTY_NOTICES.md). This runs before Step 5, which re-signs
+# the bundle, so the added files are covered by the signature.
+APP_RESOURCES="$APP_DIR/Contents/Resources"
+if [ -f "$REPO_ROOT/LICENSE" ] && [ -f "$REPO_ROOT/THIRD_PARTY_NOTICES.md" ] && [ -d "$REPO_ROOT/licenses" ]; then
+    mkdir -p "$APP_RESOURCES"
+    cp "$REPO_ROOT/LICENSE" "$APP_RESOURCES/"
+    cp "$REPO_ROOT/THIRD_PARTY_NOTICES.md" "$APP_RESOURCES/"
+    rm -rf "$APP_RESOURCES/licenses"
+    cp -R "$REPO_ROOT/licenses" "$APP_RESOURCES/licenses"
+    echo -e "${GREEN}  License files bundled in Contents/Resources/${NC}"
+else
+    echo -e "${YELLOW}  ⚠ License files not found under $REPO_ROOT, skipping${NC}"
+fi
 
 echo ""
 echo -e "${YELLOW}Step 5: Re-signing the app bundle...${NC}"

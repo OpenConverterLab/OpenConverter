@@ -143,4 +143,8 @@ Note: Use either -to or -t, not both. If both are specified, -to takes precedenc
 
 ## ☘️ 许可证
 
-OpenConverter 是基于 Apache 2.0 许可证开源的。请在使用前阅读 [LICENSE](./LICENSE) 文件。
+OpenConverter 的**源代码**基于 [Apache 2.0 许可证](./LICENSE)开源。
+
+[Releases](https://github.com/OpenConverterLab/OpenConverter/releases) 页面提供的**预编译二进制**基于 **GPL-3.0** 分发，因为它们链接了 GPL 版本的 FFmpeg（含 libx264/libx265）以及 LGPLv3 版本的 Qt。完整许可证文本见 [licenses/GPL-3.0.txt](./licenses/GPL-3.0.txt)，包内第三方组件清单见 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。
+
+请在使用前阅读 [LICENSE](./LICENSE) 文件。

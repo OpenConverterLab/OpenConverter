@@ -63,8 +63,23 @@ this specific app.
 NEED HELP?
 ────────────────────────────────────────────────────────────
 
-Visit: https://github.com/TSGU-OSC/OpenConverter
+Visit: https://github.com/OpenConverterLab/OpenConverter
 Email: jacklau1222gm@gmail.com
+
+
+LICENSE
+────────────────────────────────────────────────────────────
+
+OpenConverter's source code is licensed under Apache-2.0.
+This application bundle is distributed under GPL-3.0, because
+it links against a GPL-enabled FFmpeg build and the LGPLv3
+build of Qt.
+
+License texts and the list of bundled components:
+
+  OpenConverter.app/Contents/Resources/LICENSE
+  OpenConverter.app/Contents/Resources/licenses/GPL-3.0.txt
+  OpenConverter.app/Contents/Resources/THIRD_PARTY_NOTICES.md
 
 
 ═══════════════════════════════════════════════════════════
