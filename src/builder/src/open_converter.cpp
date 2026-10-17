@@ -46,6 +46,8 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QStandardPaths>
+#include <QTimer>
+#include <QDesktopServices>
 
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
@@ -125,6 +127,16 @@ OpenConverter::OpenConverter(QWidget *parent)
             ui->action_enableLog->setChecked(checked);
         });
 
+        QSettings settings(m_settingsPath, QSettings::IniFormat);
+        QCheckBox *autoUpdateCheckBox = new QCheckBox(tr("Check for updates on startup"), settingsDialog);
+        autoUpdateCheckBox->setChecked(settings.value("update/autoUpdate", true).toBool());
+        layout->addWidget(autoUpdateCheckBox);
+
+        connect(autoUpdateCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.setValue("update/autoUpdate", checked);
+        });
+
         layout->addStretch();
 
         QPushButton *clearButton = new QPushButton(tr("Reset All Settings"), settingsDialog);
@@ -151,6 +163,12 @@ OpenConverter::OpenConverter(QWidget *parent)
     // On Windows/Linux this menu stays visible as "Help" (placed before Language).
     QMenu *helpMenu = new QMenu(tr("Help"), this);
     helpMenu->addAction(prefAction);
+
+    QAction *checkUpdateAction = new QAction(tr("Check for Updates..."), this);
+    checkUpdateAction->setMenuRole(QAction::NoRole);
+    connect(checkUpdateAction, &QAction::triggered, this, &OpenConverter::SlotCheckForUpdates);
+    helpMenu->addAction(checkUpdateAction);
+
     helpMenu->addAction(ui->action_about);
     menuBar()->insertMenu(ui->menuLanguage->menuAction(), helpMenu);
 
@@ -170,6 +188,15 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // Initialize batch queue dialog
     batchQueueDialog = nullptr;
+
+    // Initialize updater
+    updater = new Updater(this);
+    connect(updater, &Updater::UpdateAvailable,
+            this, &OpenConverter::OnUpdateAvailable);
+    connect(updater, &Updater::NoUpdateAvailable,
+            this, &OpenConverter::OnNoUpdateAvailable);
+    connect(updater, &Updater::CheckFailed,
+            this, &OpenConverter::OnUpdateCheckFailed);
 
 #ifdef ENABLE_FFMPEG
     QAction *act_ffmpeg = new QAction(tr("FFMPEG"), this);
@@ -266,6 +293,14 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     connect(ui->menuTranscoder, SIGNAL(triggered(QAction *)), this,
             SLOT(SlotTranscoderChanged(QAction *)));
+
+    // Auto-check for updates on startup
+    bool autoUpdate = settings.value("update/autoUpdate", true).toBool();
+    if (autoUpdate) {
+        QTimer::singleShot(2000, this, [this]() {
+            updater->CheckForUpdates(true);
+        });
+    }
 }
 
 void OpenConverter::dragEnterEvent(QDragEnterEvent *event) {
@@ -653,6 +688,35 @@ void OpenConverter::SlotAbout() {
 
     aboutDialog->setLayout(layout);
     aboutDialog->exec();
+}
+
+void OpenConverter::SlotCheckForUpdates() {
+    updater->CheckForUpdates(false);
+}
+
+void OpenConverter::OnUpdateAvailable(const QString &currentVer, const QString &latestVer,
+                                       const QString &downloadUrl, const QString &releaseNotes) {
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("Update Available"));
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setText(tr("A new version of OpenConverter is available!"));
+    msgBox.setInformativeText(tr("Current: %1\nLatest: %2\n\n%3")
+                              .arg(currentVer, latestVer, releaseNotes.left(200)));
+    msgBox.setStandardButtons(QMessageBox::Open | QMessageBox::Cancel);
+    msgBox.button(QMessageBox::Open)->setText(tr("Download"));
+    msgBox.button(QMessageBox::Cancel)->setText(tr("Later"));
+
+    if (msgBox.exec() == QMessageBox::Open) {
+        QDesktopServices::openUrl(QUrl(downloadUrl));
+    }
+}
+
+void OpenConverter::OnNoUpdateAvailable() {
+    ui->statusBar->showMessage(tr("You are running the latest version"), 3000);
+}
+
+void OpenConverter::OnUpdateCheckFailed(const QString &errorMsg) {
+    ui->statusBar->showMessage(tr("Update check failed: %1").arg(errorMsg), 5000);
 }
 
 #include "open_converter.moc"

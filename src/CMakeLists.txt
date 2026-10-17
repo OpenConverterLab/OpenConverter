@@ -28,6 +28,7 @@ set(COMMON_SOURCES
     ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
     ${CMAKE_SOURCE_DIR}/common/src/process_parameter.cpp
     ${CMAKE_SOURCE_DIR}/common/src/stream_context.cpp
+    ${CMAKE_SOURCE_DIR}/common/src/updater.cpp
     ${CMAKE_SOURCE_DIR}/engine/src/converter.cpp
 )
 
@@ -39,6 +40,7 @@ set(COMMON_HEADERS
     ${CMAKE_SOURCE_DIR}/common/include/process_parameter.h
     ${CMAKE_SOURCE_DIR}/common/include/process_observer.h
     ${CMAKE_SOURCE_DIR}/common/include/stream_context.h
+    ${CMAKE_SOURCE_DIR}/common/include/updater.h
     ${CMAKE_SOURCE_DIR}/engine/include/converter.h
     ${CMAKE_SOURCE_DIR}/transcoder/include/transcoder.h
 )
