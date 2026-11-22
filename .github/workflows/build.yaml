@@ -81,7 +81,7 @@ jobs:
         export PATH=$(readlink -f /tmp/.mount_QtCreator-*-${{ matrix.arch }}/*/gcc_64/bin/):$PATH
         (cd linuxdeployqt && qmake && make && sudo make install)
         # patchelf
-        wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.bz2
+        curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fL -O https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.bz2
         tar xf patchelf-0.9.tar.bz2
         ( cd patchelf-0.9/ && ./configure  && make && sudo make install )
         # appimage
@@ -114,7 +114,7 @@ jobs:
         cp -r $BMF_ROOT_PATH src/build/
         (mkdir -p src/build/modules/weights &&
         cd src/build/modules/weights &&
-        wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth)
+        curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fL -O https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth)
 
     # Step to package the build directory
     - name: Create tar.gz package
@@ -242,7 +242,7 @@ jobs:
 
     - name: Setup tmate session
       if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
+      uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113 # v3
 
     - name: Upload Linglong package
       uses: actions/upload-artifact@v4
@@ -291,7 +291,7 @@ jobs:
         ' ./bmf/build_osx.sh
 
         mkdir -p "$HOME/Library/Application Support/OpenConverter/Python.framework"
-        wget https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.9.25+20251031-aarch64-apple-darwin-install_only.tar.gz
+        curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fL -O https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.9.25+20251031-aarch64-apple-darwin-install_only.tar.gz
         tar xzvf cpython-3.9.25+20251031-aarch64-apple-darwin-install_only.tar.gz --strip-components=1 -C "$HOME/Library/Application Support/OpenConverter/Python.framework"
 
         # wget https://invisible-island.net/archives/ncurses/ncurses-6.5.tar.gz
@@ -344,7 +344,7 @@ jobs:
           # export CMAKE_PREFIX_PATH=$(pwd)/opt/binutils:$CMAKE_PREFIX_PATH
           brew link --force python@3.9
           export BMF_PYTHON_VERSION="3.9"
-          pip install setuptools
+          pip install --only-binary :all: 'setuptools==69.5.1'
           (cd bmf && git checkout oc && git submodule update --init --recursive && ./build_osx.sh)
         else
           echo "BMF is already installed, skipping build."
@@ -408,7 +408,7 @@ jobs:
 
       # Set up the Qt environment.
       - name: (2) Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           version:      6.8.3
           host:         windows
@@ -596,7 +596,7 @@ jobs:
 
       - name: Upload Release Assets
         if: steps.prepare.outputs.HAS_FILES == 'true'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           files: ${{ steps.prepare.outputs.FILES }}
 
