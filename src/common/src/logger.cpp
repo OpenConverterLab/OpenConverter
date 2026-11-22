@@ -95,7 +95,7 @@ bool Logger::IsEnabled() const {
     return m_enabled && m_logFile.is_open();
 }
 
-bool Logger::IsLoggingEnabled() { return Instance().IsEnabled(); }
+bool Logger::FileLoggingEnabled() { return Instance().IsEnabled(); }
 
 void Logger::CloseFileUnlocked() {
     m_enabled = false;

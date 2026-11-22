@@ -53,7 +53,8 @@ public:
     // into separate records. A no-op write to the file when logging is off.
     static void Log(const std::string& msg, bool isError = false);
 
-    static bool IsLoggingEnabled();
+    // windows.h #defines IsLoggingEnabled, so this name stays clear of that macro.
+    static bool FileLoggingEnabled();
 
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;

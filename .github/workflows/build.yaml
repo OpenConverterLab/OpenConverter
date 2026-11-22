@@ -18,14 +18,14 @@ jobs:
         include:
           - arch: x86_64
             runner: ubuntu-22.04
-            ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1.tar.xz
-            ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linux64-gpl-shared-5.1
+            ffmpeg_url: https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2025-01-31-12-58/ffmpeg-n5.1.6-16-g6e63e49496-linux64-gpl-shared-5.1.tar.xz
+            ffmpeg_dir: ffmpeg-n5.1.6-16-g6e63e49496-linux64-gpl-shared-5.1
             bmf_url: https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-linux-x86_64-cp39.tar.gz
             appimagetool: appimagetool-x86_64.AppImage
           - arch: aarch64
             runner: ubuntu-22.04-arm
-            ffmpeg_url: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1.tar.xz
-            ffmpeg_dir: ffmpeg-n5.1.6-11-gcde3c5fc0c-linuxarm64-gpl-shared-5.1
+            ffmpeg_url: https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2025-01-31-12-58/ffmpeg-n5.1.6-16-g6e63e49496-linuxarm64-gpl-shared-5.1.tar.xz
+            ffmpeg_dir: ffmpeg-n5.1.6-16-g6e63e49496-linuxarm64-gpl-shared-5.1
             bmf_url: https://github.com/OpenConverterLab/bmf/releases/download/oc0.0.3/bmf-bin-linux-aarch64-cp39.tar.gz
             appimagetool: appimagetool-aarch64.AppImage
     runs-on: ${{ matrix.runner }}
@@ -254,7 +254,7 @@ jobs:
       run: echo "Linglong build complete"
 
   build-macos-arm:
-    runs-on: macos-14
+    runs-on: macos-15
     concurrency:
       group: "review-macos-${{ github.event.pull_request.number }}"
       cancel-in-progress: true
@@ -421,17 +421,17 @@ jobs:
       - name: Download FFmpeg
         shell: powershell
         run: |
-          $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-11-30-13-12/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1.zip"
+          $ffmpegUrl = "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2025-01-31-12-58/ffmpeg-n5.1.6-16-g6e63e49496-win64-gpl-shared-5.1.zip"
           $outputZip = "ffmpeg.zip"
           Invoke-WebRequest -Uri $ffmpegUrl -OutFile $outputZip
           Expand-Archive -Path $outputZip -DestinationPath ffmpeg
-          echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" >> $GITHUB_ENV
+          echo "FFMPEG_ROOT_PATH=$(pwd)/ffmpeg/ffmpeg-n5.1.6-16-g6e63e49496-win64-gpl-shared-5.1" >> $GITHUB_ENV
 
       # Create a build directory, run qmake, and build the project.
       - name: Build Qt project
         run: |
           (cd src &&
-          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1" -DFFTOOL_TRANSCODER=OFF -DBMF_TRANSCODER=OFF &&
+          cmake -S . -B build "-DFFMPEG_ROOT_PATH=../ffmpeg/ffmpeg-n5.1.6-16-g6e63e49496-win64-gpl-shared-5.1" -DFFTOOL_TRANSCODER=OFF -DBMF_TRANSCODER=OFF &&
           cmake --build build --config Release --parallel)
 
       - name : Deploy project
@@ -457,7 +457,7 @@ jobs:
 
           # 4) Copy FFmpeg DLLs into OpenConverter_win64/
           Copy-Item `
-            -Path "ffmpeg\ffmpeg-n5.1.6-11-gcde3c5fc0c-win64-gpl-shared-5.1\bin\*.dll" `
+            -Path "ffmpeg\ffmpeg-n5.1.6-16-g6e63e49496-win64-gpl-shared-5.1\bin\*.dll" `
             -Destination "OpenConverter_win64"
 
           # 5) Bundle the MSVC C++ runtime app-local. The app directory wins over
