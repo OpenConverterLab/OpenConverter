@@ -46,6 +46,7 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QStandardPaths>
+#include <QSignalBlocker>
 
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/info.h"
@@ -66,8 +67,6 @@
 #include "../include/transcode_page.h"
 #include "../include/ai_processing_page.h"
 #include "ui_open_converter.h"
-
-#include <iostream>
 
 OpenConverter::OpenConverter(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::OpenConverter) {
@@ -94,9 +93,11 @@ OpenConverter::OpenConverter(QWidget *parent)
 
     // ── Restore user settings ────────────────────────────────────────────
     QSettings settings(m_settingsPath, QSettings::IniFormat);
-    bool loggingEnabled = settings.value("logging/fileLoggingEnabled", false).toBool();
+    bool wantLog = settings.value("logging/fileLoggingEnabled", false).toBool();
+    bool loggingEnabled = Logger::Instance().SetEnabled(wantLog);
     ui->action_enableLog->setChecked(loggingEnabled);
-    Logger::Instance().SetEnabled(loggingEnabled);
+    if (loggingEnabled != wantLog)
+        settings.setValue("logging/fileLoggingEnabled", loggingEnabled);
 
     connect(ui->action_enableLog, &QAction::toggled,
             this, &OpenConverter::SlotLogToggled);
@@ -121,8 +122,13 @@ OpenConverter::OpenConverter(QWidget *parent)
         logCheckBox->setChecked(Logger::Instance().IsEnabled());
         layout->addWidget(logCheckBox);
 
-        connect(logCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
+        connect(logCheckBox, &QCheckBox::toggled, this, [this, logCheckBox](bool checked) {
             ui->action_enableLog->setChecked(checked);
+            const bool enabled = Logger::Instance().IsEnabled();
+            if (logCheckBox->isChecked() != enabled) {
+                QSignalBlocker blocker(logCheckBox);
+                logCheckBox->setChecked(enabled);
+            }
         });
 
         layout->addStretch();
@@ -139,7 +145,10 @@ OpenConverter::OpenConverter(QWidget *parent)
                 QSettings settings(m_settingsPath, QSettings::IniFormat);
                 settings.clear();
                 Logger::Instance().SetEnabled(false);
-                ui->action_enableLog->setChecked(false);
+                {
+                    QSignalBlocker blocker(ui->action_enableLog);
+                    ui->action_enableLog->setChecked(false);
+                }
                 settingsDialog->close();
             }
         });
@@ -208,8 +217,7 @@ OpenConverter::OpenConverter(QWidget *parent)
             for (QAction* action : transcoderActions) {
                 if (action->objectName() == savedTranscoder) {
                     action->setChecked(true);
-                    converter->set_transcoder(savedTranscoder.toStdString());
-                    restored = true;
+                    restored = converter->set_transcoder(savedTranscoder.toStdString());
                     break;
                 }
             }
@@ -295,38 +303,32 @@ void OpenConverter::dropEvent(QDropEvent *event) {
 
 // Called every time, when a menu entry of the transcoder menu is called
 void OpenConverter::SlotTranscoderChanged(QAction *action) {
-    if (0 != action) {
-        std::string transcoderName = action->objectName().toStdString();
-        bool isValid = false;
+    if (!action)
+        return;
+
+    const std::string transcoderName = action->objectName().toStdString();
+    bool isValid = false;
 #ifdef ENABLE_FFMPEG
-        if (transcoderName == "FFMPEG") {
-            converter->set_transcoder(transcoderName);
-            isValid = true;
-        }
+    if (transcoderName == "FFMPEG")
+        isValid = converter->set_transcoder(transcoderName);
 #endif
 #ifdef ENABLE_FFTOOL
-        if (transcoderName == "FFTOOL") {
-            converter->set_transcoder(transcoderName);
-            isValid = true;
-        }
+    if (transcoderName == "FFTOOL")
+        isValid = converter->set_transcoder(transcoderName);
 #endif
 #ifdef ENABLE_BMF
-        if (transcoderName == "BMF") {
-            converter->set_transcoder(transcoderName);
-            isValid = true;
-        }
+    if (transcoderName == "BMF")
+        isValid = converter->set_transcoder(transcoderName);
 #endif
-        // If the transcoder name is not valid, log an error
-        if (isValid) {
-            QSettings settings(m_settingsPath, QSettings::IniFormat);
-            settings.setValue("app/transcoder", action->objectName());
-            ui->statusBar->showMessage(
-                tr("Current Transcoder changed to %1")
-                    .arg(QString::fromStdString(transcoderName)));
-        } else {
-            std::cout << "Error: Undefined transcoder name - "
-                      << transcoderName.c_str() << std::endl;
-        }
+    if (isValid) {
+        QSettings settings(m_settingsPath, QSettings::IniFormat);
+        settings.setValue("app/transcoder", action->objectName());
+        ui->statusBar->showMessage(
+            tr("Current Transcoder changed to %1")
+                .arg(QString::fromStdString(transcoderName)));
+    } else {
+        Logger::Log("Undefined or unavailable transcoder: " + transcoderName,
+                    true);
     }
 }
 
@@ -608,9 +610,18 @@ QString OpenConverter::GetCurrentTranscoderName() const {
 }
 
 void OpenConverter::SlotLogToggled(bool checked) {
+    const bool enabled = Logger::Instance().SetEnabled(checked);
+    if (enabled != checked) {
+        QSignalBlocker blocker(ui->action_enableLog);
+        ui->action_enableLog->setChecked(enabled);
+        QMessageBox::warning(
+            this, tr("Log File"),
+            tr("Could not open the log file:\n%1")
+                .arg(QString::fromStdString(Logger::Instance().GetLogPath())));
+    }
+
     QSettings settings(m_settingsPath, QSettings::IniFormat);
-    settings.setValue("logging/fileLoggingEnabled", checked);
-    Logger::Instance().SetEnabled(checked);
+    settings.setValue("logging/fileLoggingEnabled", enabled);
 }
 
 void OpenConverter::SlotAbout() {

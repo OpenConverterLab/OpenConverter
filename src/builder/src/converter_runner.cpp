@@ -16,12 +16,16 @@
  */
 
 #include "../include/converter_runner.h"
+#include "../../common/include/logger.h"
 #include "../../common/include/encode_parameter.h"
 #include "../../common/include/process_parameter.h"
 #include "../../engine/include/converter.h"
 #include <QMessageBox>
 #include <QMetaObject>
 #include <QThread>
+#include <exception>
+#include <memory>
+#include <string>
 
 ConverterRunner::ConverterRunner(QProgressBar *progressBar,
                                  QLabel *progressLabel,
@@ -81,15 +85,29 @@ bool ConverterRunner::RunConversion(const QString &inputPath,
 
     // Run conversion in a separate thread
     QThread *thread = QThread::create([this, inputPath, outputPath, encodeParam, processParam, transcoderName]() {
-        // Create converter
-        Converter *converter = new Converter(processParam, encodeParam);
-        converter->set_transcoder(transcoderName.toStdString());
+        bool success = false;
 
-        // Perform conversion
-        bool success = converter->convert_format(inputPath.toStdString(), outputPath.toStdString());
-
-        // Clean up converter
-        delete converter;
+        try {
+            // unique_ptr so a throw cannot leak the converter. An exception
+            // leaving this thread would terminate the process.
+            auto converter =
+                std::make_unique<Converter>(processParam, encodeParam);
+            if (!converter->set_transcoder(transcoderName.toStdString())) {
+                success = false;
+            } else {
+                success = converter->convert_format(inputPath.toStdString(),
+                                                    outputPath.toStdString());
+            }
+        } catch (const std::exception &ex) {
+            success = false;
+            const char *what = ex.what();
+            Logger::Log(std::string("Conversion aborted by exception: ") +
+                            (what ? what : "std::exception"),
+                        true);
+        } catch (...) {
+            success = false;
+            Logger::Log("Conversion aborted by an unknown exception.", true);
+        }
 
         // Emit signal to notify completion (will be handled on main thread)
         QMetaObject::invokeMethod(this, [this, success]() {

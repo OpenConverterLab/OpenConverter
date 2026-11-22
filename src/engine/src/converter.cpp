@@ -17,6 +17,8 @@
 
 #include "../include/converter.h"
 
+#include "../../common/include/logger.h"
+
 #if defined(ENABLE_BMF)
     #include "../../transcoder/include/transcoder_bmf.h"
 #endif
@@ -53,42 +55,49 @@ Converter::Converter(ProcessParameter *processParamter,
 }
 
 bool Converter::set_transcoder(std::string transcoderName) {
-    if (transcoder) {
-        delete transcoder;
-        transcoder = NULL;
-    }
+    delete transcoder;
+    transcoder = nullptr;
 
-    if (transcoder == NULL) {
-        if (transcoderName == "FFMPEG") {
+    if (transcoderName == "FFMPEG") {
 #if defined(ENABLE_FFMPEG)
-            transcoder = new TranscoderFFmpeg(this->processParameter,
-                                              this->encodeParameter);
+        transcoder = new TranscoderFFmpeg(this->processParameter,
+                                          this->encodeParameter);
 #endif
-            std::cout << "Set FFmpeg Transcoder!" << std::endl;
-        } else if (transcoderName == "BMF") {
+    } else if (transcoderName == "BMF") {
 #if defined(ENABLE_BMF)
-            transcoder = new TranscoderBMF(this->processParameter,
-                                           this->encodeParameter);
-            std::cout << "Set BMF Transcoder!" << std::endl;
+        transcoder = new TranscoderBMF(this->processParameter,
+                                       this->encodeParameter);
 #endif
-        } else if (transcoderName == "FFTOOL") {
+    } else if (transcoderName == "FFTOOL") {
 #if defined(ENABLE_FFTOOL)
-            transcoder = new TranscoderFFTool(this->processParameter,
-                                              this->encodeParameter);
-            std::cout << "Set FFTool Transcoder!" << std::endl;
+        transcoder = new TranscoderFFTool(this->processParameter,
+                                          this->encodeParameter);
 #endif
-        } else {
-            std::cout << "Wrong Transcoder Name!" << std::endl;
-            return false;
-        }
     } else {
-        std::cout << "Init transcoder failed!" << std::endl;
+        Logger::Log("Unknown transcoder name: " + transcoderName, true);
         return false;
     }
+
+    // The name can be recognized while that backend was compiled out.
+    // Returning success with a null transcoder used to crash the next call.
+    if (!transcoder) {
+        Logger::Log("Failed to create transcoder: " + transcoderName, true);
+        return false;
+    }
+
+    Logger::Log("Using transcoder: " + transcoderName);
     return true;
 }
 
 bool Converter::convert_format(const std::string &src, const std::string &dst) {
+    if (!transcoder) {
+        Logger::Log("Conversion requested with no transcoder.", true);
+        return false;
+    }
+    if (src.empty() || dst.empty()) {
+        Logger::Log("Conversion requested with an empty path.", true);
+        return false;
+    }
     return transcoder->transcode(src, dst);
 }
 

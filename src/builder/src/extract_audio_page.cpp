@@ -28,6 +28,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <string>
 
 ExtractAudioPage::ExtractAudioPage(QWidget *parent) : BasePage(parent), converterRunner(nullptr) {
     SetupUI();
@@ -258,10 +259,11 @@ void ExtractAudioPage::UpdateOutputPath() {
 
 QString ExtractAudioPage::DetectAudioCodecFromFile(const QString &filePath) {
     Info info;
-    QByteArray ba = filePath.toLocal8Bit();
-    char *src = ba.data();
+    // Stable UTF-8 path, mirroring the video player's FFmpeg usage; avoids
+    // feeding avformat a pointer into a short-lived toLocal8Bit() buffer.
+    std::string path = filePath.toStdString();
 
-    info.send_info(src);
+    info.send_info(path);
     QuickInfo *quickInfo = info.get_quick_info();
 
     if (quickInfo && quickInfo->audioIdx >= 0) {

@@ -24,6 +24,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
+#include <vector>
 
 extern "C" {
 #include <libavutil/log.h>
@@ -430,8 +432,7 @@ protected:
     std::string logPath;
 
     void SetUp() override {
-        logPath = (std::filesystem::temp_directory_path()
-                   / "oc_logger_test.log").string();
+        logPath = "oc_logger_test.log";
         std::filesystem::remove(logPath);
         Logger::Instance().SetLogPath(logPath);
         Logger::Instance().SetEnabled(false);
@@ -439,7 +440,8 @@ protected:
 
     void TearDown() override {
         Logger::Instance().SetEnabled(false);
-        std::filesystem::remove(logPath);
+        std::error_code ec;
+        std::filesystem::remove_all(logPath, ec);
     }
 };
 
@@ -473,4 +475,89 @@ TEST_F(LoggerTest, AvLogWritesToFile) {
 
 TEST_F(LoggerTest, GetLogPathReturnsSetPath) {
     EXPECT_EQ(Logger::Instance().GetLogPath(), logPath);
+}
+
+TEST_F(LoggerTest, EnableReturnsFalseForEmptyPath) {
+    Logger::Instance().SetLogPath("");
+    EXPECT_FALSE(Logger::Instance().SetEnabled(true));
+    EXPECT_FALSE(Logger::Instance().IsEnabled());
+}
+
+TEST_F(LoggerTest, EnableFailsWhenPathIsDirectory) {
+    std::filesystem::create_directory(logPath);
+    EXPECT_FALSE(Logger::Instance().SetEnabled(true));
+    EXPECT_FALSE(Logger::Instance().IsEnabled());
+}
+
+TEST_F(LoggerTest, CreatesMissingParentDirectory) {
+    const std::string nested = "oc_logger_nested_test/logs/app.log";
+    std::filesystem::remove_all("oc_logger_nested_test");
+    Logger::Instance().SetLogPath(nested);
+    ASSERT_TRUE(Logger::Instance().SetEnabled(true));
+    Logger::Log("nested ok");
+    Logger::Instance().SetEnabled(false);
+
+    std::ifstream in(nested);
+    std::string contents((std::istreambuf_iterator<char>(in)),
+                          std::istreambuf_iterator<char>());
+    EXPECT_NE(contents.find("nested ok"), std::string::npos);
+    std::filesystem::remove_all("oc_logger_nested_test");
+    Logger::Instance().SetLogPath(logPath);
+}
+
+TEST_F(LoggerTest, LogWritesInfoAndError) {
+    ASSERT_TRUE(Logger::Instance().SetEnabled(true));
+    Logger::Log("hello info");
+    Logger::Log("hello error", true);
+    Logger::Instance().SetEnabled(false);
+
+    std::ifstream in(logPath);
+    std::string contents((std::istreambuf_iterator<char>(in)),
+                          std::istreambuf_iterator<char>());
+    EXPECT_NE(contents.find("[INFO] hello info"), std::string::npos);
+    EXPECT_NE(contents.find("[ERROR] hello error"), std::string::npos);
+}
+
+TEST_F(LoggerTest, LogDoesNotCreateFileWhenDisabled) {
+    Logger::Log("should not persist");
+    EXPECT_FALSE(std::filesystem::exists(logPath));
+}
+
+TEST_F(LoggerTest, AvLogJoinsPartialLinesAndDropsProgress) {
+    ASSERT_TRUE(Logger::Instance().SetEnabled(true));
+    av_log(nullptr, AV_LOG_WARNING, "hello ");
+    av_log(nullptr, AV_LOG_WARNING, "world\n");
+    av_log(nullptr, AV_LOG_INFO, "\rframe=1\r");
+    av_log(nullptr, AV_LOG_ERROR, "real failure\n");
+    Logger::Instance().SetEnabled(false);
+
+    std::ifstream in(logPath);
+    std::string contents((std::istreambuf_iterator<char>(in)),
+                          std::istreambuf_iterator<char>());
+    EXPECT_NE(contents.find("hello world"), std::string::npos);
+    EXPECT_NE(contents.find("[WARNING]"), std::string::npos);
+    EXPECT_NE(contents.find("real failure"), std::string::npos);
+    EXPECT_EQ(contents.find("frame="), std::string::npos);
+}
+
+TEST_F(LoggerTest, ConcurrentLogDoesNotDropLines) {
+    ASSERT_TRUE(Logger::Instance().SetEnabled(true));
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 4; ++i) {
+        threads.emplace_back([i]() {
+            for (int n = 0; n < 40; ++n) {
+                Logger::Log("thread " + std::to_string(i) + " line " +
+                            std::to_string(n));
+            }
+        });
+    }
+    for (std::thread &thread : threads)
+        thread.join();
+    Logger::Instance().SetEnabled(false);
+
+    std::ifstream in(logPath);
+    std::string contents((std::istreambuf_iterator<char>(in)),
+                          std::istreambuf_iterator<char>());
+    EXPECT_NE(contents.find("thread 0 line 0"), std::string::npos);
+    EXPECT_NE(contents.find("thread 3 line 39"), std::string::npos);
 }
