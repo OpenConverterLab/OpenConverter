@@ -22,6 +22,7 @@
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <string>
 
 InfoViewPage::InfoViewPage(QWidget *parent) : BasePage(parent) {
     info = new Info();
@@ -196,11 +197,14 @@ void InfoViewPage::AnalyzeFile(const QString &filePath) {
         return;
     }
 
-    QByteArray ba = filePath.toLocal8Bit();
-    char *src = ba.data();
+    // Pass the path as a stable UTF-8 std::string (mirrors how the video
+    // player feeds FFmpeg). Avoid avformat consuming a pointer into a
+    // short-lived QByteArray whose local-code-page encoding and buffer
+    // lifetime are not guaranteed on all Windows systems.
+    std::string path = filePath.toStdString();  // QString -> UTF-8 std::string
 
     // Get info by analyzing the file
-    info->send_info(src);
+    info->send_info(path);
 
     // Display info
     DisplayInfo(info->get_quick_info());

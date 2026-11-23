@@ -84,8 +84,11 @@ public:
     void init();
     // get qucik info reference
     QuickInfo *get_quick_info();
-    // send the info to front-end
-    void send_info(char *src);
+    // Probe the file at src. src is a UTF-8 filesystem path. FFmpeg's
+    // file protocol accepts UTF-8 on every platform, including Windows,
+    // where it converts the path to UTF-16. The string only needs to
+    // stay alive for this call.
+    void send_info(const std::string& src);
 };
 
 #endif // INFO_H

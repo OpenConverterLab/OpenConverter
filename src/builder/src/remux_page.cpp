@@ -27,6 +27,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <string>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -238,10 +239,11 @@ void RemuxPage::AnalyzeStreams(const QString &filePath) {
     }
 
     AVFormatContext *formatCtx = nullptr;
-    QByteArray ba = filePath.toLocal8Bit();
+    // FFmpeg wants a UTF-8 path. toLocal8Bit() is the ANSI code page on
+    // Windows, so non-ASCII paths fail to open.
+    const std::string path = filePath.toStdString();
 
-    // Open input file
-    if (avformat_open_input(&formatCtx, ba.data(), nullptr, nullptr) < 0) {
+    if (avformat_open_input(&formatCtx, path.c_str(), nullptr, nullptr) < 0) {
         QLabel *errorLabel = new QLabel("Error: Could not open file", streamsContainer);
         errorLabel->setStyleSheet("color: red;");
         streamsLayout->addWidget(errorLabel);

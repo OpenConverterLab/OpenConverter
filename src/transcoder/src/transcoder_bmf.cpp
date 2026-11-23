@@ -423,7 +423,7 @@ bool TranscoderBMF::prepare_info(std::string input_path,
     if (video_codec_name.empty() || audio_codec_name.empty() || pixel_format.empty()) {
         // Use Info class to probe input file
         Info info;
-        info.send_info(const_cast<char*>(input_path.c_str()));
+        info.send_info(input_path);
         QuickInfo *quick_info = info.get_quick_info();
         if (quick_info) {
             input_video_codec = quick_info->videoCodec;

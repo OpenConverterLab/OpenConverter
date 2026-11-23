@@ -18,7 +18,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <iostream>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
@@ -28,10 +27,12 @@
 #ifdef _WIN32
     #include <windows.h>
 #else
+    #include <sys/wait.h>
     #include <unistd.h>
 #endif
 
 #include "../include/transcoder_fftool.h"
+#include "../../common/include/logger.h"
 
 TranscoderFFTool::TranscoderFFTool(ProcessParameter *process_parameter,
                                    EncodeParameter *encode_parameter)
@@ -54,43 +55,30 @@ std::string escape_windows_path(const std::string &path) {
 }
 
 bool TranscoderFFTool::prepared_opt() {
+    // The old order dereferenced encode_parameter before the null check.
+    if (!encode_parameter)
+        return false;
 
-    if (encode_parameter->get_video_codec_name() == "copy") {
-        copy_video = true;
-    } else {
-        copy_video = false;
-    }
+    video_codec = encode_parameter->get_video_codec_name();
+    video_bit_rate = encode_parameter->get_video_bit_rate();
+    audio_codec = encode_parameter->get_audio_codec_name();
+    audio_bit_rate = encode_parameter->get_audio_bit_rate();
+    width = encode_parameter->get_width();
+    height = encode_parameter->get_height();
+    qscale = encode_parameter->get_qscale();
+    pixel_format = encode_parameter->get_pixel_format();
+    start_time = encode_parameter->get_start_time();
+    end_time = encode_parameter->get_end_time();
 
-    if (encode_parameter->get_audio_codec_name() == "copy") {
-        copy_audio = true;
-    } else {
-        copy_audio = false;
-    }
-
-    if (encode_parameter) {
-        video_codec = encode_parameter->get_video_codec_name();
-        video_bit_rate = encode_parameter->get_video_bit_rate();
-        audio_codec = encode_parameter->get_audio_codec_name();
-        audio_bit_rate = encode_parameter->get_audio_bit_rate();
-
-        // Get additional video parameters
-        width = encode_parameter->get_width();
-        height = encode_parameter->get_height();
-        qscale = encode_parameter->get_qscale();
-        pixel_format = encode_parameter->get_pixel_format();
-
-        // Get time range parameters
-        start_time = encode_parameter->get_start_time();
-        end_time = encode_parameter->get_end_time();
-    }
-
+    copy_video = video_codec == "copy";
+    copy_audio = audio_codec == "copy";
     return true;
 }
 
 bool TranscoderFFTool::transcode(std::string input_path,
                                  std::string output_path) {
     if (!prepared_opt()) {
-        std::cerr << "Failed to prepare options for transcoding." << std::endl;
+        Logger::Log("FFTool: Failed to prepare options for transcoding.", true);
         return false;
     }
 
@@ -114,8 +102,7 @@ bool TranscoderFFTool::transcode(std::string input_path,
 
     cmd << " -i \"" << input_path << "\"";
 #else
-    std::cerr << "FFmpeg path is not defined! Ensure CMake sets FFMPEG_PATH."
-              << std::endl;
+    Logger::Log("FFTool: ffmpeg path is not defined. CMake must set FFTOOL_PATH.", true);
     return false;
 #endif
 
@@ -141,7 +128,7 @@ bool TranscoderFFTool::transcode(std::string input_path,
         if (!video_codec.empty()) {
             cmd << " -c:v " << video_codec; // Use specified video codec
         } else {
-            std::cerr << "Video codec is not specified!" << std::endl;
+            Logger::Log("FFTool: Video codec is not specified!", true);
             return false;
         }
         if (video_bit_rate > 0) {
@@ -183,7 +170,7 @@ bool TranscoderFFTool::transcode(std::string input_path,
         if (!audio_codec.empty()) {
             cmd << " -c:a " << audio_codec; // Use specified audio codec
         } else {
-            std::cerr << "Audio codec is not specified!" << std::endl;
+            Logger::Log("FFTool: Audio codec is not specified!", true);
             return false;
         }
         if (audio_bit_rate > 0) {
@@ -194,29 +181,41 @@ bool TranscoderFFTool::transcode(std::string input_path,
     // Output file path
     cmd << " \"" << output_path << "\"";
 
-    std::string raw_cmd = cmd.str();
-    std::string final_cmd = "\"" + raw_cmd;
+    // The previous Windows path wrapped this string in an extra quote and
+    // logged a different command than the one Unix actually ran.
+    const std::string command = cmd.str();
+    Logger::Log("FFTool executing: " + command);
 
-    // Execute the command
-    std::cout << "Executing: " << final_cmd << std::endl;
-
-    int ret = 0;
-
-#ifdef _WIN32
-    // Windows-specific command execution (use cmd /c for shell commands)
-    std::string full_cmd = "cmd /c " + final_cmd;
-    ret = system(full_cmd.c_str());
-#else
-    // Unix-like systems (Linux/macOS) can directly use system()
-    ret = system(cmd.str().c_str());
-#endif
-
-    if (ret != 0) {
-        std::cerr << "FFmpeg transcoding failed with exit code: " << ret
-                  << std::endl;
+    int status = std::system(command.c_str());
+    if (status == -1) {
+        Logger::Log("FFTool: failed to start ffmpeg.", true);
         return false;
     }
 
-    std::cout << "Transcoding completed successfully." << std::endl;
+#ifndef _WIN32
+    // system() returns a wait status, not the process exit code.
+    if (WIFEXITED(status)) {
+        status = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+        Logger::Log("FFTool: ffmpeg was killed by signal " +
+                        std::to_string(WTERMSIG(status)),
+                    true);
+        return false;
+    } else {
+        Logger::Log("FFTool: ffmpeg returned unexpected status " +
+                        std::to_string(status),
+                    true);
+        return false;
+    }
+#endif
+
+    if (status != 0) {
+        Logger::Log("FFTool: ffmpeg failed with exit code " +
+                        std::to_string(status),
+                    true);
+        return false;
+    }
+
+    Logger::Log("FFTool: transcoding completed successfully.");
     return true;
 }

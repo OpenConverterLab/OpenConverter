@@ -17,6 +17,7 @@
 
 #include "../include/batch_queue_dialog.h"
 #include "../../engine/include/converter.h"
+#include "../../common/include/logger.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -25,6 +26,8 @@
 #include <QDebug>
 #include <QThread>
 #include <QMetaObject>
+#include <exception>
+#include <string>
 
 BatchQueueDialog::BatchQueueDialog(QWidget *parent)
     : QDialog(parent),
@@ -381,10 +384,22 @@ void BatchQueueDialog::ProcessNextItem() {
 
         try {
             Converter converter(processParam, encodeParam);
-            converter.set_transcoder(transcoderName.toStdString());
-            success = converter.convert_format(inputPath.toStdString(), outputPath.toStdString());
+            if (!converter.set_transcoder(transcoderName.toStdString())) {
+                success = false;
+            } else {
+                success = converter.convert_format(inputPath.toStdString(),
+                                                   outputPath.toStdString());
+            }
+        } catch (const std::exception &ex) {
+            success = false;
+            const char *what = ex.what();
+            Logger::Log(std::string("Batch conversion aborted by exception: ") +
+                            (what ? what : "std::exception"),
+                        true);
         } catch (...) {
             success = false;
+            Logger::Log("Batch conversion aborted by an unknown exception.",
+                        true);
         }
 
         // Remove observer and clean up

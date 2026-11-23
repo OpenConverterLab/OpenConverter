@@ -264,8 +264,6 @@ bool TranscoderFFmpeg::transcode(std::string input_path,
     double end_time_sec = encode_parameter->get_end_time();
     int64_t end_pts = -1;
 
-    av_log_set_level(AV_LOG_DEBUG);
-
     decoder->filename = input_path.c_str();
     encoder->filename = output_path.c_str();
 
